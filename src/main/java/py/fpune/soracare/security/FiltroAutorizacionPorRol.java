@@ -27,6 +27,12 @@ public class FiltroAutorizacionPorRol implements Filter {
     private static final String ROL_REQUERIDO =
             "ADMINISTRADOR";
 
+    private static final String RUTA_LOGIN =
+            "/login";
+
+    private static final String RUTA_CAMBIO_CONTRASENA =
+            "/cambiar-contrasena";
+
     @Override
     public void doFilter(
             ServletRequest solicitud,
@@ -34,8 +40,10 @@ public class FiltroAutorizacionPorRol implements Filter {
             FilterChain cadena
     ) throws IOException, ServletException {
 
-        if (!(solicitud instanceof HttpServletRequest request)
-                || !(respuesta instanceof HttpServletResponse response)) {
+        if (!(solicitud
+                instanceof HttpServletRequest request)
+                || !(respuesta
+                instanceof HttpServletResponse response)) {
 
             cadena.doFilter(
                     solicitud,
@@ -79,6 +87,17 @@ public class FiltroAutorizacionPorRol implements Filter {
             return;
         }
 
+        if (usuarioAutenticado
+                .isDebeCambiarContrasena()) {
+
+            redirigirAlCambioContrasena(
+                    request,
+                    response
+            );
+
+            return;
+        }
+
         if (!usuarioAutenticado.tieneRol(
                 ROL_REQUERIDO
         )) {
@@ -104,7 +123,18 @@ public class FiltroAutorizacionPorRol implements Filter {
 
         response.sendRedirect(
                 request.getContextPath()
-                        + "/login"
+                        + RUTA_LOGIN
+        );
+    }
+
+    private static void redirigirAlCambioContrasena(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException {
+
+        response.sendRedirect(
+                request.getContextPath()
+                        + RUTA_CAMBIO_CONTRASENA
         );
     }
 

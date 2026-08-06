@@ -22,6 +22,12 @@ public class LoginServlet extends HttpServlet {
     private static final String ATRIBUTO_USUARIO_AUTENTICADO =
             "usuarioAutenticado";
 
+    private static final String RUTA_DASHBOARD =
+            "/dashboard";
+
+    private static final String RUTA_CAMBIO_CONTRASENA =
+            "/cambiar-contrasena";
+
     private static final int DURACION_SESION_SEGUNDOS =
             30 * 60;
 
@@ -46,17 +52,24 @@ public class LoginServlet extends HttpServlet {
         HttpSession sesionExistente =
                 request.getSession(false);
 
-        if (sesionExistente != null
-                && sesionExistente.getAttribute(
-                ATRIBUTO_USUARIO_AUTENTICADO
-        ) != null) {
+        if (sesionExistente != null) {
 
-            response.sendRedirect(
-                    request.getContextPath()
-                            + "/dashboard"
-            );
+            Object usuarioEnSesion =
+                    sesionExistente.getAttribute(
+                            ATRIBUTO_USUARIO_AUTENTICADO
+                    );
 
-            return;
+            if (usuarioEnSesion
+                    instanceof UsuarioAutenticadoDTO usuarioAutenticado) {
+
+                redirigirSegunEstadoContrasena(
+                        request,
+                        response,
+                        usuarioAutenticado
+                );
+
+                return;
+            }
         }
 
         request.getRequestDispatcher(
@@ -125,9 +138,10 @@ public class LoginServlet extends HttpServlet {
                     usuarioAutenticado
             );
 
-            response.sendRedirect(
-                    request.getContextPath()
-                            + "/dashboard"
+            redirigirSegunEstadoContrasena(
+                    request,
+                    response,
+                    usuarioAutenticado
             );
 
         } catch (IllegalArgumentException error) {
@@ -161,6 +175,23 @@ public class LoginServlet extends HttpServlet {
                             + "Intentá nuevamente."
             );
         }
+    }
+
+    private static void redirigirSegunEstadoContrasena(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            UsuarioAutenticadoDTO usuarioAutenticado
+    ) throws IOException {
+
+        String rutaDestino =
+                usuarioAutenticado.isDebeCambiarContrasena()
+                        ? RUTA_CAMBIO_CONTRASENA
+                        : RUTA_DASHBOARD;
+
+        response.sendRedirect(
+                request.getContextPath()
+                        + rutaDestino
+        );
     }
 
     private void mostrarError(
