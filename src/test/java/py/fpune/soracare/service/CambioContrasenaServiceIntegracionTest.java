@@ -17,11 +17,14 @@ public class CambioContrasenaServiceIntegracionTest {
     private static final String NOMBRE_USUARIO =
             "prueba.recepcion";
 
+    private static final String VARIABLE_ENTORNO_CONTRASENA_ORIGINAL =
+            "SORACARE_TEST_RECEPCION_PASSWORD";
+
     private static final String CONTRASENA_ORIGINAL =
-            "SoraCare-Recepcion-2026!";
+            obtenerContrasenaOriginal();
 
     private static final String CONTRASENA_NUEVA =
-            "SoraCare-Recepcion-Nueva-2026!";
+            "SoraCare-Prueba-Integracion-2026!";
 
     private static final String SQL_OBTENER_ESTADO = """
             SELECT
@@ -405,8 +408,10 @@ public class CambioContrasenaServiceIntegracionTest {
 
         if (!coincide) {
             throw new IllegalStateException(
-                    "La contraseña conocida de prueba.recepcion "
-                            + "no coincide con el hash almacenado."
+                    "La contraseña definida en "
+                            + VARIABLE_ENTORNO_CONTRASENA_ORIGINAL
+                            + " no coincide con el hash almacenado "
+                            + "para prueba.recepcion."
             );
         }
     }
@@ -595,6 +600,27 @@ public class CambioContrasenaServiceIntegracionTest {
         verificarContrasenaOriginal(
                 estadoRestaurado
         );
+    }
+
+    private static String obtenerContrasenaOriginal() {
+
+        String contrasena =
+                System.getenv(
+                        VARIABLE_ENTORNO_CONTRASENA_ORIGINAL
+                );
+
+        if (contrasena == null
+                || contrasena.isBlank()) {
+
+            throw new IllegalStateException(
+                    "Definí la variable de entorno "
+                            + VARIABLE_ENTORNO_CONTRASENA_ORIGINAL
+                            + " con la contraseña vigente "
+                            + "de prueba.recepcion."
+            );
+        }
+
+        return contrasena;
     }
 
     private static void establecerFechaOpcional(
