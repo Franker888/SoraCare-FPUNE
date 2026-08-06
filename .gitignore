@@ -1,4 +1,9 @@
-# Dependencias
+﻿# Maven y Java
+target/
+out/
+*.class
+
+# Dependencias y archivos generados
 node_modules/
 vendor/
 dist/
@@ -6,13 +11,19 @@ build/
 
 # Entorno y credenciales
 .env
-.env.local
+.env.*
 *.log
+application-local.properties
 
-# IDEs y Editores
-.vscode/
+# IntelliJ IDEA y otros editores
 .idea/
+*.iml
+.vscode/
 
 # Base de datos local
 *.sqlite
 *.db
+
+# Archivos del sistema operativo
+Thumbs.db
+.DS_Store
