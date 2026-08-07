@@ -101,8 +101,9 @@
 
         .tarjeta-opcion:hover {
             transform: translateY(-3px);
-            box-shadow: 0 0.75rem 1.5rem
-            rgba(15, 23, 42, 0.10);
+            box-shadow:
+                    0 0.75rem 1.5rem
+                    rgba(15, 23, 42, 0.10);
         }
 
         .etiqueta-rol {
@@ -225,9 +226,9 @@
 
                         <span class="badge etiqueta-rol">
 
-                                <%= escaparHtml(rol) %>
+                            <%= escaparHtml(rol) %>
 
-                            </span>
+                        </span>
 
                         <% } %>
 
@@ -270,6 +271,7 @@
     </div>
 
     <section class="row g-4">
+
         <div class="col-12 col-md-6 col-xl-4">
 
             <div class="card tarjeta-opcion shadow-sm h-100">
@@ -288,6 +290,7 @@
 
                         Registrar y consultar las especialidades
                         disponibles para médicos y futuras agendas.
+
                     </p>
 
                     <a
@@ -295,9 +298,49 @@
                             class="btn btn-outline-success">
 
                         Administrar especialidades
+
                     </a>
+
                 </div>
+
             </div>
+
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-4">
+
+            <div class="card tarjeta-opcion shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <div class="icono-modulo mb-3">
+                        S
+                    </div>
+
+                    <h3 class="h5">
+                        Sedes hospitalarias
+                    </h3>
+
+                    <p class="text-secondary">
+
+                        Registrar y consultar las ubicaciones
+                        físicas donde funcionarán los consultorios
+                        y servicios hospitalarios.
+
+                    </p>
+
+                    <a
+                            href="${pageContext.request.contextPath}/admin/sedes"
+                            class="btn btn-outline-success">
+
+                        Administrar sedes
+
+                    </a>
+
+                </div>
+
+            </div>
+
         </div>
 
         <div class="col-12 col-md-6 col-xl-4">
