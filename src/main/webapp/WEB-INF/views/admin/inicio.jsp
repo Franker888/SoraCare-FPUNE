@@ -195,9 +195,10 @@
 
                     <p class="mb-0">
 
-                        Desde esta sección se gestionarán los usuarios,
-                        roles, configuraciones, reportes y registros
-                        de auditoría del sistema.
+                        Desde esta sección se gestionarán
+                        especialidades, sedes, consultorios,
+                        usuarios, configuraciones, reportes
+                        y registros de auditoría del sistema.
 
                     </p>
 
@@ -334,6 +335,42 @@
                             class="btn btn-outline-success">
 
                         Administrar sedes
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-4">
+
+            <div class="card tarjeta-opcion shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <div class="icono-modulo mb-3">
+                        C
+                    </div>
+
+                    <h3 class="h5">
+                        Consultorios
+                    </h3>
+
+                    <p class="text-secondary">
+
+                        Registrar y consultar los espacios físicos
+                        de cada sede donde se realizarán consultas,
+                        procedimientos y otros servicios médicos.
+
+                    </p>
+
+                    <a
+                            href="${pageContext.request.contextPath}/admin/consultorios"
+                            class="btn btn-outline-success">
+
+                        Administrar consultorios
 
                     </a>
 
