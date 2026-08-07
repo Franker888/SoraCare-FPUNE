@@ -270,6 +270,35 @@
     </div>
 
     <section class="row g-4">
+        <div class="col-12 col-md-6 col-xl-4">
+
+            <div class="card tarjeta-opcion shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <div class="icono-modulo mb-3">
+                        E
+                    </div>
+
+                    <h3 class="h5">
+                        Especialidades médicas
+                    </h3>
+
+                    <p class="text-secondary">
+
+                        Registrar y consultar las especialidades
+                        disponibles para médicos y futuras agendas.
+                    </p>
+
+                    <a
+                            href="${pageContext.request.contextPath}/admin/especialidades"
+                            class="btn btn-outline-success">
+
+                        Administrar especialidades
+                    </a>
+                </div>
+            </div>
+        </div>
 
         <div class="col-12 col-md-6 col-xl-4">
 
