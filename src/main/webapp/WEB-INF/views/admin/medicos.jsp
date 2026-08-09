@@ -3,6 +3,7 @@
          language="java" %>
 
 <%@ page import="py.fpune.soracare.mvc.model.Medico" %>
+<%@ page import="py.fpune.soracare.mvc.model.Especialidad" %>
 <%@ page import="java.util.List" %>
 
 <%!
@@ -33,6 +34,21 @@
                 (List<Medico>) atributoMedicos;
     } else {
         medicos =
+                List.of();
+    }
+
+    Object atributoEspecialidades =
+            request.getAttribute(
+                    "especialidadesActivas"
+            );
+
+    List<Especialidad> especialidadesActivas;
+
+    if (atributoEspecialidades instanceof List<?>) {
+        especialidadesActivas =
+                (List<Especialidad>) atributoEspecialidades;
+    } else {
+        especialidadesActivas =
                 List.of();
     }
 
@@ -96,6 +112,26 @@
                     "biografia"
             );
 
+    String asignacionIdMedico =
+            (String) request.getAttribute(
+                    "asignacionIdMedico"
+            );
+
+    String asignacionIdEspecialidad =
+            (String) request.getAttribute(
+                    "asignacionIdEspecialidad"
+            );
+
+    String asignacionPrincipal =
+            (String) request.getAttribute(
+                    "asignacionPrincipal"
+            );
+
+    String asignacionFechaDesde =
+            (String) request.getAttribute(
+                    "asignacionFechaDesde"
+            );
+
     if (nombres == null) {
         nombres = "";
     }
@@ -135,6 +171,35 @@
     if (biografia == null) {
         biografia = "";
     }
+
+    if (asignacionIdMedico == null) {
+        asignacionIdMedico = "";
+    }
+
+    if (asignacionIdEspecialidad == null) {
+        asignacionIdEspecialidad = "";
+    }
+
+    if (asignacionFechaDesde == null) {
+        asignacionFechaDesde = "";
+    }
+
+    boolean asignacionEsPrincipal =
+            "on".equalsIgnoreCase(
+                    asignacionPrincipal
+            )
+                    || "true".equalsIgnoreCase(
+                    asignacionPrincipal
+            )
+                    || "1".equals(
+                    asignacionPrincipal
+            )
+                    || "si".equalsIgnoreCase(
+                    asignacionPrincipal
+            )
+                    || "sí".equalsIgnoreCase(
+                    asignacionPrincipal
+            );
 %>
 
 <!DOCTYPE html>
@@ -196,6 +261,12 @@
         .tarjeta-contenido {
             border: none;
             border-radius: 1rem;
+        }
+
+        .tarjeta-asignacion {
+            border: none;
+            border-radius: 1rem;
+            border-left: 5px solid #0f766e;
         }
 
         .form-control,
@@ -261,6 +332,19 @@
             margin-bottom: 1.25rem;
         }
 
+        .icono-relacion {
+            width: 52px;
+            height: 52px;
+            border-radius: 1rem;
+            background-color: #ccfbf1;
+            color: #0f766e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
     </style>
 
 </head>
@@ -323,15 +407,14 @@
                     </p>
 
                     <h1 class="display-6 fw-bold mb-3">
-
                         Médicos
-
                     </h1>
 
                     <p class="mb-0">
 
-                        Registrá y consultá los profesionales
-                        médicos disponibles en SoraCare-FPUNE.
+                        Registrá profesionales y administrá
+                        las especialidades médicas que
+                        pueden ejercer dentro de SoraCare-FPUNE.
 
                     </p>
 
@@ -391,7 +474,7 @@
             class="alert alert-success alert-dismissible fade show"
             role="alert">
 
-        <strong>Registro correcto.</strong>
+        <strong>Operación correcta.</strong>
 
         <%= escaparHtml(mensajeExito) %>
 
@@ -416,14 +499,278 @@
         <strong>No se pudo completar la operación.</strong>
 
         <div class="mt-1">
-
             <%= escaparHtml(error) %>
-
         </div>
 
     </div>
 
     <% } %>
+
+    <section class="card tarjeta-asignacion shadow-sm mb-4">
+
+        <div class="card-body p-4">
+
+            <div class="d-flex align-items-center gap-3 mb-4">
+
+                <div class="icono-relacion">
+                    +
+                </div>
+
+                <div>
+
+                    <h2 class="h5 mb-1">
+                        Asignar especialidad a médico
+                    </h2>
+
+                    <p class="text-secondary mb-0">
+
+                        Relacioná un profesional con una
+                        especialidad médica activa.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <% if (medicos.isEmpty()) { %>
+
+            <div class="alert alert-warning mb-0">
+
+                Primero debe existir al menos un médico
+                registrado para poder asignar una especialidad.
+
+            </div>
+
+            <% } else if (especialidadesActivas.isEmpty()) { %>
+
+            <div class="alert alert-warning mb-0">
+
+                No existen especialidades activas disponibles
+                para realizar una asignación.
+
+            </div>
+
+            <% } else { %>
+
+            <form
+                    method="post"
+                    action="${pageContext.request.contextPath}/admin/medicos">
+
+                <input
+                        type="hidden"
+                        name="accion"
+                        value="asignarEspecialidad">
+
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-12 col-lg-4">
+
+                        <label
+                                for="idMedico"
+                                class="form-label fw-semibold">
+
+                            Médico
+
+                        </label>
+
+                        <select
+                                id="idMedico"
+                                name="idMedico"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                Seleccionar médico
+                            </option>
+
+                            <% for (
+                                    Medico medico
+                                    : medicos
+                            ) {
+
+                                String idMedicoActual =
+                                        String.valueOf(
+                                                medico.getIdMedico()
+                                        );
+
+                                boolean medicoSeleccionado =
+                                        idMedicoActual.equals(
+                                                asignacionIdMedico
+                                        );
+                            %>
+
+                            <option
+                                    value="<%= escaparHtml(
+                                            idMedicoActual
+                                    ) %>"
+                                    <%= medicoSeleccionado
+                                            ? "selected"
+                                            : "" %>>
+
+                                <%= escaparHtml(
+                                        medico.getNombres()
+                                ) %>
+
+                                <%= escaparHtml(
+                                        medico.getApellidos()
+                                ) %>
+
+                                —
+                                <%= escaparHtml(
+                                        medico.getMatriculaProfesional()
+                                ) %>
+
+                            </option>
+
+                            <% } %>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-12 col-lg-4">
+
+                        <label
+                                for="idEspecialidad"
+                                class="form-label fw-semibold">
+
+                            Especialidad
+
+                        </label>
+
+                        <select
+                                id="idEspecialidad"
+                                name="idEspecialidad"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                Seleccionar especialidad
+                            </option>
+
+                            <% for (
+                                    Especialidad especialidad
+                                    : especialidadesActivas
+                            ) {
+
+                                String idEspecialidadActual =
+                                        String.valueOf(
+                                                especialidad
+                                                        .getIdEspecialidad()
+                                        );
+
+                                boolean especialidadSeleccionada =
+                                        idEspecialidadActual.equals(
+                                                asignacionIdEspecialidad
+                                        );
+                            %>
+
+                            <option
+                                    value="<%= escaparHtml(
+                                            idEspecialidadActual
+                                    ) %>"
+                                    <%= especialidadSeleccionada
+                                            ? "selected"
+                                            : "" %>>
+
+                                <%= escaparHtml(
+                                        especialidad.getNombre()
+                                ) %>
+
+                            </option>
+
+                            <% } %>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-2">
+
+                        <label
+                                for="fechaDesde"
+                                class="form-label fw-semibold">
+
+                            Desde
+
+                        </label>
+
+                        <input
+                                type="date"
+                                id="fechaDesde"
+                                name="fechaDesde"
+                                class="form-control"
+                                value="<%= escaparHtml(
+                                        asignacionFechaDesde
+                                ) %>">
+
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-2">
+
+                        <div class="form-check mb-2">
+
+                            <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    id="principal"
+                                    name="principal"
+                                    value="true"
+                                <%= asignacionEsPrincipal
+                                            ? "checked"
+                                            : "" %>>
+
+                            <label
+                                    class="form-check-label fw-semibold"
+                                    for="principal">
+
+                                Principal
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-12">
+
+                        <div class="d-flex flex-column
+                                    flex-md-row
+                                    justify-content-between
+                                    align-items-md-center
+                                    gap-3">
+
+                            <div class="form-text">
+
+                                Si no indicás una fecha,
+                                se utilizará la fecha actual.
+                                Cada médico puede tener solamente
+                                una especialidad principal activa.
+
+                            </div>
+
+                            <button
+                                    type="submit"
+                                    class="btn btn-primary boton-principal">
+
+                                Asignar especialidad
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+            <% } %>
+
+        </div>
+
+    </section>
 
     <section class="row g-4">
 
@@ -447,6 +794,11 @@
                     <form
                             method="post"
                             action="${pageContext.request.contextPath}/admin/medicos">
+
+                        <input
+                                type="hidden"
+                                name="accion"
+                                value="registrarMedico">
 
                         <h3 class="h6 formulario-seccion">
                             Datos personales
@@ -544,7 +896,9 @@
                                         id="fechaNacimiento"
                                         name="fechaNacimiento"
                                         class="form-control"
-                                        value="<%= escaparHtml(fechaNacimiento) %>">
+                                        value="<%= escaparHtml(
+                                                fechaNacimiento
+                                        ) %>">
 
                             </div>
 
@@ -638,7 +992,9 @@
                                         id="matriculaProfesional"
                                         name="matriculaProfesional"
                                         class="form-control"
-                                        value="<%= escaparHtml(matriculaProfesional) %>"
+                                        value="<%= escaparHtml(
+                                                matriculaProfesional
+                                        ) %>"
                                         maxlength="50"
                                         required
                                         autocomplete="off">
@@ -660,7 +1016,9 @@
                                         id="fechaIngreso"
                                         name="fechaIngreso"
                                         class="form-control"
-                                        value="<%= escaparHtml(fechaIngreso) %>">
+                                        value="<%= escaparHtml(
+                                                fechaIngreso
+                                        ) %>">
 
                             </div>
 
@@ -810,9 +1168,7 @@
                             <tr>
 
                                 <td>
-
                                     <%= medico.getIdMedico() %>
-
                                 </td>
 
                                 <td>
@@ -851,7 +1207,9 @@
 
                                     <% if (
                                             medico.getCorreo() != null
-                                                    && !medico.getCorreo().isBlank()
+                                                    && !medico
+                                                    .getCorreo()
+                                                    .isBlank()
                                     ) { %>
 
                                     <div>
@@ -866,7 +1224,9 @@
 
                                     <% if (
                                             medico.getTelefono() != null
-                                                    && !medico.getTelefono().isBlank()
+                                                    && !medico
+                                                    .getTelefono()
+                                                    .isBlank()
                                     ) { %>
 
                                     <div class="dato-secundario">
@@ -881,10 +1241,14 @@
 
                                     <% if (
                                             (medico.getCorreo() == null
-                                                    || medico.getCorreo().isBlank())
+                                                    || medico
+                                                    .getCorreo()
+                                                    .isBlank())
                                                     &&
                                                     (medico.getTelefono() == null
-                                                            || medico.getTelefono().isBlank())
+                                                            || medico
+                                                            .getTelefono()
+                                                            .isBlank())
                                     ) { %>
 
                                     <span class="text-secondary">
@@ -925,7 +1289,9 @@
 
                                     <% } else if (
                                             "ACTIVO".equals(
-                                                    medico.getEstado().name()
+                                                    medico
+                                                            .getEstado()
+                                                            .name()
                                             )
                                     ) { %>
 
@@ -935,7 +1301,9 @@
 
                                     <% } else if (
                                             "LICENCIA".equals(
-                                                    medico.getEstado().name()
+                                                    medico
+                                                            .getEstado()
+                                                            .name()
                                             )
                                     ) { %>
 

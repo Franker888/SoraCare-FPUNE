@@ -5,7 +5,10 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import py.fpune.soracare.dto.AsignacionMedicoEspecialidadDTO;
 import py.fpune.soracare.dto.RegistroMedicoDTO;
+import py.fpune.soracare.service.EspecialidadService;
+import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
 
 import java.io.IOException;
@@ -23,11 +26,22 @@ public class MedicosServlet extends HttpServlet {
 
     private MedicoService medicoService;
 
+    private EspecialidadService especialidadService;
+
+    private MedicoEspecialidadService
+            medicoEspecialidadService;
+
     @Override
     public void init() {
 
         medicoService =
                 new MedicoService();
+
+        especialidadService =
+                new EspecialidadService();
+
+        medicoEspecialidadService =
+                new MedicoEspecialidadService();
     }
 
     @Override
@@ -53,6 +67,16 @@ public class MedicosServlet extends HttpServlet {
                     "mensajeExito",
                     "El médico fue registrado correctamente."
             );
+
+        } else if ("especialidad-asignada".equals(
+                resultado
+        )) {
+
+            request.setAttribute(
+                    "mensajeExito",
+                    "La especialidad fue asignada "
+                            + "al médico correctamente."
+            );
         }
 
         mostrarVista(
@@ -74,6 +98,34 @@ public class MedicosServlet extends HttpServlet {
         request.setCharacterEncoding(
                 "UTF-8"
         );
+
+        String accion =
+                request.getParameter(
+                        "accion"
+                );
+
+        if ("asignarEspecialidad".equals(
+                accion
+        )) {
+
+            procesarAsignacionEspecialidad(
+                    request,
+                    response
+            );
+
+            return;
+        }
+
+        procesarRegistroMedico(
+                request,
+                response
+        );
+    }
+
+    private void procesarRegistroMedico(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws ServletException, IOException {
 
         String nombres =
                 request.getParameter(
@@ -125,7 +177,7 @@ public class MedicosServlet extends HttpServlet {
                         "biografia"
                 );
 
-        conservarDatosFormulario(
+        conservarDatosRegistroMedico(
                 request,
                 nombres,
                 apellidos,
@@ -166,50 +218,156 @@ public class MedicosServlet extends HttpServlet {
 
         } catch (SQLException error) {
 
-            if (esErrorDeValidacion(
-                    error
-            )) {
-
-                response.setStatus(
-                        HttpServletResponse.SC_BAD_REQUEST
-                );
-
-                request.setAttribute(
-                        "error",
-                        error.getMessage()
-                );
-
-            } else {
-
-                log(
-                        "Error de base de datos al registrar "
-                                + "el médico.",
-                        error
-                );
-
-                response.setStatus(
-                        HttpServletResponse
-                                .SC_INTERNAL_SERVER_ERROR
-                );
-
-                request.setAttribute(
-                        "error",
-                        "No fue posible registrar el médico. "
-                                + "Intentá nuevamente."
-                );
-            }
-
-            mostrarVista(
+            procesarErrorOperacion(
                     request,
-                    response
+                    response,
+                    error,
+                    "Error de base de datos al registrar "
+                            + "el médico.",
+                    "No fue posible registrar el médico. "
+                            + "Intentá nuevamente."
             );
         }
+    }
+
+    private void procesarAsignacionEspecialidad(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws ServletException, IOException {
+
+        String idMedico =
+                request.getParameter(
+                        "idMedico"
+                );
+
+        String idEspecialidad =
+                request.getParameter(
+                        "idEspecialidad"
+                );
+
+        String principal =
+                request.getParameter(
+                        "principal"
+                );
+
+        String fechaDesde =
+                request.getParameter(
+                        "fechaDesde"
+                );
+
+        conservarDatosAsignacion(
+                request,
+                idMedico,
+                idEspecialidad,
+                principal,
+                fechaDesde
+        );
+
+        AsignacionMedicoEspecialidadDTO datosAsignacion =
+                new AsignacionMedicoEspecialidadDTO(
+                        idMedico,
+                        idEspecialidad,
+                        principal,
+                        fechaDesde
+                );
+
+        try {
+            medicoEspecialidadService.asignar(
+                    datosAsignacion
+            );
+
+            response.sendRedirect(
+                    request.getContextPath()
+                            + RUTA_MEDICOS
+                            + "?resultado=especialidad-asignada"
+            );
+
+        } catch (SQLException error) {
+
+            procesarErrorOperacion(
+                    request,
+                    response,
+                    error,
+                    "Error de base de datos al asignar "
+                            + "la especialidad al médico.",
+                    "No fue posible asignar la especialidad. "
+                            + "Intentá nuevamente."
+            );
+        }
+    }
+
+    private void procesarErrorOperacion(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            SQLException error,
+            String mensajeLog,
+            String mensajeGenerico
+    ) throws ServletException, IOException {
+
+        if (esErrorDeValidacion(
+                error
+        )) {
+
+            response.setStatus(
+                    HttpServletResponse.SC_BAD_REQUEST
+            );
+
+            request.setAttribute(
+                    "error",
+                    error.getMessage()
+            );
+
+        } else {
+
+            log(
+                    mensajeLog,
+                    error
+            );
+
+            response.setStatus(
+                    HttpServletResponse
+                            .SC_INTERNAL_SERVER_ERROR
+            );
+
+            request.setAttribute(
+                    "error",
+                    mensajeGenerico
+            );
+        }
+
+        mostrarVista(
+                request,
+                response
+        );
     }
 
     private void mostrarVista(
             HttpServletRequest request,
             HttpServletResponse response
     ) throws ServletException, IOException {
+
+        cargarMedicos(
+                request,
+                response
+        );
+
+        cargarEspecialidadesActivas(
+                request,
+                response
+        );
+
+        request.getRequestDispatcher(
+                VISTA_MEDICOS
+        ).forward(
+                request,
+                response
+        );
+    }
+
+    private void cargarMedicos(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
 
         try {
             request.setAttribute(
@@ -246,13 +404,48 @@ public class MedicosServlet extends HttpServlet {
                             .SC_INTERNAL_SERVER_ERROR
             );
         }
+    }
 
-        request.getRequestDispatcher(
-                VISTA_MEDICOS
-        ).forward(
-                request,
-                response
-        );
+    private void cargarEspecialidadesActivas(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+
+        try {
+            request.setAttribute(
+                    "especialidadesActivas",
+                    especialidadService.listarActivas()
+            );
+
+        } catch (SQLException error) {
+
+            log(
+                    "Error al cargar las especialidades "
+                            + "activas.",
+                    error
+            );
+
+            if (request.getAttribute(
+                    "error"
+            ) == null) {
+
+                request.setAttribute(
+                        "error",
+                        "No fue posible cargar "
+                                + "las especialidades disponibles."
+                );
+            }
+
+            request.setAttribute(
+                    "especialidadesActivas",
+                    List.of()
+            );
+
+            response.setStatus(
+                    HttpServletResponse
+                            .SC_INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
     private static boolean esErrorDeValidacion(
@@ -262,7 +455,7 @@ public class MedicosServlet extends HttpServlet {
         return error.getSQLState() == null;
     }
 
-    private static void conservarDatosFormulario(
+    private static void conservarDatosRegistroMedico(
             HttpServletRequest request,
             String nombres,
             String apellidos,
@@ -324,6 +517,35 @@ public class MedicosServlet extends HttpServlet {
         request.setAttribute(
                 "biografia",
                 biografia
+        );
+    }
+
+    private static void conservarDatosAsignacion(
+            HttpServletRequest request,
+            String idMedico,
+            String idEspecialidad,
+            String principal,
+            String fechaDesde
+    ) {
+
+        request.setAttribute(
+                "asignacionIdMedico",
+                idMedico
+        );
+
+        request.setAttribute(
+                "asignacionIdEspecialidad",
+                idEspecialidad
+        );
+
+        request.setAttribute(
+                "asignacionPrincipal",
+                principal
+        );
+
+        request.setAttribute(
+                "asignacionFechaDesde",
+                fechaDesde
         );
     }
 
