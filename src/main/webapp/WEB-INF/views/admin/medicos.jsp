@@ -1,0 +1,983 @@
+<%@ page contentType="text/html;charset=UTF-8"
+         pageEncoding="UTF-8"
+         language="java" %>
+
+<%@ page import="py.fpune.soracare.mvc.model.Medico" %>
+<%@ page import="java.util.List" %>
+
+<%!
+    private String escaparHtml(String texto) {
+        if (texto == null) {
+            return "";
+        }
+
+        return texto
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+%>
+
+<%
+    Object atributoMedicos =
+            request.getAttribute(
+                    "medicos"
+            );
+
+    List<Medico> medicos;
+
+    if (atributoMedicos instanceof List<?>) {
+        medicos =
+                (List<Medico>) atributoMedicos;
+    } else {
+        medicos =
+                List.of();
+    }
+
+    String mensajeExito =
+            (String) request.getAttribute(
+                    "mensajeExito"
+            );
+
+    String error =
+            (String) request.getAttribute(
+                    "error"
+            );
+
+    String nombres =
+            (String) request.getAttribute(
+                    "nombres"
+            );
+
+    String apellidos =
+            (String) request.getAttribute(
+                    "apellidos"
+            );
+
+    String cedula =
+            (String) request.getAttribute(
+                    "cedula"
+            );
+
+    String fechaNacimiento =
+            (String) request.getAttribute(
+                    "fechaNacimiento"
+            );
+
+    String telefono =
+            (String) request.getAttribute(
+                    "telefono"
+            );
+
+    String correo =
+            (String) request.getAttribute(
+                    "correo"
+            );
+
+    String direccion =
+            (String) request.getAttribute(
+                    "direccion"
+            );
+
+    String matriculaProfesional =
+            (String) request.getAttribute(
+                    "matriculaProfesional"
+            );
+
+    String fechaIngreso =
+            (String) request.getAttribute(
+                    "fechaIngreso"
+            );
+
+    String biografia =
+            (String) request.getAttribute(
+                    "biografia"
+            );
+
+    if (nombres == null) {
+        nombres = "";
+    }
+
+    if (apellidos == null) {
+        apellidos = "";
+    }
+
+    if (cedula == null) {
+        cedula = "";
+    }
+
+    if (fechaNacimiento == null) {
+        fechaNacimiento = "";
+    }
+
+    if (telefono == null) {
+        telefono = "";
+    }
+
+    if (correo == null) {
+        correo = "";
+    }
+
+    if (direccion == null) {
+        direccion = "";
+    }
+
+    if (matriculaProfesional == null) {
+        matriculaProfesional = "";
+    }
+
+    if (fechaIngreso == null) {
+        fechaIngreso = "";
+    }
+
+    if (biografia == null) {
+        biografia = "";
+    }
+%>
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1">
+
+    <meta
+            name="robots"
+            content="noindex, nofollow">
+
+    <title>
+        Médicos | SoraCare-FPUNE
+    </title>
+
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet">
+
+    <style>
+
+        body {
+            min-height: 100vh;
+            background-color: #f1f5f9;
+        }
+
+        .barra-superior {
+            background-color: #0f766e;
+        }
+
+        .marca-soracare {
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .marca-soracare:hover,
+        .marca-soracare:focus {
+            color: #ffffff;
+        }
+
+        .encabezado-modulo {
+            border: none;
+            border-radius: 1rem;
+            background:
+                    linear-gradient(
+                            135deg,
+                            #0f766e,
+                            #0e7490
+                    );
+            color: #ffffff;
+        }
+
+        .tarjeta-contenido {
+            border: none;
+            border-radius: 1rem;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 0.75rem;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #0f766e;
+            box-shadow:
+                    0 0 0 0.25rem
+                    rgba(15, 118, 110, 0.15);
+        }
+
+        .boton-principal {
+            background-color: #0f766e;
+            border-color: #0f766e;
+        }
+
+        .boton-principal:hover,
+        .boton-principal:focus {
+            background-color: #115e59;
+            border-color: #115e59;
+        }
+
+        .contador-medicos {
+            background-color: #ccfbf1;
+            color: #115e59;
+        }
+
+        .estado-activo {
+            background-color: #ccfbf1;
+            color: #115e59;
+        }
+
+        .estado-licencia {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .estado-inactivo {
+            background-color: #e2e8f0;
+            color: #475569;
+        }
+
+        .boton-cerrar-sesion {
+            min-width: 120px;
+        }
+
+        .tabla-medicos th {
+            white-space: nowrap;
+        }
+
+        .dato-secundario {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .formulario-seccion {
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<nav class="navbar barra-superior shadow-sm">
+
+    <div class="container">
+
+        <a
+                class="navbar-brand marca-soracare"
+                href="${pageContext.request.contextPath}/dashboard">
+
+            SoraCare-FPUNE
+
+        </a>
+
+        <div class="d-flex align-items-center gap-3">
+
+            <span class="navbar-text text-white d-none d-lg-inline">
+
+                Área administrativa
+
+            </span>
+
+            <form
+                    method="post"
+                    action="${pageContext.request.contextPath}/logout"
+                    class="m-0">
+
+                <button
+                        type="submit"
+                        class="btn btn-outline-light btn-sm boton-cerrar-sesion">
+
+                    Cerrar sesión
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</nav>
+
+<main class="container py-4 py-md-5">
+
+    <section class="card encabezado-modulo shadow-sm mb-4">
+
+        <div class="card-body p-4 p-md-5">
+
+            <div class="row align-items-center">
+
+                <div class="col-12 col-lg-8">
+
+                    <p class="mb-2 opacity-75">
+                        Gestión médica
+                    </p>
+
+                    <h1 class="display-6 fw-bold mb-3">
+
+                        Médicos
+
+                    </h1>
+
+                    <p class="mb-0">
+
+                        Registrá y consultá los profesionales
+                        médicos disponibles en SoraCare-FPUNE.
+
+                    </p>
+
+                </div>
+
+                <div class="col-12 col-lg-4 mt-4 mt-lg-0 text-lg-end">
+
+                    <span class="badge contador-medicos fs-6">
+
+                        <%= medicos.size() %>
+                        médico<%= medicos.size() == 1
+                            ? ""
+                            : "s" %>
+
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <div class="d-flex flex-column
+                flex-md-row
+                justify-content-between
+                align-items-md-center
+                gap-3 mb-4">
+
+        <div>
+
+            <h2 class="h4 mb-1">
+                Administración de médicos
+            </h2>
+
+            <p class="text-secondary mb-0">
+                Acceso exclusivo para administradores autorizados
+            </p>
+
+        </div>
+
+        <a
+                href="${pageContext.request.contextPath}/admin/inicio"
+                class="btn btn-outline-secondary">
+
+            Volver a administración
+
+        </a>
+
+    </div>
+
+    <% if (mensajeExito != null
+            && !mensajeExito.isBlank()) { %>
+
+    <div
+            class="alert alert-success alert-dismissible fade show"
+            role="alert">
+
+        <strong>Registro correcto.</strong>
+
+        <%= escaparHtml(mensajeExito) %>
+
+        <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Cerrar">
+        </button>
+
+    </div>
+
+    <% } %>
+
+    <% if (error != null
+            && !error.isBlank()) { %>
+
+    <div
+            class="alert alert-danger"
+            role="alert">
+
+        <strong>No se pudo completar la operación.</strong>
+
+        <div class="mt-1">
+
+            <%= escaparHtml(error) %>
+
+        </div>
+
+    </div>
+
+    <% } %>
+
+    <section class="row g-4">
+
+        <div class="col-12 col-xl-5">
+
+            <div class="card tarjeta-contenido shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h2 class="h5 mb-1">
+                        Nuevo médico
+                    </h2>
+
+                    <p class="text-secondary mb-4">
+
+                        Completá los datos personales
+                        y profesionales.
+
+                    </p>
+
+                    <form
+                            method="post"
+                            action="${pageContext.request.contextPath}/admin/medicos">
+
+                        <h3 class="h6 formulario-seccion">
+                            Datos personales
+                        </h3>
+
+                        <div class="row">
+
+                            <div class="col-12 col-md-6 mb-3">
+
+                                <label
+                                        for="nombres"
+                                        class="form-label fw-semibold">
+
+                                    Nombres
+
+                                </label>
+
+                                <input
+                                        type="text"
+                                        id="nombres"
+                                        name="nombres"
+                                        class="form-control"
+                                        value="<%= escaparHtml(nombres) %>"
+                                        maxlength="100"
+                                        required
+                                        autocomplete="off">
+
+                            </div>
+
+                            <div class="col-12 col-md-6 mb-3">
+
+                                <label
+                                        for="apellidos"
+                                        class="form-label fw-semibold">
+
+                                    Apellidos
+
+                                </label>
+
+                                <input
+                                        type="text"
+                                        id="apellidos"
+                                        name="apellidos"
+                                        class="form-control"
+                                        value="<%= escaparHtml(apellidos) %>"
+                                        maxlength="100"
+                                        required
+                                        autocomplete="off">
+
+                            </div>
+
+                        </div>
+
+                        <div class="row">
+
+                            <div class="col-12 col-md-6 mb-3">
+
+                                <label
+                                        for="cedula"
+                                        class="form-label fw-semibold">
+
+                                    Cédula
+
+                                </label>
+
+                                <input
+                                        type="text"
+                                        id="cedula"
+                                        name="cedula"
+                                        class="form-control"
+                                        value="<%= escaparHtml(cedula) %>"
+                                        inputmode="numeric"
+                                        pattern="[0-9]+"
+                                        required
+                                        autocomplete="off">
+
+                                <div class="form-text">
+                                    Ingresá solamente números.
+                                </div>
+
+                            </div>
+
+                            <div class="col-12 col-md-6 mb-3">
+
+                                <label
+                                        for="fechaNacimiento"
+                                        class="form-label fw-semibold">
+
+                                    Fecha de nacimiento
+
+                                </label>
+
+                                <input
+                                        type="date"
+                                        id="fechaNacimiento"
+                                        name="fechaNacimiento"
+                                        class="form-control"
+                                        value="<%= escaparHtml(fechaNacimiento) %>">
+
+                            </div>
+
+                        </div>
+
+                        <div class="row">
+
+                            <div class="col-12 col-md-6 mb-3">
+
+                                <label
+                                        for="telefono"
+                                        class="form-label fw-semibold">
+
+                                    Teléfono
+
+                                </label>
+
+                                <input
+                                        type="text"
+                                        id="telefono"
+                                        name="telefono"
+                                        class="form-control"
+                                        value="<%= escaparHtml(telefono) %>"
+                                        maxlength="30"
+                                        autocomplete="off">
+
+                            </div>
+
+                            <div class="col-12 col-md-6 mb-3">
+
+                                <label
+                                        for="correo"
+                                        class="form-label fw-semibold">
+
+                                    Correo electrónico
+
+                                </label>
+
+                                <input
+                                        type="email"
+                                        id="correo"
+                                        name="correo"
+                                        class="form-control"
+                                        value="<%= escaparHtml(correo) %>"
+                                        maxlength="150"
+                                        autocomplete="off">
+
+                            </div>
+
+                        </div>
+
+                        <div class="mb-4">
+
+                            <label
+                                    for="direccion"
+                                    class="form-label fw-semibold">
+
+                                Dirección
+
+                            </label>
+
+                            <input
+                                    type="text"
+                                    id="direccion"
+                                    name="direccion"
+                                    class="form-control"
+                                    value="<%= escaparHtml(direccion) %>"
+                                    maxlength="255"
+                                    autocomplete="off">
+
+                        </div>
+
+                        <h3 class="h6 formulario-seccion">
+                            Datos profesionales
+                        </h3>
+
+                        <div class="row">
+
+                            <div class="col-12 col-md-6 mb-3">
+
+                                <label
+                                        for="matriculaProfesional"
+                                        class="form-label fw-semibold">
+
+                                    Matrícula profesional
+
+                                </label>
+
+                                <input
+                                        type="text"
+                                        id="matriculaProfesional"
+                                        name="matriculaProfesional"
+                                        class="form-control"
+                                        value="<%= escaparHtml(matriculaProfesional) %>"
+                                        maxlength="50"
+                                        required
+                                        autocomplete="off">
+
+                            </div>
+
+                            <div class="col-12 col-md-6 mb-3">
+
+                                <label
+                                        for="fechaIngreso"
+                                        class="form-label fw-semibold">
+
+                                    Fecha de ingreso
+
+                                </label>
+
+                                <input
+                                        type="date"
+                                        id="fechaIngreso"
+                                        name="fechaIngreso"
+                                        class="form-control"
+                                        value="<%= escaparHtml(fechaIngreso) %>">
+
+                            </div>
+
+                        </div>
+
+                        <div class="mb-4">
+
+                            <label
+                                    for="biografia"
+                                    class="form-label fw-semibold">
+
+                                Biografía profesional
+
+                            </label>
+
+                            <textarea
+                                    id="biografia"
+                                    name="biografia"
+                                    class="form-control"
+                                    rows="4"
+                                    maxlength="1000"
+                                    placeholder="Experiencia, formación o información profesional del médico"><%= escaparHtml(biografia) %></textarea>
+
+                            <div class="form-text">
+                                Campo opcional. Máximo 1000 caracteres.
+                            </div>
+
+                        </div>
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary boton-principal w-100">
+
+                            Registrar médico
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-12 col-xl-7">
+
+            <div class="card tarjeta-contenido shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <div class="d-flex flex-column
+                                flex-md-row
+                                justify-content-between
+                                align-items-md-center
+                                gap-2 mb-4">
+
+                        <div>
+
+                            <h2 class="h5 mb-1">
+                                Médicos registrados
+                            </h2>
+
+                            <p class="text-secondary mb-0">
+                                Listado general de profesionales
+                            </p>
+
+                        </div>
+
+                        <span class="badge contador-medicos">
+
+                            Total: <%= medicos.size() %>
+
+                        </span>
+
+                    </div>
+
+                    <% if (medicos.isEmpty()) { %>
+
+                    <div class="text-center py-5">
+
+                        <h3 class="h5">
+                            Todavía no existen médicos
+                        </h3>
+
+                        <p class="text-secondary mb-0">
+
+                            Utilizá el formulario para registrar
+                            el primer profesional médico.
+
+                        </p>
+
+                    </div>
+
+                    <% } else { %>
+
+                    <div class="table-responsive">
+
+                        <table
+                                class="table table-hover
+                                       align-middle
+                                       tabla-medicos">
+
+                            <thead>
+
+                            <tr>
+
+                                <th scope="col">
+                                    ID
+                                </th>
+
+                                <th scope="col">
+                                    Médico
+                                </th>
+
+                                <th scope="col">
+                                    Cédula
+                                </th>
+
+                                <th scope="col">
+                                    Matrícula
+                                </th>
+
+                                <th scope="col">
+                                    Contacto
+                                </th>
+
+                                <th scope="col">
+                                    Ingreso
+                                </th>
+
+                                <th scope="col">
+                                    Estado
+                                </th>
+
+                            </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                            <% for (
+                                    Medico medico
+                                    : medicos
+                            ) { %>
+
+                            <tr>
+
+                                <td>
+
+                                    <%= medico.getIdMedico() %>
+
+                                </td>
+
+                                <td>
+
+                                    <strong>
+
+                                        <%= escaparHtml(
+                                                medico.getNombres()
+                                        ) %>
+
+                                        <%= escaparHtml(
+                                                medico.getApellidos()
+                                        ) %>
+
+                                    </strong>
+
+                                </td>
+
+                                <td>
+
+                                    <%= escaparHtml(
+                                            medico.getCedula()
+                                    ) %>
+
+                                </td>
+
+                                <td>
+
+                                    <%= escaparHtml(
+                                            medico.getMatriculaProfesional()
+                                    ) %>
+
+                                </td>
+
+                                <td>
+
+                                    <% if (
+                                            medico.getCorreo() != null
+                                                    && !medico.getCorreo().isBlank()
+                                    ) { %>
+
+                                    <div>
+
+                                        <%= escaparHtml(
+                                                medico.getCorreo()
+                                        ) %>
+
+                                    </div>
+
+                                    <% } %>
+
+                                    <% if (
+                                            medico.getTelefono() != null
+                                                    && !medico.getTelefono().isBlank()
+                                    ) { %>
+
+                                    <div class="dato-secundario">
+
+                                        <%= escaparHtml(
+                                                medico.getTelefono()
+                                        ) %>
+
+                                    </div>
+
+                                    <% } %>
+
+                                    <% if (
+                                            (medico.getCorreo() == null
+                                                    || medico.getCorreo().isBlank())
+                                                    &&
+                                                    (medico.getTelefono() == null
+                                                            || medico.getTelefono().isBlank())
+                                    ) { %>
+
+                                    <span class="text-secondary">
+                                        Sin datos
+                                    </span>
+
+                                    <% } %>
+
+                                </td>
+
+                                <td>
+
+                                    <% if (
+                                            medico.getFechaIngreso() == null
+                                    ) { %>
+
+                                    <span class="text-secondary">
+                                        Sin fecha
+                                    </span>
+
+                                    <% } else { %>
+
+                                    <%= medico.getFechaIngreso() %>
+
+                                    <% } %>
+
+                                </td>
+
+                                <td>
+
+                                    <% if (
+                                            medico.getEstado() == null
+                                    ) { %>
+
+                                    <span class="badge estado-inactivo">
+                                        Sin estado
+                                    </span>
+
+                                    <% } else if (
+                                            "ACTIVO".equals(
+                                                    medico.getEstado().name()
+                                            )
+                                    ) { %>
+
+                                    <span class="badge estado-activo">
+                                        Activo
+                                    </span>
+
+                                    <% } else if (
+                                            "LICENCIA".equals(
+                                                    medico.getEstado().name()
+                                            )
+                                    ) { %>
+
+                                    <span class="badge estado-licencia">
+                                        Licencia
+                                    </span>
+
+                                    <% } else { %>
+
+                                    <span class="badge estado-inactivo">
+                                        Inactivo
+                                    </span>
+
+                                    <% } %>
+
+                                </td>
+
+                            </tr>
+
+                            <% } %>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <% } %>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+<script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+
+</body>
+</html>
