@@ -7,13 +7,18 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import py.fpune.soracare.dto.AsignacionMedicoEspecialidadDTO;
 import py.fpune.soracare.dto.RegistroMedicoDTO;
+import py.fpune.soracare.mvc.model.Especialidad;
+import py.fpune.soracare.mvc.model.Medico;
+import py.fpune.soracare.mvc.model.MedicoEspecialidad;
 import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet("/admin/medicos")
 public class MedicosServlet extends HttpServlet {
@@ -346,14 +351,21 @@ public class MedicosServlet extends HttpServlet {
             HttpServletResponse response
     ) throws ServletException, IOException {
 
-        cargarMedicos(
-                request,
-                response
-        );
+        List<Medico> medicos =
+                cargarMedicos(
+                        request,
+                        response
+                );
 
         cargarEspecialidadesActivas(
                 request,
                 response
+        );
+
+        cargarEspecialidadesAsignadas(
+                request,
+                response,
+                medicos
         );
 
         request.getRequestDispatcher(
@@ -364,16 +376,21 @@ public class MedicosServlet extends HttpServlet {
         );
     }
 
-    private void cargarMedicos(
+    private List<Medico> cargarMedicos(
             HttpServletRequest request,
             HttpServletResponse response
     ) {
 
         try {
+            List<Medico> medicos =
+                    medicoService.listarTodos();
+
             request.setAttribute(
                     "medicos",
-                    medicoService.listarTodos()
+                    medicos
             );
+
+            return medicos;
 
         } catch (SQLException error) {
 
@@ -403,6 +420,8 @@ public class MedicosServlet extends HttpServlet {
                     HttpServletResponse
                             .SC_INTERNAL_SERVER_ERROR
             );
+
+            return List.of();
         }
     }
 
@@ -439,6 +458,109 @@ public class MedicosServlet extends HttpServlet {
             request.setAttribute(
                     "especialidadesActivas",
                     List.of()
+            );
+
+            response.setStatus(
+                    HttpServletResponse
+                            .SC_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    private void cargarEspecialidadesAsignadas(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            List<Medico> medicos
+    ) {
+
+        Map<Long, List<MedicoEspecialidad>>
+                especialidadesPorMedico =
+                new LinkedHashMap<>();
+
+        Map<Integer, Especialidad>
+                especialidadesPorId =
+                new LinkedHashMap<>();
+
+        try {
+            List<Especialidad> todasEspecialidades =
+                    especialidadService.listarTodas();
+
+            for (
+                    Especialidad especialidad
+                    : todasEspecialidades
+            ) {
+
+                if (especialidad.getIdEspecialidad()
+                        != null) {
+
+                    especialidadesPorId.put(
+                            especialidad
+                                    .getIdEspecialidad(),
+                            especialidad
+                    );
+                }
+            }
+
+            for (
+                    Medico medico
+                    : medicos
+            ) {
+
+                if (medico.getIdMedico()
+                        == null) {
+
+                    continue;
+                }
+
+                List<MedicoEspecialidad> relaciones =
+                        medicoEspecialidadService
+                                .listarActivasPorMedico(
+                                        medico.getIdMedico()
+                                );
+
+                especialidadesPorMedico.put(
+                        medico.getIdMedico(),
+                        relaciones
+                );
+            }
+
+            request.setAttribute(
+                    "especialidadesPorMedico",
+                    especialidadesPorMedico
+            );
+
+            request.setAttribute(
+                    "especialidadesPorId",
+                    especialidadesPorId
+            );
+
+        } catch (SQLException error) {
+
+            log(
+                    "Error al cargar las especialidades "
+                            + "asignadas a los médicos.",
+                    error
+            );
+
+            if (request.getAttribute(
+                    "error"
+            ) == null) {
+
+                request.setAttribute(
+                        "error",
+                        "No fue posible cargar "
+                                + "las especialidades asignadas."
+                );
+            }
+
+            request.setAttribute(
+                    "especialidadesPorMedico",
+                    Map.of()
+            );
+
+            request.setAttribute(
+                    "especialidadesPorId",
+                    Map.of()
             );
 
             response.setStatus(

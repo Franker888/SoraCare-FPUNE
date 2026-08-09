@@ -4,7 +4,9 @@
 
 <%@ page import="py.fpune.soracare.mvc.model.Medico" %>
 <%@ page import="py.fpune.soracare.mvc.model.Especialidad" %>
+<%@ page import="py.fpune.soracare.mvc.model.MedicoEspecialidad" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
 
 <%!
     private String escaparHtml(String texto) {
@@ -50,6 +52,40 @@
     } else {
         especialidadesActivas =
                 List.of();
+    }
+
+    Object atributoEspecialidadesPorMedico =
+            request.getAttribute(
+                    "especialidadesPorMedico"
+            );
+
+    Map<Long, List<MedicoEspecialidad>>
+            especialidadesPorMedico;
+
+    if (atributoEspecialidadesPorMedico instanceof Map<?, ?>) {
+        especialidadesPorMedico =
+                (Map<Long, List<MedicoEspecialidad>>)
+                        atributoEspecialidadesPorMedico;
+    } else {
+        especialidadesPorMedico =
+                Map.of();
+    }
+
+    Object atributoEspecialidadesPorId =
+            request.getAttribute(
+                    "especialidadesPorId"
+            );
+
+    Map<Integer, Especialidad>
+            especialidadesPorId;
+
+    if (atributoEspecialidadesPorId instanceof Map<?, ?>) {
+        especialidadesPorId =
+                (Map<Integer, Especialidad>)
+                        atributoEspecialidadesPorId;
+    } else {
+        especialidadesPorId =
+                Map.of();
     }
 
     String mensajeExito =
@@ -313,6 +349,16 @@
             color: #475569;
         }
 
+        .especialidad-principal {
+            background-color: #0f766e;
+            color: #ffffff;
+        }
+
+        .especialidad-secundaria {
+            background-color: #e0f2fe;
+            color: #075985;
+        }
+
         .boton-cerrar-sesion {
             min-width: 120px;
         }
@@ -343,6 +389,27 @@
             justify-content: center;
             font-size: 1.4rem;
             font-weight: 700;
+        }
+
+        .contenedor-especialidades {
+            min-width: 190px;
+        }
+
+        .badge-especialidad {
+            display: inline-block;
+            margin-right: 0.25rem;
+            margin-bottom: 0.35rem;
+            padding: 0.45rem 0.6rem;
+            border-radius: 0.6rem;
+            font-weight: 600;
+        }
+
+        .fecha-especialidad {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 400;
+            margin-top: 0.15rem;
+            opacity: 0.85;
         }
 
     </style>
@@ -499,7 +566,9 @@
         <strong>No se pudo completar la operación.</strong>
 
         <div class="mt-1">
+
             <%= escaparHtml(error) %>
+
         </div>
 
     </div>
@@ -1083,7 +1152,7 @@
                             </h2>
 
                             <p class="text-secondary mb-0">
-                                Listado general de profesionales
+                                Profesionales y especialidades activas
                             </p>
 
                         </div>
@@ -1135,19 +1204,15 @@
                                 </th>
 
                                 <th scope="col">
-                                    Cédula
-                                </th>
-
-                                <th scope="col">
                                     Matrícula
                                 </th>
 
                                 <th scope="col">
-                                    Contacto
+                                    Especialidades
                                 </th>
 
                                 <th scope="col">
-                                    Ingreso
+                                    Contacto
                                 </th>
 
                                 <th scope="col">
@@ -1163,7 +1228,16 @@
                             <% for (
                                     Medico medico
                                     : medicos
-                            ) { %>
+                            ) {
+
+                                List<MedicoEspecialidad>
+                                        relacionesMedico =
+                                        especialidadesPorMedico
+                                                .getOrDefault(
+                                                        medico.getIdMedico(),
+                                                        List.of()
+                                                );
+                            %>
 
                             <tr>
 
@@ -1185,13 +1259,28 @@
 
                                     </strong>
 
-                                </td>
+                                    <div class="dato-secundario">
 
-                                <td>
+                                        CI:
+                                        <%= escaparHtml(
+                                                medico.getCedula()
+                                        ) %>
 
-                                    <%= escaparHtml(
-                                            medico.getCedula()
-                                    ) %>
+                                    </div>
+
+                                    <% if (
+                                            medico.getFechaIngreso()
+                                                    != null
+                                    ) { %>
+
+                                    <div class="dato-secundario">
+
+                                        Ingreso:
+                                        <%= medico.getFechaIngreso() %>
+
+                                    </div>
+
+                                    <% } %>
 
                                 </td>
 
@@ -1200,6 +1289,86 @@
                                     <%= escaparHtml(
                                             medico.getMatriculaProfesional()
                                     ) %>
+
+                                </td>
+
+                                <td class="contenedor-especialidades">
+
+                                    <% if (
+                                            relacionesMedico.isEmpty()
+                                    ) { %>
+
+                                    <span class="text-secondary">
+                                        Sin especialidades asignadas
+                                    </span>
+
+                                    <% } else {
+
+                                        for (
+                                                MedicoEspecialidad relacion
+                                                : relacionesMedico
+                                        ) {
+
+                                            Especialidad especialidad =
+                                                    especialidadesPorId.get(
+                                                            relacion
+                                                                    .getIdEspecialidad()
+                                                    );
+
+                                            String nombreEspecialidad =
+                                                    especialidad != null
+                                                            ? especialidad
+                                                            .getNombre()
+                                                            : "Especialidad #"
+                                                            + relacion
+                                                            .getIdEspecialidad();
+                                    %>
+
+                                    <% if (relacion.isPrincipal()) { %>
+
+                                    <span
+                                            class="badge-especialidad
+                                                   especialidad-principal">
+
+                                        <%= escaparHtml(
+                                                nombreEspecialidad
+                                        ) %>
+
+                                        · Principal
+
+                                        <span class="fecha-especialidad">
+
+                                            Desde:
+                                            <%= relacion.getFechaDesde() %>
+
+                                        </span>
+
+                                    </span>
+
+                                    <% } else { %>
+
+                                    <span
+                                            class="badge-especialidad
+                                                   especialidad-secundaria">
+
+                                        <%= escaparHtml(
+                                                nombreEspecialidad
+                                        ) %>
+
+                                        <span class="fecha-especialidad">
+
+                                            Desde:
+                                            <%= relacion.getFechaDesde() %>
+
+                                        </span>
+
+                                    </span>
+
+                                    <% } %>
+
+                                    <% } %>
+
+                                    <% } %>
 
                                 </td>
 
@@ -1254,24 +1423,6 @@
                                     <span class="text-secondary">
                                         Sin datos
                                     </span>
-
-                                    <% } %>
-
-                                </td>
-
-                                <td>
-
-                                    <% if (
-                                            medico.getFechaIngreso() == null
-                                    ) { %>
-
-                                    <span class="text-secondary">
-                                        Sin fecha
-                                    </span>
-
-                                    <% } else { %>
-
-                                    <%= medico.getFechaIngreso() %>
 
                                     <% } %>
 
