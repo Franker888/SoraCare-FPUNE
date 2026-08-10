@@ -196,8 +196,9 @@
                     <p class="mb-0">
 
                         Desde esta sección se gestionarán
-                        especialidades, sedes, consultorios,
-                        usuarios, configuraciones, reportes
+                        especialidades, médicos, sedes,
+                        consultorios, usuarios,
+                        configuraciones, reportes
                         y registros de auditoría del sistema.
 
                     </p>
@@ -299,6 +300,42 @@
                             class="btn btn-outline-success">
 
                         Administrar especialidades
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-4">
+
+            <div class="card tarjeta-opcion shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <div class="icono-modulo mb-3">
+                        M
+                    </div>
+
+                    <h3 class="h5">
+                        Médicos
+                    </h3>
+
+                    <p class="text-secondary">
+
+                        Registrar profesionales médicos,
+                        consultar sus datos y administrar
+                        las especialidades que tienen asignadas.
+
+                    </p>
+
+                    <a
+                            href="${pageContext.request.contextPath}/admin/medicos"
+                            class="btn btn-outline-success">
+
+                        Administrar médicos
 
                     </a>
 
