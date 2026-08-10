@@ -316,6 +316,42 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
+                        H
+                    </div>
+
+                    <h3 class="h5">
+                        Horarios médicos
+                    </h3>
+
+                    <p class="text-secondary">
+
+                        Definir la agenda semanal de cada médico,
+                        la duración de sus turnos y el consultorio
+                        donde realizará la atención.
+
+                    </p>
+
+                    <a
+                            href="${pageContext.request.contextPath}/admin/horarios"
+                            class="btn btn-outline-success">
+
+                        Administrar horarios
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-4">
+
+            <div class="card tarjeta-opcion shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <div class="icono-modulo mb-3">
                         M
                     </div>
 
