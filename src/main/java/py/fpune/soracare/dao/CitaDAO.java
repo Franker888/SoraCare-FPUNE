@@ -117,6 +117,24 @@ public class CitaDAO {
         return citas;
     }
 
+    public List<Cita> listarPorPaciente(long idPaciente, int limite) throws SQLException {
+        String sql = BASE_SELECT + """
+                WHERE c.id_paciente = ?
+                ORDER BY c.fecha_hora_inicio DESC, c.id_cita DESC
+                LIMIT ?
+                """;
+        List<Cita> citas = new ArrayList<>();
+        try (Connection conexion = ConexionBD.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setLong(1, idPaciente);
+            sentencia.setInt(2, limite);
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                while (resultado.next()) citas.add(mapear(resultado));
+            }
+        }
+        return citas;
+    }
+
     public boolean existeSuperposicion(
             Connection conexion,
             long idPaciente,

@@ -1,0 +1,213 @@
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
+<%@ page import="py.fpune.soracare.dto.SlotDisponibleDTO" %>
+<%@ page import="py.fpune.soracare.mvc.model.Cita" %>
+<%@ page import="py.fpune.soracare.mvc.model.Consultorio" %>
+<%@ page import="py.fpune.soracare.mvc.model.Especialidad" %>
+<%@ page import="py.fpune.soracare.mvc.model.Medico" %>
+<%@ page import="py.fpune.soracare.mvc.model.Paciente" %>
+<%@ page import="py.fpune.soracare.service.DisponibilidadService" %>
+<%@ page import="java.time.LocalDate" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
+<%!
+    private String h(String valor) {
+        if (valor == null) return "";
+        return valor.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
+    }
+%>
+<%
+    List<SlotDisponibleDTO> slots = request.getAttribute("slots") instanceof List<?>
+            ? (List<SlotDisponibleDTO>) request.getAttribute("slots") : List.of();
+    List<Cita> citas = request.getAttribute("citas") instanceof List<?>
+            ? (List<Cita>) request.getAttribute("citas") : List.of();
+    List<Medico> medicosLista = request.getAttribute("medicos") instanceof List<?>
+            ? (List<Medico>) request.getAttribute("medicos") : List.of();
+    List<Especialidad> especialidadesLista = request.getAttribute("especialidades") instanceof List<?>
+            ? (List<Especialidad>) request.getAttribute("especialidades") : List.of();
+    Map<Long, Medico> medicos = request.getAttribute("medicosPorId") instanceof Map<?, ?>
+            ? (Map<Long, Medico>) request.getAttribute("medicosPorId") : Map.of();
+    Map<Integer, Especialidad> especialidades = request.getAttribute("especialidadesPorId") instanceof Map<?, ?>
+            ? (Map<Integer, Especialidad>) request.getAttribute("especialidadesPorId") : Map.of();
+    Map<Long, Consultorio> consultorios = request.getAttribute("consultoriosPorId") instanceof Map<?, ?>
+            ? (Map<Long, Consultorio>) request.getAttribute("consultoriosPorId") : Map.of();
+    Paciente paciente = (Paciente) request.getAttribute("paciente");
+    LocalDate fecha = (LocalDate) request.getAttribute("fecha");
+    Long idMedico = (Long) request.getAttribute("idMedicoSeleccionado");
+    Integer idEspecialidad = (Integer) request.getAttribute("idEspecialidadSeleccionada");
+    DateTimeFormatter formatoFechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+%>
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Mis citas | SoraCare-FPUNE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f4f8f6; }
+        .barra { background: #0f766e; }
+        .tarjeta { border: 0; border-radius: 1rem; }
+        .slot { border-left: .3rem solid #15956e; }
+    </style>
+</head>
+<body>
+<nav class="navbar barra shadow-sm">
+    <div class="container py-2">
+        <a class="navbar-brand fw-bold text-white" href="${pageContext.request.contextPath}/dashboard">SoraCare-FPUNE</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-light btn-sm" href="${pageContext.request.contextPath}/dashboard">Panel</a>
+            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
+                <button class="btn btn-light btn-sm">Cerrar sesión</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<main class="container py-4 py-md-5">
+    <div class="mb-4">
+        <p class="text-success fw-semibold mb-1">Portal del paciente</p>
+        <h1 class="h2 mb-1">Mis citas</h1>
+        <p class="text-secondary mb-0">
+            <% if (paciente != null) { %>Hola, <%= h(paciente.getNombres()) %>. <% } %>
+            Elegí especialidad, médico, fecha y turno para reservar por tu cuenta.
+        </p>
+    </div>
+
+    <% if (request.getAttribute("mensajeExito") != null) { %>
+    <div class="alert alert-success"><%= h((String) request.getAttribute("mensajeExito")) %></div>
+    <% } %>
+    <% if (request.getAttribute("error") != null) { %>
+    <div class="alert alert-danger"><%= h((String) request.getAttribute("error")) %></div>
+    <% } %>
+
+    <section class="card tarjeta shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3">1. Buscar un turno</h2>
+            <form method="get" action="${pageContext.request.contextPath}/mis-citas" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="idEspecialidad" class="form-label">Especialidad</label>
+                    <select id="idEspecialidad" name="idEspecialidad" class="form-select">
+                        <option value="">Todas</option>
+                        <% for (Especialidad especialidad : especialidadesLista) { %>
+                        <option value="<%= especialidad.getIdEspecialidad() %>" <%= especialidad.getIdEspecialidad().equals(idEspecialidad) ? "selected" : "" %>><%= h(especialidad.getNombre()) %></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="idMedico" class="form-label">Médico</label>
+                    <select id="idMedico" name="idMedico" class="form-select">
+                        <option value="">Todos</option>
+                        <% for (Medico medico : medicosLista) { %>
+                        <option value="<%= medico.getIdMedico() %>" <%= medico.getIdMedico().equals(idMedico) ? "selected" : "" %>><%= h(medico.getNombres() + " " + medico.getApellidos()) %></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="fecha" class="form-label">Fecha</label>
+                    <input id="fecha" name="fecha" type="date" class="form-control" required value="<%= fecha %>">
+                </div>
+                <div class="col-md-2 d-grid"><button class="btn btn-success">Buscar</button></div>
+            </form>
+        </div>
+    </section>
+
+    <section class="card tarjeta shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h2 class="h5 mb-0">2. Seleccionar y solicitar</h2>
+                <span class="badge text-bg-success"><%= slots.size() %> turnos disponibles</span>
+            </div>
+            <% if (slots.isEmpty()) { %>
+            <div class="alert alert-light border mb-0">No hay turnos libres con estos filtros. Probá otra fecha, médico o especialidad.</div>
+            <% } else { %>
+            <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="row g-3">
+                <input type="hidden" name="fecha" value="<%= fecha %>">
+                <input type="hidden" name="idMedico" value="<%= idMedico == null ? "" : idMedico %>">
+                <input type="hidden" name="idEspecialidad" value="<%= idEspecialidad == null ? "" : idEspecialidad %>">
+                <div class="col-12">
+                    <label for="slot" class="form-label">Turno</label>
+                    <select class="form-select" id="slot" name="slot" required>
+                        <option value="">Seleccionar turno disponible</option>
+                        <% for (SlotDisponibleDTO slot : slots) {
+                            Medico medico = medicos.get(slot.idMedico());
+                            Especialidad especialidad = especialidades.get(slot.idEspecialidad());
+                            Consultorio consultorio = consultorios.get(slot.idConsultorio());
+                            String valor = (slot.idHorario() == null ? 0 : slot.idHorario()) + "|"
+                                    + (slot.idExcepcion() == null ? 0 : slot.idExcepcion()) + "|"
+                                    + slot.idMedico() + "|" + slot.idEspecialidad() + "|"
+                                    + slot.idConsultorio() + "|" + slot.fecha() + "|" + slot.horaInicio();
+                        %>
+                        <option value="<%= valor %>"><%= slot.horaInicio() %>–<%= slot.horaFin() %> · <%= medico == null ? "Médico" : h(medico.getNombres() + " " + medico.getApellidos()) %> · <%= especialidad == null ? "Especialidad" : h(especialidad.getNombre()) %> · <%= consultorio == null ? "Consultorio" : h(consultorio.getNombre()) %></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label for="motivoConsulta" class="form-label">Motivo de consulta</label>
+                    <input id="motivoConsulta" name="motivoConsulta" class="form-control" maxlength="500" required placeholder="Ej.: control cardiológico">
+                </div>
+                <div class="col-md-5">
+                    <label for="observaciones" class="form-label">Observaciones (opcional)</label>
+                    <input id="observaciones" name="observaciones" class="form-control" maxlength="1000">
+                </div>
+                <div class="col-12 d-flex flex-wrap align-items-center gap-3">
+                    <button class="btn btn-success">Solicitar mi cita</button>
+                    <small class="text-secondary">La reserva quedará en estado “Solicitada”. El método de pago se incorporará en la etapa 5.</small>
+                </div>
+            </form>
+            <% } %>
+        </div>
+    </section>
+
+    <section>
+        <h2 class="h4 mb-3">Historial de mis citas</h2>
+        <% if (citas.isEmpty()) { %>
+        <div class="alert alert-light border">Todavía no tenés citas registradas.</div>
+        <% } else { %>
+        <div class="row g-3">
+            <% for (Cita cita : citas) {
+                Medico medico = medicos.get(cita.getIdMedico());
+                Especialidad especialidad = especialidades.get(cita.getIdEspecialidad());
+                Consultorio consultorio = consultorios.get(cita.getIdConsultorio());
+                boolean cancelable = !"CANCELADA".equals(cita.getCodigoEstado()) && !"ATENDIDA".equals(cita.getCodigoEstado());
+            %>
+            <div class="col-12">
+                <article class="card tarjeta slot shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-lg-7">
+                                <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                                    <strong><%= cita.getFechaHoraInicio().atZoneSameInstant(DisponibilidadService.ZONA_HORARIA).format(formatoFechaHora) %></strong>
+                                    <span class="badge <%= "CANCELADA".equals(cita.getCodigoEstado()) ? "text-bg-secondary" : "text-bg-success" %>"><%= h(cita.getNombreEstado()) %></span>
+                                </div>
+                                <div><%= medico == null ? "Médico" : h(medico.getNombres() + " " + medico.getApellidos()) %></div>
+                                <div class="text-secondary"><%= especialidad == null ? "Especialidad" : h(especialidad.getNombre()) %> · <%= consultorio == null ? "Consultorio" : h(consultorio.getNombre()) %></div>
+                                <small class="text-secondary">Motivo: <%= h(cita.getMotivoConsulta()) %></small>
+                            </div>
+                            <div class="col-lg-5">
+                                <% if (cancelable) { %>
+                                <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="d-flex gap-2">
+                                    <input type="hidden" name="accion" value="cancelar">
+                                    <input type="hidden" name="fecha" value="<%= fecha %>">
+                                    <input type="hidden" name="idCita" value="<%= cita.getIdCita() %>">
+                                    <input name="motivoCancelacion" class="form-control form-control-sm" maxlength="500" required placeholder="Motivo de cancelación">
+                                    <button class="btn btn-outline-danger btn-sm">Cancelar</button>
+                                </form>
+                                <% } else if (cita.getMotivoCancelacion() != null) { %>
+                                <small class="text-secondary">Cancelada: <%= h(cita.getMotivoCancelacion()) %></small>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <% } %>
+        </div>
+        <% } %>
+    </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

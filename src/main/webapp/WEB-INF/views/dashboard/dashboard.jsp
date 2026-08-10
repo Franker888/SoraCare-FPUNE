@@ -55,6 +55,11 @@
                     || usuarioAutenticado.tieneRol(
                     "RECEPCIONISTA"
             );
+
+    boolean esPaciente =
+            usuarioAutenticado.tieneRol(
+                    "PACIENTE"
+            );
 %>
 
 <!DOCTYPE html>
@@ -278,6 +283,8 @@
 
         <div class="row g-4">
 
+            <% if (puedeGestionarAgenda) { %>
+
             <div class="col-12 col-md-6 col-xl-4">
 
                 <div class="card tarjeta-modulo shadow-sm h-100">
@@ -307,6 +314,8 @@
 
             </div>
 
+            <% } %>
+
             <div class="col-12 col-md-6 col-xl-4">
 
                 <div class="card tarjeta-modulo shadow-sm h-100">
@@ -332,6 +341,16 @@
 
                         </a>
 
+                        <% } else if (esPaciente) { %>
+
+                        <a
+                                href="${pageContext.request.contextPath}/mis-citas"
+                                class="btn btn-outline-success">
+
+                            Ir a mis citas
+
+                        </a>
+
                         <% } else { %>
 
                         <a
@@ -350,6 +369,8 @@
 
             </div>
 
+            <% if (esAdministrador) { %>
+
             <div class="col-12 col-md-6 col-xl-4">
 
                 <div class="card tarjeta-modulo shadow-sm h-100">
@@ -365,8 +386,6 @@
                             reportes y configuración.
                         </p>
 
-                        <% if (esAdministrador) { %>
-
                         <a
                                 href="${pageContext.request.contextPath}/admin/inicio"
                                 class="btn btn-outline-success">
@@ -375,24 +394,13 @@
 
                         </a>
 
-                        <% } else { %>
-
-                        <button
-                                type="button"
-                                class="btn btn-outline-secondary"
-                                disabled>
-
-                            Acceso restringido
-
-                        </button>
-
-                        <% } %>
-
                     </div>
 
                 </div>
 
             </div>
+
+            <% } %>
 
         </div>
 

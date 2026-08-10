@@ -115,7 +115,13 @@
         <% } %>
     </div>
     <% } %>
-    <div class="alert alert-success mt-4 mb-0">Para reservar, comunicate con recepción o ingresá al sistema con una cuenta autorizada.</div>
+    <div class="alert alert-success mt-4 mb-0 d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <span>¿Encontraste un turno? Iniciá sesión como paciente para reservarlo vos mismo.</span>
+        <span class="d-flex gap-2">
+            <a class="btn btn-success btn-sm" href="${pageContext.request.contextPath}/login">Iniciar sesión</a>
+            <a class="btn btn-outline-success btn-sm" href="${pageContext.request.contextPath}/registro">Crear cuenta</a>
+        </span>
+    </div>
 </main>
 </body>
 </html>

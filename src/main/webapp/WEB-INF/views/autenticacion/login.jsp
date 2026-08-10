@@ -24,6 +24,9 @@
     String identificador =
             (String) request.getAttribute("identificador");
 
+    boolean registroExitoso =
+            "exitoso".equals(request.getParameter("registro"));
+
     if (identificador == null) {
         identificador = "";
     }
@@ -131,6 +134,14 @@
                         Iniciar sesión
                     </h2>
 
+                    <% if (registroExitoso) { %>
+
+                    <div class="alert alert-success" role="alert">
+                        Tu cuenta de paciente fue creada. Ya podés iniciar sesión.
+                    </div>
+
+                    <% } %>
+
                     <% if (mensajeError != null
                             && !mensajeError.isBlank()) { %>
 
@@ -207,6 +218,14 @@
                     </form>
 
                     <div class="text-center mt-4">
+
+                        <p class="mb-2">
+                            ¿Todavía no tenés cuenta?
+                            <a href="${pageContext.request.contextPath}/registro"
+                               class="text-decoration-none fw-semibold">
+                                Registrarme como paciente
+                            </a>
+                        </p>
 
                         <a
                                 href="${pageContext.request.contextPath}/"
