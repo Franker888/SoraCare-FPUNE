@@ -128,9 +128,12 @@
             min-width: 120px;
         }
     </style>
+
+    <link rel="stylesheet"
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
 </head>
 
-<body>
+<body class="app-shell app-admin">
 
 <nav class="navbar barra-superior shadow-sm">
 
@@ -140,7 +143,7 @@
                 class="navbar-brand marca-soracare"
                 href="${pageContext.request.contextPath}/dashboard">
 
-            SoraCare-FPUNE
+            SoraCare
 
         </a>
 
@@ -281,7 +284,7 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
-                        E
+                        <i class="bi bi-heart-pulse"></i>
                     </div>
 
                     <h3 class="h5">
@@ -316,7 +319,7 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
-                        H
+                        <i class="bi bi-clock-history"></i>
                     </div>
 
                     <h3 class="h5">
@@ -352,7 +355,7 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
-                        M
+                        <i class="bi bi-person-badge"></i>
                     </div>
 
                     <h3 class="h5">
@@ -388,7 +391,7 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
-                        S
+                        <i class="bi bi-hospital"></i>
                     </div>
 
                     <h3 class="h5">
@@ -424,7 +427,7 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
-                        C
+                        <i class="bi bi-door-open"></i>
                     </div>
 
                     <h3 class="h5">
@@ -460,7 +463,7 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
-                        U
+                        <i class="bi bi-people"></i>
                     </div>
 
                     <h3 class="h5">
@@ -496,7 +499,7 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
-                        R
+                        <i class="bi bi-shield-lock"></i>
                     </div>
 
                     <h3 class="h5">
@@ -532,7 +535,7 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
-                        A
+                        <i class="bi bi-activity"></i>
                     </div>
 
                     <h3 class="h5">
@@ -568,7 +571,7 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
-                        C
+                        <i class="bi bi-gear"></i>
                     </div>
 
                     <h3 class="h5">
@@ -604,7 +607,7 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
-                        I
+                        <i class="bi bi-bar-chart"></i>
                     </div>
 
                     <h3 class="h5">
@@ -640,7 +643,7 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
-                        S
+                        <i class="bi bi-heart-pulse-fill"></i>
                     </div>
 
                     <h3 class="h5">

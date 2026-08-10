@@ -29,8 +29,9 @@
         .qr-demo span { width: 13px; height: 13px; background: #d5e2dc; }
         .qr-demo span:nth-child(2n), .qr-demo span:nth-child(5n), .qr-demo span:nth-child(11n) { background: #123d34; }
     </style>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
 </head>
-<body>
+<body class="app-shell app-patient">
 <nav class="navbar barra shadow-sm"><div class="container py-2">
     <a class="navbar-brand fw-bold text-white" href="${pageContext.request.contextPath}/mis-citas">SoraCare-FPUNE</a>
     <a class="btn btn-outline-light btn-sm" href="${pageContext.request.contextPath}/mis-citas">Volver a mis citas</a>

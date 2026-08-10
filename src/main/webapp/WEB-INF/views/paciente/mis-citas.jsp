@@ -58,8 +58,9 @@
         .tarjeta { border: 0; border-radius: 1rem; }
         .slot { border-left: .3rem solid #15956e; }
     </style>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
 </head>
-<body>
+<body class="app-shell app-patient">
 <nav class="navbar barra shadow-sm">
     <div class="container py-2">
         <a class="navbar-brand fw-bold text-white" href="${pageContext.request.contextPath}/dashboard">SoraCare-FPUNE</a>

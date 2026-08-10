@@ -194,9 +194,12 @@
             border-color: #115e59;
         }
     </style>
+
+    <link rel="stylesheet"
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
 </head>
 
-<body>
+<body class="app-shell app-admin">
 
 <nav class="navbar barra-superior shadow-sm">
 

@@ -39,8 +39,10 @@
         .hero { background: linear-gradient(135deg, #0b6b4f, #15956e); color: white; }
         .slot { border-left: .3rem solid #15956e; }
     </style>
+    <link rel="stylesheet"
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
 </head>
-<body>
+<body class="app-public">
 <nav class="navbar bg-white border-bottom">
     <div class="container py-2">
         <a class="navbar-brand fw-bold text-success" href="${pageContext.request.contextPath}/">SoraCare-FPUNE</a>

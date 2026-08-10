@@ -50,204 +50,161 @@
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
             rel="stylesheet">
 
-    <style>
-        body {
-            min-height: 100vh;
-            background: linear-gradient(
-                    135deg,
-                    #0f766e,
-                    #0e7490
-            );
-        }
+    <link rel="icon"
+          type="image/png"
+          href="${pageContext.request.contextPath}/assets/home/img/logo/SoraCare1.png">
 
-        .contenedor-login {
-            min-height: 100vh;
-        }
-
-        .tarjeta-login {
-            width: 100%;
-            max-width: 440px;
-            border: none;
-            border-radius: 1.25rem;
-        }
-
-        .marca-soracare {
-            color: #0f766e;
-            font-weight: 700;
-        }
-
-        .subtitulo {
-            color: #64748b;
-        }
-
-        .form-control {
-            min-height: 48px;
-        }
-
-        .form-control:focus {
-            border-color: #0f766e;
-            box-shadow: 0 0 0 0.25rem
-            rgba(15, 118, 110, 0.20);
-        }
-
-        .boton-ingresar {
-            min-height: 48px;
-            background-color: #0f766e;
-            border-color: #0f766e;
-        }
-
-        .boton-ingresar:hover,
-        .boton-ingresar:focus {
-            background-color: #115e59;
-            border-color: #115e59;
-        }
-    </style>
+    <link rel="stylesheet"
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
 </head>
 
-<body>
+<body class="soracare-auth">
 
-<main class="container">
+<main class="auth-page">
 
-    <div class="row align-items-center
-                justify-content-center
-                contenedor-login">
+    <section class="auth-visual" aria-label="Presentación de SoraCare">
 
-        <div class="col-12 col-sm-10 col-md-7 col-lg-5">
+        <a class="auth-brand"
+           href="${pageContext.request.contextPath}/">
 
-            <div class="card tarjeta-login shadow-lg mx-auto">
+            <img src="${pageContext.request.contextPath}/assets/home/img/logo/SoraCare1.png"
+                 alt="Logo SoraCare">
 
-                <div class="card-body p-4 p-md-5">
+            <span>SoraCare-FPUNE</span>
 
-                    <div class="text-center mb-4">
+        </a>
 
-                        <h1 class="h3 marca-soracare mb-2">
-                            SoraCare-FPUNE
-                        </h1>
+        <div class="auth-visual-content">
 
-                        <p class="subtitulo mb-0">
-                            Sistema de gestión hospitalaria
-                        </p>
+            <span class="auth-kicker">
+                Centro médico integral
+            </span>
 
-                    </div>
+            <h2>
+                Tu atención médica, organizada en un solo lugar.
+            </h2>
 
-                    <h2 class="h5 text-center mb-4">
-                        Iniciar sesión
-                    </h2>
-
-                    <% if (registroExitoso) { %>
-
-                    <div class="alert alert-success" role="alert">
-                        Tu cuenta de paciente fue creada. Ya podés iniciar sesión.
-                    </div>
-
-                    <% } %>
-
-                    <% if (mensajeError != null
-                            && !mensajeError.isBlank()) { %>
-
-                    <div class="alert alert-danger"
-                         role="alert">
-
-                        <%= escaparHtml(mensajeError) %>
-
-                    </div>
-
-                    <% } %>
-
-                    <form
-                            method="post"
-                            action="${pageContext.request.contextPath}/login"
-                            autocomplete="on">
-
-                        <div class="mb-3">
-
-                            <label
-                                    for="identificador"
-                                    class="form-label">
-
-                                Usuario o correo electrónico
-
-                            </label>
-
-                            <input
-                                    type="text"
-                                    class="form-control"
-                                    id="identificador"
-                                    name="identificador"
-                                    value="<%= escaparHtml(identificador) %>"
-                                    maxlength="150"
-                                    autocomplete="username"
-                                    required
-                                    autofocus>
-
-                        </div>
-
-                        <div class="mb-4">
-
-                            <label
-                                    for="contrasena"
-                                    class="form-label">
-
-                                Contraseña
-
-                            </label>
-
-                            <input
-                                    type="password"
-                                    class="form-control"
-                                    id="contrasena"
-                                    name="contrasena"
-                                    maxlength="72"
-                                    autocomplete="current-password"
-                                    required>
-
-                        </div>
-
-                        <div class="d-grid">
-
-                            <button
-                                    type="submit"
-                                    class="btn btn-primary boton-ingresar">
-
-                                Ingresar
-
-                            </button>
-
-                        </div>
-
-                    </form>
-
-                    <div class="text-center mt-4">
-
-                        <p class="mb-2">
-                            ¿Todavía no tenés cuenta?
-                            <a href="${pageContext.request.contextPath}/registro"
-                               class="text-decoration-none fw-semibold">
-                                Registrarme como paciente
-                            </a>
-                        </p>
-
-                        <a
-                                href="${pageContext.request.contextPath}/"
-                                class="text-decoration-none">
-
-                            Volver a la página principal
-
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <p class="text-center text-white-50 small mt-3">
-                Acceso exclusivo para usuarios autorizados
+            <p>
+                Ingresá para administrar citas, consultar pagos y acceder
+                a las funciones habilitadas para tu perfil.
             </p>
 
         </div>
 
-    </div>
+    </section>
+
+    <section class="auth-panel">
+
+        <div class="auth-card">
+
+            <a class="auth-mobile-brand"
+               href="${pageContext.request.contextPath}/">
+
+                <img src="${pageContext.request.contextPath}/assets/home/img/logo/SoraCare1.png"
+                     alt="Logo SoraCare">
+
+                <span>SoraCare-FPUNE</span>
+
+            </a>
+
+            <span class="badge rounded-pill text-bg-primary mb-3">
+                Acceso seguro
+            </span>
+
+            <h1>Bienvenido de nuevo</h1>
+
+            <p class="auth-subtitle">
+                Iniciá sesión con tu usuario o correo electrónico
+                para continuar a tu panel.
+            </p>
+
+            <% if (registroExitoso) { %>
+
+            <div class="alert alert-success" role="alert">
+                Tu cuenta de paciente fue creada. Ya podés iniciar sesión.
+            </div>
+
+            <% } %>
+
+            <% if (mensajeError != null
+                    && !mensajeError.isBlank()) { %>
+
+            <div class="alert alert-danger" role="alert">
+                <%= escaparHtml(mensajeError) %>
+            </div>
+
+            <% } %>
+
+            <form method="post"
+                  action="${pageContext.request.contextPath}/login"
+                  autocomplete="on">
+
+                <div class="mb-3">
+
+                    <label for="identificador" class="form-label">
+                        Usuario o correo electrónico
+                    </label>
+
+                    <input type="text"
+                           class="form-control"
+                           id="identificador"
+                           name="identificador"
+                           value="<%= escaparHtml(identificador) %>"
+                           maxlength="150"
+                           autocomplete="username"
+                           placeholder="Ej.: nombre.usuario"
+                           required
+                           autofocus>
+
+                </div>
+
+                <div class="mb-4">
+
+                    <label for="contrasena" class="form-label">
+                        Contraseña
+                    </label>
+
+                    <input type="password"
+                           class="form-control"
+                           id="contrasena"
+                           name="contrasena"
+                           maxlength="72"
+                           autocomplete="current-password"
+                           placeholder="Ingresá tu contraseña"
+                           required>
+
+                </div>
+
+                <div class="d-grid">
+
+                    <button type="submit" class="btn btn-primary">
+                        Ingresar a mi panel
+                        <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+
+                </div>
+
+            </form>
+
+            <div class="auth-card-footer">
+
+                <p class="mb-2">
+                    ¿Todavía no tenés cuenta?
+                    <a href="${pageContext.request.contextPath}/registro">
+                        Crear cuenta de paciente
+                    </a>
+                </p>
+
+                <a href="${pageContext.request.contextPath}/">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Volver a la página principal
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
 
 </main>
 

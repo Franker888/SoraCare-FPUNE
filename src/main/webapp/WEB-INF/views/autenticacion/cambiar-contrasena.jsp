@@ -97,9 +97,11 @@
             font-size: 0.9rem;
         }
     </style>
+    <link rel="stylesheet"
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
 </head>
 
-<body>
+<body class="soracare-auth soracare-auth-simple">
 
 <main class="container">
 
@@ -115,6 +117,12 @@
                 <div class="card-body p-4 p-md-5">
 
                     <div class="text-center mb-4">
+
+                        <img src="${pageContext.request.contextPath}/assets/home/img/logo/SoraCare1.png"
+                             alt="Logo SoraCare"
+                             width="82"
+                             height="82"
+                             class="object-fit-contain mb-3">
 
                         <h1 class="h3 marca-soracare mb-2">
                             SoraCare-FPUNE

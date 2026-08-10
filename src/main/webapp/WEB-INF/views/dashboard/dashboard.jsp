@@ -60,6 +60,22 @@
             usuarioAutenticado.tieneRol(
                     "PACIENTE"
             );
+
+    String nombrePanel = esAdministrador
+            ? "Panel de administración"
+            : puedeGestionarAgenda
+                    ? "Panel de recepción"
+                    : esPaciente
+                            ? "Portal del paciente"
+                            : "Panel principal";
+
+    String descripcionPanel = esAdministrador
+            ? "Control general de la operación de SoraCare"
+            : puedeGestionarAgenda
+                    ? "Citas, pacientes y cobros de recepción"
+                    : esPaciente
+                            ? "Tus citas, pagos y servicios médicos"
+                            : "Accesos disponibles para tu cuenta";
 %>
 
 <!DOCTYPE html>
@@ -142,9 +158,12 @@
             min-width: 120px;
         }
     </style>
+
+    <link rel="stylesheet"
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
 </head>
 
-<body>
+<body class="app-shell app-dashboard">
 
 <nav class="navbar barra-superior shadow-sm">
 
@@ -154,15 +173,20 @@
                 class="navbar-brand marca-soracare"
                 href="${pageContext.request.contextPath}/dashboard">
 
-            SoraCare-FPUNE
+            SoraCare
 
         </a>
 
         <div class="d-flex align-items-center gap-3">
 
             <span class="navbar-text text-white d-none d-md-inline">
-                Sistema de gestión hospitalaria
+                <%= escaparHtml(nombrePanel) %>
             </span>
+
+            <a href="${pageContext.request.contextPath}/"
+               class="btn btn-outline-light btn-sm d-none d-sm-inline-flex">
+                Página principal
+            </a>
 
             <form
                     method="post"
@@ -221,7 +245,7 @@
                 <div class="flex-grow-1">
 
                     <p class="text-secondary mb-1">
-                        Bienvenido a SoraCare
+                        <%= escaparHtml(nombrePanel) %>
                     </p>
 
                     <h1 class="h3 mb-2">
@@ -272,11 +296,11 @@
         <div class="mb-3">
 
             <h2 class="h4 mb-1">
-                Panel principal
+                <%= escaparHtml(nombrePanel) %>
             </h2>
 
             <p class="text-secondary mb-0">
-                Accesos disponibles para la cuenta autenticada
+                <%= escaparHtml(descripcionPanel) %>
             </p>
 
         </div>
@@ -290,6 +314,10 @@
                 <div class="card tarjeta-modulo shadow-sm h-100">
 
                     <div class="card-body p-4">
+
+                        <div class="module-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
 
                         <h3 class="h5">
                             Pacientes
@@ -322,13 +350,20 @@
 
                     <div class="card-body p-4">
 
+                        <div class="module-icon">
+                            <i class="bi bi-calendar2-check"></i>
+                        </div>
+
                         <h3 class="h5">
-                            Agenda médica
+                            <%= esPaciente
+                                    ? "Mis citas y pagos"
+                                    : "Agenda médica" %>
                         </h3>
 
                         <p class="text-secondary">
-                            Consultar turnos disponibles,
-                            solicitar citas y administrar la agenda diaria.
+                            <%= esPaciente
+                                    ? "Reservar consultas, revisar tus citas y consultar sus pagos."
+                                    : "Consultar turnos disponibles, solicitar citas y administrar la agenda diaria." %>
                         </p>
 
                         <% if (puedeGestionarAgenda) { %>
@@ -369,6 +404,66 @@
 
             </div>
 
+            <% if (esPaciente) { %>
+
+            <div class="col-12 col-md-6 col-xl-4">
+
+                <div class="card tarjeta-modulo shadow-sm h-100">
+
+                    <div class="card-body p-4">
+
+                        <div class="module-icon">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+
+                        <h3 class="h5">Médicos</h3>
+
+                        <p class="text-secondary">
+                            Conocé a los profesionales activos y revisá
+                            la disponibilidad de atención.
+                        </p>
+
+                        <a href="${pageContext.request.contextPath}/medicos"
+                           class="btn btn-outline-success">
+                            Ver médicos
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-4">
+
+                <div class="card tarjeta-modulo shadow-sm h-100">
+
+                    <div class="card-body p-4">
+
+                        <div class="module-icon">
+                            <i class="bi bi-heart-pulse"></i>
+                        </div>
+
+                        <h3 class="h5">Especialidades</h3>
+
+                        <p class="text-secondary">
+                            Explorá las áreas médicas disponibles
+                            para encontrar la atención adecuada.
+                        </p>
+
+                        <a href="${pageContext.request.contextPath}/especialidades"
+                           class="btn btn-outline-success">
+                            Ver especialidades
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <% } %>
+
             <% if (puedeGestionarAgenda) { %>
 
             <div class="col-12 col-md-6 col-xl-4">
@@ -376,6 +471,10 @@
                 <div class="card tarjeta-modulo shadow-sm h-100">
 
                     <div class="card-body p-4">
+
+                        <div class="module-icon">
+                            <i class="bi bi-credit-card"></i>
+                        </div>
 
                         <h3 class="h5">Pagos y comprobantes</h3>
 
@@ -404,6 +503,10 @@
                 <div class="card tarjeta-modulo shadow-sm h-100">
 
                     <div class="card-body p-4">
+
+                        <div class="module-icon">
+                            <i class="bi bi-sliders"></i>
+                        </div>
 
                         <h3 class="h5">
                             Administración

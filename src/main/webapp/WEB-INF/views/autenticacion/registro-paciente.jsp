@@ -18,8 +18,9 @@
         .cabecera { background: linear-gradient(135deg, #0b5f49, #15956e); color: white; }
         .card { border: 0; border-radius: 1rem; }
     </style>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
 </head>
-<body>
+<body class="app-shell app-registration">
 <nav class="navbar bg-white border-bottom"><div class="container py-2">
     <a class="navbar-brand fw-bold text-success" href="${pageContext.request.contextPath}/">SoraCare-FPUNE</a>
     <a class="btn btn-outline-success btn-sm" href="${pageContext.request.contextPath}/login">Ya tengo cuenta</a>

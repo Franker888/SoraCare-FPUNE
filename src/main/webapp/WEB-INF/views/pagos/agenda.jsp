@@ -22,8 +22,9 @@
     <title>Gestión de pagos | SoraCare-FPUNE</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>body{background:#f4f7f6}.cabecera{background:linear-gradient(135deg,#073f32,#0c7658);color:white}.card{border:0;border-radius:1rem}</style>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
 </head>
-<body>
+<body class="app-shell app-reception">
 <nav class="navbar bg-white border-bottom"><div class="container py-2">
     <a class="navbar-brand fw-bold text-success" href="${pageContext.request.contextPath}/dashboard">SoraCare-FPUNE</a>
     <div class="d-flex gap-2"><a class="btn btn-outline-success btn-sm" href="${pageContext.request.contextPath}/agenda/citas">Agenda</a><a class="btn btn-outline-success btn-sm" href="${pageContext.request.contextPath}/dashboard">Panel</a></div>

@@ -209,9 +209,11 @@
             color: #cbd5e1;
         }
     </style>
+    <link rel="stylesheet"
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
 </head>
 
-<body>
+<body class="app-public">
 
 <nav class="navbar navbar-expand-lg barra-publica shadow-sm">
 
