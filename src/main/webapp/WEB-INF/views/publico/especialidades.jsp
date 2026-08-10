@@ -197,6 +197,14 @@
                 </a>
 
                 <a
+                        class="nav-link text-white"
+                        href="${pageContext.request.contextPath}/medicos">
+
+                    Médicos
+
+                </a>
+
+                <a
                         class="btn btn-outline-light ms-lg-2"
                         href="${pageContext.request.contextPath}/login">
 
@@ -395,14 +403,13 @@
 
                     <% } %>
 
-                    <button
-                            type="button"
-                            class="btn btn-outline-secondary w-100"
-                            disabled>
+                    <a
+                            href="${pageContext.request.contextPath}/medicos"
+                            class="btn btn-outline-success w-100">
 
-                        Médicos próximamente
+                        Ver médicos
 
-                    </button>
+                    </a>
 
                 </div>
 
