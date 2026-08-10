@@ -1,0 +1,1904 @@
+/* ==================================================
+   VARIABLES DEL PROYECTO
+================================================== */
+
+:root {
+
+    --primary: #2563EB;
+
+    --secondary: #14B8A6;
+
+    --background: #F8FAFC;
+
+    --text: #1F2937;
+
+    --text-light: #64748B;
+
+    --white: #FFFFFF;
+
+    --primary-light: #EFF6FF;
+
+    --secondary-light: #ECFEF9;
+
+}
+
+
+
+/* ==================================================
+   RESET
+================================================== */
+
+* {
+
+    margin: 0;
+
+    padding: 0;
+
+    box-sizing: border-box;
+
+}
+
+
+
+html {
+
+    scroll-behavior: smooth;
+
+}
+
+
+
+body {
+
+    font-family: 'Poppins', sans-serif;
+
+    background: var(--background);
+
+    color: var(--text);
+
+}
+
+
+
+/* ==================================================
+   NAVBAR
+================================================== */
+
+.navbar {
+
+    background: var(--white);
+
+    padding: 18px 0;
+
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
+
+}
+
+
+
+.navbar-brand img {
+
+    height: 130px;
+
+    width: auto;
+
+}
+
+
+
+.nav-link {
+
+    font-weight: 500;
+
+    color: var(--text) !important;
+
+    margin: 0 12px;
+
+    position: relative;
+
+    transition: color 0.3s ease;
+
+}
+
+
+
+.nav-link::after {
+
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+
+    bottom: -4px;
+
+    width: 0;
+
+    height: 2px;
+
+    background: var(--primary);
+
+    transition: width 0.3s ease;
+
+}
+
+
+
+.nav-link:hover {
+
+    color: var(--primary) !important;
+
+}
+
+
+
+.nav-link:hover::after {
+
+    width: 100%;
+
+}
+
+
+
+/* ==================================================
+   BOTONES PRINCIPALES
+================================================== */
+
+.btn-primary {
+
+    background: var(--primary);
+
+    border-color: var(--primary);
+
+    border-radius: 10px;
+
+    padding: 11px 22px;
+
+    font-weight: 600;
+
+    transition: all 0.3s ease;
+
+}
+
+
+
+.btn-primary:hover {
+
+    background: #1D4ED8;
+
+    border-color: #1D4ED8;
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.20);
+
+}
+
+
+
+.btn-login {
+
+    border-radius: 12px;
+
+    padding: 10px 22px;
+
+    font-weight: 600;
+
+}
+
+
+
+.session-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+}
+
+
+
+.btn-register,
+.btn-logout {
+
+    border-radius: 12px;
+
+    padding: 10px 18px;
+
+    font-weight: 600;
+
+}
+
+
+
+.btn-logout {
+
+    padding-inline: 14px;
+
+}
+
+
+
+/* ==================================================
+   HERO / CARRUSEL
+================================================== */
+
+.hero {
+
+    width: 100%;
+
+}
+
+
+
+.hero-slide-image {
+
+    width: 100%;
+
+    height: 600px;
+
+    object-fit: cover;
+
+}
+
+
+
+.carousel-item {
+
+    position: relative;
+
+}
+
+
+
+.hero-overlay {
+
+    position: absolute;
+
+    top: 0;
+
+    left: 0;
+
+    width: 100%;
+
+    height: 100%;
+
+    background: rgba(0, 0, 0, 0.35);
+
+}
+
+
+
+.hero-caption {
+
+    position: absolute;
+
+    top: 50%;
+
+    left: 10%;
+
+    right: auto;
+
+    bottom: auto;
+
+    transform: translateY(-50%);
+
+    max-width: 650px;
+
+    text-align: left;
+
+}
+
+
+
+.hero-subtitle {
+
+    display: inline-block;
+
+    margin-bottom: 12px;
+
+    font-size: 1rem;
+
+    font-weight: 600;
+
+    color: var(--white);
+
+}
+
+
+
+.hero-caption h1 {
+
+    font-size: 3.5rem;
+
+    font-weight: 700;
+
+    line-height: 1.15;
+
+    color: var(--white);
+
+    margin-bottom: 20px;
+
+}
+
+
+
+.hero-caption p {
+
+    max-width: 600px;
+
+    font-size: 1.15rem;
+
+    line-height: 1.7;
+
+    color: var(--white);
+
+    margin-bottom: 28px;
+
+}
+
+
+
+.hero-caption .btn {
+
+    padding: 13px 28px;
+
+    border-radius: 10px;
+
+    font-weight: 600;
+
+}
+
+
+
+/* ==================================================
+   ACCIONES RÁPIDAS
+================================================== */
+
+.quick-actions {
+
+    padding: 70px 0;
+
+    background: var(--white);
+
+}
+
+
+
+.quick-actions h2 {
+
+    font-size: 2.2rem;
+
+    font-weight: 700;
+
+    color: var(--text);
+
+}
+
+
+
+.quick-actions .text-center p {
+
+    color: var(--text-light);
+
+    margin-top: 10px;
+
+}
+
+
+
+.quick-action-card {
+
+    height: 100%;
+
+    padding: 35px 30px;
+
+    background: var(--white);
+
+    border-radius: 16px;
+
+    border: 1px solid #E5E7EB;
+
+    text-align: center;
+
+    transition: all 0.3s ease;
+
+}
+
+
+
+.quick-action-card:hover {
+
+    transform: translateY(-6px);
+
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+
+}
+
+
+
+.quick-action-icon {
+
+    width: 70px;
+
+    height: 70px;
+
+    margin: 0 auto 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: var(--primary-light);
+
+    color: var(--primary);
+
+    font-size: 30px;
+
+}
+
+
+
+.quick-action-card h4 {
+
+    margin-bottom: 12px;
+
+    font-weight: 600;
+
+    color: var(--text);
+
+}
+
+
+
+.quick-action-card p {
+
+    color: var(--text-light);
+
+    line-height: 1.7;
+
+    margin-bottom: 20px;
+
+}
+
+
+
+.quick-action-link {
+
+    color: var(--primary);
+
+    text-decoration: none;
+
+    font-weight: 600;
+
+}
+
+
+
+.quick-action-link i {
+
+    margin-left: 5px;
+
+    transition: margin-left 0.3s ease;
+
+}
+
+
+
+.quick-action-link:hover i {
+
+    margin-left: 10px;
+
+}
+
+
+
+/* ==================================================
+   ESPECIALIDADES
+================================================== */
+
+.specialties {
+
+    padding: 90px 0;
+
+    background: var(--background);
+
+}
+
+
+
+.specialties h2 {
+
+    font-size: 2.5rem;
+
+    font-weight: 700;
+
+    color: var(--text);
+
+}
+
+
+
+.specialties .text-center > p {
+
+    max-width: 650px;
+
+    margin: 15px auto 0;
+
+    color: var(--text-light);
+
+    line-height: 1.7;
+
+}
+
+
+
+.specialty-card {
+
+    height: 100%;
+
+    border: 1px solid #E2E8F0;
+
+    border-radius: 18px;
+
+    background: var(--white);
+
+    overflow: hidden;
+
+    transition: all 0.3s ease;
+
+}
+
+
+
+.specialty-card:hover {
+
+    transform: translateY(-8px);
+
+    border-color: var(--primary);
+
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.12);
+
+}
+
+
+
+.specialty-card .card-body {
+
+    padding: 35px 25px;
+
+}
+
+
+
+.specialty-icon {
+
+    width: 75px;
+
+    height: 75px;
+
+    margin: 0 auto;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: var(--primary-light);
+
+    color: var(--primary);
+
+    font-size: 2.2rem;
+
+    transition: all 0.3s ease;
+
+}
+
+
+
+.specialty-card:hover .specialty-icon {
+
+    background: var(--primary);
+
+    color: var(--white);
+
+    transform: scale(1.05);
+
+}
+
+
+
+.specialty-card h4 {
+
+    font-size: 1.25rem;
+
+    font-weight: 600;
+
+    color: var(--text);
+
+}
+
+
+
+.specialty-card p {
+
+    color: var(--text-light);
+
+    line-height: 1.7;
+
+}
+
+
+
+.specialty-card .btn {
+
+    margin-top: 8px;
+
+    border-radius: 10px;
+
+    padding: 9px 20px;
+
+    font-weight: 500;
+
+    transition: all 0.3s ease;
+
+}
+
+
+
+.specialty-card .btn:hover {
+
+    transform: translateY(-2px);
+
+}
+
+
+
+.specialties-link {
+
+    padding: 11px 24px;
+
+    border-radius: 10px;
+
+    font-weight: 600;
+
+    transition: all 0.3s ease;
+
+}
+
+
+
+.specialties-link:hover {
+
+    transform: translateY(-2px);
+
+}
+
+
+
+/* ==================================================
+   MÉDICOS DESTACADOS
+================================================== */
+
+.doctors {
+
+    padding: 80px 0;
+
+    background: var(--white);
+
+}
+
+
+
+.doctors h2 {
+
+    font-size: 2.5rem;
+
+    font-weight: 700;
+
+    color: var(--text);
+
+}
+
+
+
+.doctors .text-center > p {
+
+    max-width: 650px;
+
+    margin: 15px auto 0;
+
+    color: var(--text-light);
+
+    line-height: 1.7;
+
+}
+
+
+
+.doctor-card {
+
+    height: 100%;
+
+    background: var(--white);
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    border: 1px solid #E5E7EB;
+
+    transition: all 0.3s ease;
+
+}
+
+
+
+.doctor-card:hover {
+
+    transform: translateY(-6px);
+
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+
+}
+
+
+
+.doctor-image {
+
+    width: 100%;
+
+    height: 300px;
+
+    overflow: hidden;
+
+}
+
+
+
+.doctor-image img {
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: cover;
+
+}
+
+
+
+.doctor-info {
+
+    padding: 25px;
+
+}
+
+
+
+.doctor-info h4 {
+
+    margin-bottom: 5px;
+
+    font-weight: 600;
+
+    color: var(--text);
+
+}
+
+
+
+.doctor-specialty {
+
+    display: inline-block;
+
+    margin-bottom: 15px;
+
+    color: var(--primary);
+
+    font-weight: 600;
+
+}
+
+
+
+.doctor-info p {
+
+    color: var(--text-light);
+
+    line-height: 1.7;
+
+    margin-bottom: 15px;
+
+}
+
+
+
+.doctor-experience {
+
+    color: var(--text-light);
+
+    font-size: 0.9rem;
+
+    margin-bottom: 20px;
+
+}
+
+
+
+.doctor-experience i {
+
+    color: var(--primary);
+
+    margin-right: 5px;
+
+}
+
+
+
+.doctor-actions {
+
+    display: flex;
+
+    gap: 10px;
+
+}
+
+
+
+.doctor-actions .btn {
+
+    flex: 1;
+
+    border-radius: 9px;
+
+    font-weight: 600;
+
+}
+
+
+
+.doctors-link {
+
+    padding: 11px 24px;
+
+    border-radius: 10px;
+
+    font-weight: 600;
+
+}
+
+
+
+/* ==================================================
+   SERVICIOS PARA PACIENTES
+================================================== */
+
+.patient-services {
+
+    padding: 80px 0;
+
+    background: var(--white);
+
+}
+
+
+
+.patient-services h2 {
+
+    font-size: 2.2rem;
+
+    font-weight: 700;
+
+    color: var(--text);
+
+}
+
+
+
+.patient-services .text-center > p {
+
+    color: var(--text-light);
+
+    margin-top: 10px;
+
+}
+
+
+
+.patient-service {
+
+    height: 100%;
+
+    padding: 30px 25px;
+
+    border: 1px solid #E5E7EB;
+
+    border-radius: 16px;
+
+    background: var(--white);
+
+    transition: all 0.3s ease;
+
+}
+
+
+
+.patient-service:hover {
+
+    transform: translateY(-5px);
+
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.07);
+
+}
+
+
+
+.patient-service-icon {
+
+    width: 58px;
+
+    height: 58px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin-bottom: 20px;
+
+    border-radius: 50%;
+
+    background: var(--primary-light);
+
+    color: var(--primary);
+
+    font-size: 25px;
+
+}
+
+
+
+.patient-service h4 {
+
+    font-weight: 600;
+
+    margin-bottom: 12px;
+
+}
+
+
+
+.patient-service p {
+
+    color: var(--text-light);
+
+    line-height: 1.7;
+
+    margin-bottom: 18px;
+
+}
+
+
+
+.patient-service a {
+
+    color: var(--primary);
+
+    text-decoration: none;
+
+    font-weight: 600;
+
+}
+
+
+
+.patient-service a i {
+
+    margin-left: 5px;
+
+    transition: margin-left 0.3s ease;
+
+}
+
+
+
+.patient-service a:hover i {
+
+    margin-left: 8px;
+
+}
+
+
+
+.service-coming-soon {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    border-radius: 999px;
+
+    padding: 7px 13px;
+
+    background: #F1F5F9;
+
+    color: var(--text-light);
+
+    font-size: 0.875rem;
+
+    font-weight: 600;
+
+}
+
+
+
+/* ==================================================
+   ¿POR QUÉ SORACARE?
+================================================== */
+
+.why-soracare {
+
+    padding: 90px 0;
+
+    background: var(--background);
+
+}
+
+
+
+.why-subtitle {
+
+    color: var(--primary);
+
+    font-weight: 600;
+
+    font-size: 0.95rem;
+
+}
+
+
+
+.why-soracare h2 {
+
+    margin-top: 12px;
+
+    font-size: 2.5rem;
+
+    font-weight: 700;
+
+    line-height: 1.25;
+
+    color: var(--text);
+
+}
+
+
+
+.why-description {
+
+    margin-top: 20px;
+
+    margin-bottom: 30px;
+
+    color: var(--text-light);
+
+    line-height: 1.8;
+
+}
+
+
+
+.why-item {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 18px;
+
+    margin-bottom: 22px;
+
+}
+
+
+
+.why-icon {
+
+    min-width: 48px;
+
+    height: 48px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: var(--primary-light);
+
+    color: var(--primary);
+
+    font-size: 21px;
+
+}
+
+
+
+.why-item h4 {
+
+    margin-bottom: 5px;
+
+    font-size: 1.05rem;
+
+    font-weight: 600;
+
+}
+
+
+
+.why-item p {
+
+    margin: 0;
+
+    color: var(--text-light);
+
+    line-height: 1.6;
+
+}
+
+
+
+.why-image {
+
+    margin-left: 40px;
+
+    border-radius: 20px;
+
+    overflow: hidden;
+
+}
+
+
+
+.why-image img {
+
+    width: 100%;
+
+    height: 500px;
+
+    object-fit: cover;
+
+}
+
+
+
+/* ==================================================
+   ¿CÓMO FUNCIONA?
+================================================== */
+
+.how-it-works {
+
+    padding: 90px 0;
+
+    background: var(--white);
+
+}
+
+
+
+.how-subtitle {
+
+    color: var(--primary);
+
+    font-weight: 600;
+
+    font-size: 0.95rem;
+
+}
+
+
+
+.how-it-works h2 {
+
+    margin-top: 10px;
+
+    font-size: 2.3rem;
+
+    font-weight: 700;
+
+    color: var(--text);
+
+}
+
+
+
+.how-it-works .text-center > p {
+
+    margin-top: 10px;
+
+    color: var(--text-light);
+
+}
+
+
+
+.step-card {
+
+    position: relative;
+
+    height: 100%;
+
+    padding: 35px 25px;
+
+    text-align: center;
+
+    border: 1px solid #E5E7EB;
+
+    border-radius: 18px;
+
+    background: var(--white);
+
+    transition: all 0.3s ease;
+
+}
+
+
+
+.step-card:hover {
+
+    transform: translateY(-6px);
+
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.07);
+
+}
+
+
+
+.step-number {
+
+    position: absolute;
+
+    top: 15px;
+
+    right: 15px;
+
+    width: 32px;
+
+    height: 32px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: var(--primary-light);
+
+    color: var(--primary);
+
+    font-weight: 700;
+
+}
+
+
+
+.step-icon {
+
+    width: 70px;
+
+    height: 70px;
+
+    margin: 0 auto 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: var(--primary-light);
+
+    color: var(--primary);
+
+    font-size: 30px;
+
+}
+
+
+
+.step-card h4 {
+
+    margin-bottom: 12px;
+
+    font-weight: 600;
+
+    color: var(--text);
+
+}
+
+
+
+.step-card p {
+
+    margin: 0;
+
+    color: var(--text-light);
+
+    line-height: 1.7;
+
+}
+
+
+
+/* ==================================================
+   LLAMADO A LA ACCIÓN
+================================================== */
+
+.cta-section {
+
+    padding: 70px 0;
+
+    background: var(--primary);
+
+}
+
+
+
+.cta-content {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 40px;
+
+}
+
+
+
+.cta-subtitle {
+
+    color: #DBEAFE;
+
+    font-weight: 600;
+
+    font-size: 0.95rem;
+
+}
+
+
+
+.cta-content h2 {
+
+    margin-top: 10px;
+
+    margin-bottom: 12px;
+
+    color: var(--white);
+
+    font-size: 2.2rem;
+
+    font-weight: 700;
+
+}
+
+
+
+.cta-content p {
+
+    margin: 0;
+
+    max-width: 650px;
+
+    color: #DBEAFE;
+
+    line-height: 1.7;
+
+}
+
+
+
+.cta-buttons {
+
+    display: flex;
+
+    gap: 12px;
+
+    flex-shrink: 0;
+
+}
+
+
+
+.cta-buttons .btn {
+
+    padding: 12px 22px;
+
+    border-radius: 10px;
+
+    font-weight: 600;
+
+}
+
+
+
+/* ==================================================
+   CONTACTO
+================================================== */
+
+.contact-section {
+
+    padding: 80px 0;
+
+    background: var(--background);
+
+}
+
+
+
+.contact-subtitle {
+
+    color: var(--primary);
+
+    font-weight: 600;
+
+    font-size: 0.95rem;
+
+}
+
+
+
+.contact-section h2 {
+
+    margin-top: 10px;
+
+    font-size: 2.3rem;
+
+    font-weight: 700;
+
+    color: var(--text);
+
+}
+
+
+
+.contact-section .text-center > p {
+
+    margin-top: 10px;
+
+    color: var(--text-light);
+
+}
+
+
+
+.contact-item {
+
+    height: 100%;
+
+    padding: 25px 20px;
+
+    text-align: center;
+
+    background: var(--white);
+
+    border: 1px solid #E5E7EB;
+
+    border-radius: 16px;
+
+    transition: all 0.3s ease;
+
+}
+
+
+
+.contact-item:hover {
+
+    transform: translateY(-5px);
+
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+
+}
+
+
+
+.contact-icon {
+
+    width: 55px;
+
+    height: 55px;
+
+    margin: 0 auto 15px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: var(--primary-light);
+
+    color: var(--primary);
+
+    font-size: 23px;
+
+}
+
+
+
+.contact-item h4 {
+
+    margin-bottom: 8px;
+
+    font-size: 1.05rem;
+
+    font-weight: 600;
+
+}
+
+
+
+.contact-item p {
+
+    margin: 0;
+
+    color: var(--text-light);
+
+    line-height: 1.6;
+
+}
+
+
+
+/* ==================================================
+   FOOTER
+================================================== */
+
+.footer {
+
+    padding: 70px 0 25px;
+
+    background: #172554;
+
+    color: var(--white);
+
+}
+
+
+
+.footer-logo {
+
+    height: 70px;
+
+    width: auto;
+
+    margin-bottom: 20px;
+
+}
+
+
+
+.footer-description {
+
+    max-width: 430px;
+
+    color: #CBD5E1;
+
+    line-height: 1.7;
+
+}
+
+
+
+.footer h4 {
+
+    margin-bottom: 20px;
+
+    font-size: 1.05rem;
+
+    font-weight: 600;
+
+}
+
+
+
+.footer ul {
+
+    padding: 0;
+
+    margin: 0;
+
+    list-style: none;
+
+}
+
+
+
+.footer li {
+
+    margin-bottom: 12px;
+
+}
+
+
+
+.footer a {
+
+    color: #CBD5E1;
+
+    text-decoration: none;
+
+    transition: color 0.3s ease;
+
+}
+
+
+
+.footer a:hover {
+
+    color: var(--white);
+
+}
+
+
+
+.footer-social {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 20px;
+
+}
+
+
+
+.footer-social a,
+.footer-social .social-placeholder {
+
+    width: 40px;
+
+    height: 40px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.1);
+
+    font-size: 18px;
+
+    color: #CBD5E1;
+
+}
+
+
+
+.footer-social a:hover,
+.footer-social .social-placeholder:hover {
+
+    background: rgba(255, 255, 255, 0.2);
+
+}
+
+
+
+.footer-contact li {
+
+    display: flex;
+
+    gap: 10px;
+
+    align-items: flex-start;
+
+    color: #CBD5E1;
+
+}
+
+
+
+.footer-contact i {
+
+    margin-top: 3px;
+
+}
+
+
+
+.footer-bottom {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-top: 50px;
+
+    padding-top: 25px;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+
+}
+
+
+
+.footer-bottom p {
+
+    margin: 0;
+
+    color: #94A3B8;
+
+    font-size: 0.9rem;
+
+}
+
+
+
+/* ==================================================
+   RESPONSIVE
+================================================== */
+
+@media (max-width: 991.98px) {
+
+    .session-actions {
+
+        margin-top: 18px;
+
+        padding-top: 18px;
+
+        border-top: 1px solid #E2E8F0;
+
+        flex-wrap: wrap;
+
+    }
+
+}
+
+@media (max-width: 768px) {
+
+
+    /* NAVBAR */
+
+    .navbar-brand img {
+
+        height: 90px;
+
+    }
+
+
+    .session-actions .btn-login,
+    .session-actions .btn-register {
+
+        flex: 1 1 auto;
+
+    }
+
+
+    /* HERO */
+
+    .hero-slide-image {
+
+        height: 550px;
+
+    }
+
+
+    .hero-caption {
+
+        left: 8%;
+
+        right: 8%;
+
+        max-width: none;
+
+    }
+
+
+    .hero-caption h1 {
+
+        font-size: 2.3rem;
+
+    }
+
+
+    .hero-caption p {
+
+        font-size: 1rem;
+
+    }
+
+
+    /* POR QUÉ SORACARE */
+
+    .why-image {
+
+        margin-left: 0;
+
+        margin-top: 30px;
+
+    }
+
+
+    .why-image img {
+
+        height: 350px;
+
+    }
+
+
+    /* CTA */
+
+    .cta-content {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+    }
+
+
+    .cta-buttons {
+
+        width: 100%;
+
+        flex-wrap: wrap;
+
+    }
+
+
+    /* FOOTER */
+
+    .footer-bottom {
+
+        flex-direction: column;
+
+    }
+
+}
+
+
+
+.footer-social .social-placeholder {
+
+    cursor: default;
+
+}
+
+
+
+#inicio,
+#nosotros,
+#contacto,
+#especialidades-destacadas,
+#medicos-destacados {
+
+    scroll-margin-top: 24px;
+
+}
