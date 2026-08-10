@@ -1,10 +1,12 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ page import="py.fpune.soracare.dto.SlotDisponibleDTO" %>
+<%@ page import="py.fpune.soracare.dto.PagoResumenDTO" %>
 <%@ page import="py.fpune.soracare.mvc.model.Cita" %>
 <%@ page import="py.fpune.soracare.mvc.model.Consultorio" %>
 <%@ page import="py.fpune.soracare.mvc.model.Especialidad" %>
 <%@ page import="py.fpune.soracare.mvc.model.Medico" %>
 <%@ page import="py.fpune.soracare.mvc.model.Paciente" %>
+<%@ page import="py.fpune.soracare.mvc.model.MetodoPago" %>
 <%@ page import="py.fpune.soracare.service.DisponibilidadService" %>
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
@@ -26,6 +28,10 @@
             ? (List<Medico>) request.getAttribute("medicos") : List.of();
     List<Especialidad> especialidadesLista = request.getAttribute("especialidades") instanceof List<?>
             ? (List<Especialidad>) request.getAttribute("especialidades") : List.of();
+    List<MetodoPago> metodosPago = request.getAttribute("metodosPago") instanceof List<?>
+            ? (List<MetodoPago>) request.getAttribute("metodosPago") : List.of();
+    Map<Long, PagoResumenDTO> pagosPorCita = request.getAttribute("pagosPorCita") instanceof Map<?, ?>
+            ? (Map<Long, PagoResumenDTO>) request.getAttribute("pagosPorCita") : Map.of();
     Map<Long, Medico> medicos = request.getAttribute("medicosPorId") instanceof Map<?, ?>
             ? (Map<Long, Medico>) request.getAttribute("medicosPorId") : Map.of();
     Map<Integer, Especialidad> especialidades = request.getAttribute("especialidadesPorId") instanceof Map<?, ?>
@@ -152,9 +158,42 @@
                     <label for="observaciones" class="form-label">Observaciones (opcional)</label>
                     <input id="observaciones" name="observaciones" class="form-control" maxlength="1000">
                 </div>
+                <div class="col-12"><hr><h3 class="h6 mb-1">3. Pago y datos del comprobante</h3>
+                    <p class="small text-secondary mb-2">Los pagos son una simulación académica. No ingreses datos reales de tarjetas.</p></div>
+                <div class="col-md-4">
+                    <label for="metodoPago" class="form-label">Método de pago</label>
+                    <select id="metodoPago" name="metodoPago" class="form-select" required>
+                        <option value="">Seleccionar</option>
+                        <% for (MetodoPago metodo : metodosPago) { %>
+                        <option value="<%= h(metodo.getCodigo()) %>"><%= h(metodo.getNombre()) %></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="tipoDocumentoFactura" class="form-label">Tipo de documento</label>
+                    <select id="tipoDocumentoFactura" name="tipoDocumentoFactura" class="form-select" required>
+                        <option value="CI">Cédula</option><option value="RUC">RUC</option><option value="PASAPORTE">Pasaporte</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label for="numeroDocumentoFactura" class="form-label">Número de documento</label>
+                    <input id="numeroDocumentoFactura" name="numeroDocumentoFactura" class="form-control" maxlength="30" required value="<%= paciente == null ? "" : h(paciente.getCedula()) %>">
+                </div>
+                <div class="col-md-6">
+                    <label for="nombreFactura" class="form-label">Nombre o razón social</label>
+                    <input id="nombreFactura" name="nombreFactura" class="form-control" maxlength="160" required value="<%= paciente == null ? "" : h(paciente.getNombres() + " " + paciente.getApellidos()) %>">
+                </div>
+                <div class="col-md-6">
+                    <label for="correoFactura" class="form-label">Correo para el comprobante</label>
+                    <input id="correoFactura" name="correoFactura" type="email" class="form-control" maxlength="255" required value="<%= paciente == null ? "" : h(paciente.getCorreo()) %>">
+                </div>
+                <div class="col-12">
+                    <label for="direccionFactura" class="form-label">Dirección para facturación</label>
+                    <input id="direccionFactura" name="direccionFactura" class="form-control" maxlength="255" required value="<%= paciente == null ? "" : h(paciente.getDireccion()) %>">
+                </div>
                 <div class="col-12 d-flex flex-wrap align-items-center gap-3">
-                    <button class="btn btn-success">Solicitar mi cita</button>
-                    <small class="text-secondary">La reserva quedará en estado “Solicitada”. El método de pago se incorporará en la etapa 5.</small>
+                    <button class="btn btn-success">Reservar y continuar al pago</button>
+                    <small class="text-secondary">El efectivo conserva el turno pendiente; los medios digitales continúan a la simulación.</small>
                 </div>
             </form>
             <% } %>
@@ -171,6 +210,7 @@
                 Medico medico = medicos.get(cita.getIdMedico());
                 Especialidad especialidad = especialidades.get(cita.getIdEspecialidad());
                 Consultorio consultorio = consultorios.get(cita.getIdConsultorio());
+                PagoResumenDTO pago = pagosPorCita.get(cita.getIdCita());
                 boolean cancelable = !"CANCELADA".equals(cita.getCodigoEstado()) && !"ATENDIDA".equals(cita.getCodigoEstado());
             %>
             <div class="col-12">
@@ -185,6 +225,20 @@
                                 <div><%= medico == null ? "Médico" : h(medico.getNombres() + " " + medico.getApellidos()) %></div>
                                 <div class="text-secondary"><%= especialidad == null ? "Especialidad" : h(especialidad.getNombre()) %> · <%= consultorio == null ? "Consultorio" : h(consultorio.getNombre()) %></div>
                                 <small class="text-secondary">Motivo: <%= h(cita.getMotivoConsulta()) %></small>
+                                <% if (pago != null) { %>
+                                <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                                    <span class="badge <%= pago.estaConfirmado() ? "text-bg-success" : ("REEMBOLSADO".equals(pago.codigoEstado()) || "ANULADO".equals(pago.codigoEstado()) ? "text-bg-secondary" : "text-bg-warning") %>">
+                                        Pago: <%= h(pago.nombreEstado()) %>
+                                    </span>
+                                    <small class="text-secondary"><%= h(pago.nombreMetodo()) %> · Gs. <%= pago.monto().setScale(0).toPlainString() %></small>
+                                    <% if (pago.estaPendiente() && pago.esDigital() && cancelable) { %>
+                                    <a class="btn btn-sm btn-success" href="${pageContext.request.contextPath}/pagos/procesar?idPago=<%= pago.idPago() %>">Continuar pago</a>
+                                    <% } %>
+                                    <% if (pago.idComprobante() != null) { %>
+                                    <a class="btn btn-sm btn-outline-success" target="_blank" href="${pageContext.request.contextPath}/comprobantes/pago?id=<%= pago.idComprobante() %>">Ver comprobante PDF</a>
+                                    <% } %>
+                                </div>
+                                <% } %>
                             </div>
                             <div class="col-lg-5">
                                 <% if (cancelable) { %>

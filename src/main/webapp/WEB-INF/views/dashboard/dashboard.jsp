@@ -369,6 +369,34 @@
 
             </div>
 
+            <% if (puedeGestionarAgenda) { %>
+
+            <div class="col-12 col-md-6 col-xl-4">
+
+                <div class="card tarjeta-modulo shadow-sm h-100">
+
+                    <div class="card-body p-4">
+
+                        <h3 class="h5">Pagos y comprobantes</h3>
+
+                        <p class="text-secondary">
+                            Confirmar pagos en efectivo y consultar
+                            las operaciones simuladas de las citas.
+                        </p>
+
+                        <a href="${pageContext.request.contextPath}/agenda/pagos"
+                           class="btn btn-outline-success">
+                            Ir a pagos
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <% } %>
+
             <% if (esAdministrador) { %>
 
             <div class="col-12 col-md-6 col-xl-4">

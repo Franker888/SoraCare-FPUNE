@@ -5,6 +5,7 @@
 <%@ page import="py.fpune.soracare.mvc.model.Especialidad" %>
 <%@ page import="py.fpune.soracare.mvc.model.Medico" %>
 <%@ page import="py.fpune.soracare.mvc.model.Paciente" %>
+<%@ page import="py.fpune.soracare.mvc.model.MetodoPago" %>
 <%@ page import="py.fpune.soracare.service.DisponibilidadService" %>
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
@@ -24,6 +25,8 @@
             ? (List<Cita>) request.getAttribute("citas") : List.of();
     List<Paciente> pacientes = request.getAttribute("pacientes") instanceof List<?>
             ? (List<Paciente>) request.getAttribute("pacientes") : List.of();
+    List<MetodoPago> metodosPago = request.getAttribute("metodosPago") instanceof List<?>
+            ? (List<MetodoPago>) request.getAttribute("metodosPago") : List.of();
     Map<Long, Medico> medicos = (Map<Long, Medico>) request.getAttribute("medicosPorId");
     Map<Integer, Especialidad> especialidades = (Map<Integer, Especialidad>) request.getAttribute("especialidadesPorId");
     Map<Long, Consultorio> consultorios = (Map<Long, Consultorio>) request.getAttribute("consultoriosPorId");
@@ -47,7 +50,7 @@
 <body>
 <nav class="navbar bg-white border-bottom"><div class="container py-2">
     <a class="navbar-brand fw-bold text-success" href="${pageContext.request.contextPath}/dashboard">SoraCare-FPUNE</a>
-    <a class="btn btn-outline-success btn-sm" href="${pageContext.request.contextPath}/dashboard">Volver al panel</a>
+    <div class="d-flex gap-2"><a class="btn btn-success btn-sm" href="${pageContext.request.contextPath}/agenda/pagos">Pagos</a><a class="btn btn-outline-success btn-sm" href="${pageContext.request.contextPath}/dashboard">Volver al panel</a></div>
 </div></nav>
 <header class="cabecera py-4"><div class="container">
     <p class="small text-uppercase mb-1">Etapa 4</p><h1 class="h2 mb-1">Agenda médica</h1>
@@ -68,12 +71,12 @@
 
     <section class="card shadow-sm mb-4"><div class="card-body p-4">
         <h2 class="h4">Solicitar nueva cita</h2>
-        <p class="text-secondary">La cita queda en estado Solicitada. El pago y la confirmación corresponden a la etapa 5.</p>
+        <p class="text-secondary">La cita y el pago pendiente se registran en una sola operación.</p>
         <form method="post" action="${pageContext.request.contextPath}/agenda/citas" class="row g-3">
             <input type="hidden" name="accion" value="reservar"><input type="hidden" name="fecha" value="<%= fecha %>">
             <div class="col-md-6"><label class="form-label" for="idPaciente">Paciente</label>
                 <select class="form-select" id="idPaciente" name="idPaciente" required><option value="">Seleccionar paciente</option>
-                    <% for (Paciente paciente : pacientes) { %><option value="<%= paciente.getIdPaciente() %>"><%= h(paciente.getApellidos() + ", " + paciente.getNombres() + " — " + paciente.getNumeroHistoriaClinica()) %></option><% } %>
+                    <% for (Paciente paciente : pacientes) { %><option value="<%= paciente.getIdPaciente() %>" data-documento="<%= h(paciente.getCedula()) %>" data-nombre="<%= h(paciente.getNombres() + " " + paciente.getApellidos()) %>" data-correo="<%= h(paciente.getCorreo()) %>" data-direccion="<%= h(paciente.getDireccion()) %>"><%= h(paciente.getApellidos() + ", " + paciente.getNombres() + " — " + paciente.getNumeroHistoriaClinica()) %></option><% } %>
                 </select></div>
             <div class="col-md-6"><label class="form-label" for="slot">Turno disponible</label>
                 <select class="form-select" id="slot" name="slot" required><option value="">Seleccionar turno</option>
@@ -93,7 +96,14 @@
                 <select class="form-select" id="canalReserva" name="canalReserva"><option value="RECEPCION">Recepción</option><option value="TELEFONO">Teléfono</option><option value="ADMINISTRACION">Administración</option></select></div>
             <div class="col-12"><label class="form-label" for="observaciones">Observaciones</label>
                 <textarea class="form-control" id="observaciones" name="observaciones" rows="2" maxlength="1000"></textarea></div>
-            <div class="col-12"><button class="btn btn-success" <%= slots.isEmpty() || pacientes.isEmpty() ? "disabled" : "" %>>Solicitar cita</button></div>
+            <div class="col-12"><hr><h3 class="h6">Pago y comprobante académico</h3></div>
+            <div class="col-md-4"><label class="form-label" for="metodoPago">Método</label><select class="form-select" id="metodoPago" name="metodoPago" required><option value="">Seleccionar</option><% for (MetodoPago metodo : metodosPago) { %><option value="<%= h(metodo.getCodigo()) %>" <%= "EFECTIVO".equals(metodo.getCodigo()) ? "selected" : "" %>><%= h(metodo.getNombre()) %></option><% } %></select></div>
+            <div class="col-md-3"><label class="form-label" for="tipoDocumentoFactura">Documento</label><select class="form-select" id="tipoDocumentoFactura" name="tipoDocumentoFactura" required><option value="CI">Cédula</option><option value="RUC">RUC</option><option value="PASAPORTE">Pasaporte</option></select></div>
+            <div class="col-md-5"><label class="form-label" for="numeroDocumentoFactura">Número</label><input class="form-control" id="numeroDocumentoFactura" name="numeroDocumentoFactura" maxlength="30" required></div>
+            <div class="col-md-6"><label class="form-label" for="nombreFactura">Nombre o razón social</label><input class="form-control" id="nombreFactura" name="nombreFactura" maxlength="160" required></div>
+            <div class="col-md-6"><label class="form-label" for="correoFactura">Correo</label><input class="form-control" type="email" id="correoFactura" name="correoFactura" maxlength="255" required></div>
+            <div class="col-12"><label class="form-label" for="direccionFactura">Dirección</label><input class="form-control" id="direccionFactura" name="direccionFactura" maxlength="255" required></div>
+            <div class="col-12"><button class="btn btn-success" <%= slots.isEmpty() || pacientes.isEmpty() ? "disabled" : "" %>>Reservar con pago</button></div>
         </form>
     </div></section>
 
@@ -118,5 +128,15 @@
         </tbody></table></div><% } %>
     </div></section>
 </main>
+<script>
+    const pacienteSelect = document.getElementById('idPaciente');
+    pacienteSelect.addEventListener('change', () => {
+        const opcion = pacienteSelect.options[pacienteSelect.selectedIndex];
+        document.getElementById('numeroDocumentoFactura').value = opcion.dataset.documento || '';
+        document.getElementById('nombreFactura').value = opcion.dataset.nombre || '';
+        document.getElementById('correoFactura').value = opcion.dataset.correo || '';
+        document.getElementById('direccionFactura').value = opcion.dataset.direccion || '';
+    });
+</script>
 </body>
 </html>

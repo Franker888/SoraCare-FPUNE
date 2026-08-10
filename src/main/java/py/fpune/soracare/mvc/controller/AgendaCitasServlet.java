@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import py.fpune.soracare.dto.SolicitudCitaDTO;
+import py.fpune.soracare.dto.DatosFacturacionDTO;
+import py.fpune.soracare.dto.SolicitudPagoDTO;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 import py.fpune.soracare.mvc.model.Consultorio;
 import py.fpune.soracare.mvc.model.Especialidad;
@@ -18,6 +20,8 @@ import py.fpune.soracare.service.DisponibilidadService;
 import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoService;
 import py.fpune.soracare.service.PacienteService;
+import py.fpune.soracare.service.PagoService;
+import py.fpune.soracare.service.ReservaPagoService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -36,6 +40,8 @@ public class AgendaCitasServlet extends HttpServlet {
     private MedicoService medicoService;
     private EspecialidadService especialidadService;
     private ConsultorioService consultorioService;
+    private PagoService pagoService;
+    private ReservaPagoService reservaPagoService;
 
     @Override
     public void init() {
@@ -45,6 +51,8 @@ public class AgendaCitasServlet extends HttpServlet {
         medicoService = new MedicoService();
         especialidadService = new EspecialidadService();
         consultorioService = new ConsultorioService();
+        pagoService = new PagoService();
+        reservaPagoService = new ReservaPagoService();
     }
 
     @Override
@@ -78,7 +86,7 @@ public class AgendaCitasServlet extends HttpServlet {
                     slot[2], slot[3], slot[4], slot[5], slot[6],
                     request.getParameter("motivoConsulta"), request.getParameter("observaciones"),
                     request.getParameter("canalReserva"));
-            citaService.solicitar(datos, usuario.getIdUsuario());
+            reservaPagoService.reservar(datos, solicitudPago(request), usuario.getIdUsuario());
             redirigir(request, response, LocalDate.parse(slot[5]), "reservada");
         } catch (IllegalArgumentException error) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -112,6 +120,7 @@ public class AgendaCitasServlet extends HttpServlet {
             request.setAttribute("slots", disponibilidadService.listar(fecha, null, null));
             request.setAttribute("citas", citaService.listarPorFecha(fecha));
             request.setAttribute("pacientes", pacientes);
+            request.setAttribute("metodosPago", pagoService.listarMetodosActivos());
             request.setAttribute("medicosPorId", medicosPorId);
             request.setAttribute("especialidadesPorId", especialidadesPorId);
             request.setAttribute("consultoriosPorId", consultoriosPorId);
@@ -124,6 +133,7 @@ public class AgendaCitasServlet extends HttpServlet {
             request.setAttribute("slots", List.of());
             request.setAttribute("citas", List.of());
             request.setAttribute("pacientes", List.of());
+            request.setAttribute("metodosPago", List.of());
             request.setAttribute("medicosPorId", Map.of());
             request.setAttribute("especialidadesPorId", Map.of());
             request.setAttribute("consultoriosPorId", Map.of());
@@ -145,6 +155,19 @@ public class AgendaCitasServlet extends HttpServlet {
     }
 
     private static String vaciarCero(String valor) { return "0".equals(valor) ? "" : valor; }
+
+    private static SolicitudPagoDTO solicitudPago(HttpServletRequest request) {
+        return new SolicitudPagoDTO(
+                request.getParameter("metodoPago"),
+                new DatosFacturacionDTO(
+                        request.getParameter("tipoDocumentoFactura"),
+                        request.getParameter("numeroDocumentoFactura"),
+                        request.getParameter("nombreFactura"),
+                        request.getParameter("direccionFactura"),
+                        request.getParameter("correoFactura")
+                )
+        );
+    }
     private static long convertirLong(String valor) {
         try {
             long numero = Long.parseLong(valor);

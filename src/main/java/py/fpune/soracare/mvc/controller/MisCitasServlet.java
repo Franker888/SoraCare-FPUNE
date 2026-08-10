@@ -7,6 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import py.fpune.soracare.dto.SolicitudCitaDTO;
+import py.fpune.soracare.dto.DatosFacturacionDTO;
+import py.fpune.soracare.dto.PagoResumenDTO;
+import py.fpune.soracare.dto.ResultadoReservaDTO;
+import py.fpune.soracare.dto.SolicitudPagoDTO;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 import py.fpune.soracare.mvc.model.Consultorio;
 import py.fpune.soracare.mvc.model.Especialidad;
@@ -18,6 +22,8 @@ import py.fpune.soracare.service.DisponibilidadService;
 import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoService;
 import py.fpune.soracare.service.PacienteService;
+import py.fpune.soracare.service.PagoService;
+import py.fpune.soracare.service.ReservaPagoService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -36,6 +42,8 @@ public class MisCitasServlet extends HttpServlet {
     private MedicoService medicoService;
     private EspecialidadService especialidadService;
     private ConsultorioService consultorioService;
+    private PagoService pagoService;
+    private ReservaPagoService reservaPagoService;
 
     @Override
     public void init() {
@@ -45,6 +53,8 @@ public class MisCitasServlet extends HttpServlet {
         medicoService = new MedicoService();
         especialidadService = new EspecialidadService();
         consultorioService = new ConsultorioService();
+        pagoService = new PagoService();
+        reservaPagoService = new ReservaPagoService();
     }
 
     @Override
@@ -52,8 +62,9 @@ public class MisCitasServlet extends HttpServlet {
             throws ServletException, IOException {
         configurarSinCache(response);
         String resultado = request.getParameter("resultado");
-        if ("reservada".equals(resultado)) {
-            request.setAttribute("mensajeExito", "Tu cita fue solicitada correctamente.");
+        if ("efectivo".equals(resultado)) {
+            request.setAttribute("mensajeExito",
+                    "Tu turno quedo reservado. El pago en efectivo sigue pendiente hasta que recepcion registre el cobro.");
         } else if ("cancelada".equals(resultado)) {
             request.setAttribute("mensajeExito", "Tu cita fue cancelada correctamente.");
         }
@@ -86,8 +97,14 @@ public class MisCitasServlet extends HttpServlet {
                     slot[2], slot[3], slot[4], slot[5], slot[6],
                     request.getParameter("motivoConsulta"), request.getParameter("observaciones"),
                     "WEB");
-            citaService.solicitar(datos, usuario.getIdUsuario());
-            redirigir(request, response, LocalDate.parse(slot[5]), "reservada");
+            ResultadoReservaDTO resultado = reservaPagoService.reservar(
+                    datos, solicitudPago(request), usuario.getIdUsuario());
+            if (resultado.pago().esDigital()) {
+                response.sendRedirect(request.getContextPath() + "/pagos/procesar?idPago="
+                        + resultado.pago().idPago());
+            } else {
+                redirigir(request, response, LocalDate.parse(slot[5]), "efectivo");
+            }
         } catch (IllegalArgumentException error) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             request.setAttribute("error", error.getMessage());
@@ -125,6 +142,12 @@ public class MisCitasServlet extends HttpServlet {
             request.setAttribute("idEspecialidadSeleccionada", idEspecialidad);
             request.setAttribute("slots", disponibilidadService.listar(fecha, idMedico, idEspecialidad));
             request.setAttribute("citas", citaService.listarPorPaciente(paciente.getIdPaciente()));
+            List<PagoResumenDTO> pagos = pagoService.listarPorPaciente(paciente.getIdPaciente());
+            Map<Long, PagoResumenDTO> pagosPorCita = new LinkedHashMap<>();
+            for (PagoResumenDTO pago : pagos) pagosPorCita.putIfAbsent(pago.idCita(), pago);
+            request.setAttribute("pagos", pagos);
+            request.setAttribute("pagosPorCita", pagosPorCita);
+            request.setAttribute("metodosPago", pagoService.listarMetodosActivos());
             request.setAttribute("medicos", medicos);
             request.setAttribute("especialidades", especialidades);
             request.setAttribute("medicosPorId", medicosPorId);
@@ -137,6 +160,9 @@ public class MisCitasServlet extends HttpServlet {
             request.setAttribute("fecha", fecha);
             request.setAttribute("slots", List.of());
             request.setAttribute("citas", List.of());
+            request.setAttribute("pagos", List.of());
+            request.setAttribute("pagosPorCita", Map.of());
+            request.setAttribute("metodosPago", List.of());
             request.setAttribute("medicos", List.of());
             request.setAttribute("especialidades", List.of());
             request.setAttribute("medicosPorId", Map.of());
@@ -159,6 +185,19 @@ public class MisCitasServlet extends HttpServlet {
     }
 
     private static String vaciarCero(String valor) { return "0".equals(valor) ? "" : valor; }
+
+    private static SolicitudPagoDTO solicitudPago(HttpServletRequest request) {
+        return new SolicitudPagoDTO(
+                request.getParameter("metodoPago"),
+                new DatosFacturacionDTO(
+                        request.getParameter("tipoDocumentoFactura"),
+                        request.getParameter("numeroDocumentoFactura"),
+                        request.getParameter("nombreFactura"),
+                        request.getParameter("direccionFactura"),
+                        request.getParameter("correoFactura")
+                )
+        );
+    }
 
     private static long convertirLong(String valor) {
         try {

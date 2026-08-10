@@ -4,6 +4,7 @@ import py.fpune.soracare.config.ConexionBD;
 import py.fpune.soracare.dao.CitaDAO;
 import py.fpune.soracare.dao.EstadoCitaDAO;
 import py.fpune.soracare.dao.PacienteDAO;
+import py.fpune.soracare.dao.PagoDAO;
 import py.fpune.soracare.dto.SlotDisponibleDTO;
 import py.fpune.soracare.dto.SolicitudCitaDTO;
 import py.fpune.soracare.mvc.model.Cita;
@@ -28,10 +29,29 @@ public class CitaService {
     private final CitaDAO citaDAO = new CitaDAO();
     private final EstadoCitaDAO estadoDAO = new EstadoCitaDAO();
     private final PacienteDAO pacienteDAO = new PacienteDAO();
+    private final PagoDAO pagoDAO = new PagoDAO();
     private final DisponibilidadService disponibilidadService = new DisponibilidadService();
 
     public Cita solicitar(SolicitudCitaDTO datos, Long idUsuarioCreador)
             throws SQLException {
+        try (Connection conexion = ConexionBD.obtenerConexion()) {
+            try {
+                conexion.setAutoCommit(false);
+                Cita creada = solicitar(conexion, datos, idUsuarioCreador);
+                conexion.commit();
+                return creada;
+            } catch (Exception error) {
+                rollback(conexion, error);
+                if (error instanceof IllegalArgumentException validacion) throw validacion;
+                if (error instanceof SQLException sql) throw sql;
+                throw new SQLException("No fue posible crear la cita.", error);
+            }
+        }
+    }
+
+    Cita solicitar(Connection conexion, SolicitudCitaDTO datos, Long idUsuarioCreador)
+            throws SQLException {
+        if (conexion == null) throw new IllegalArgumentException("La conexión es obligatoria.");
         if (datos == null) throw new IllegalArgumentException("Los datos de la cita son obligatorios.");
         long idPaciente = convertirLong(datos.idPaciente(), "Seleccioná un paciente.");
         Long idHorario = convertirLongOpcional(datos.idHorario());
@@ -65,49 +85,39 @@ public class CitaService {
         OffsetDateTime fin = fecha.atTime(slot.horaFin())
                 .atZone(DisponibilidadService.ZONA_HORARIA).toOffsetDateTime();
 
-        try (Connection conexion = ConexionBD.obtenerConexion()) {
-            try {
-                conexion.setAutoCommit(false);
-                if (pacienteDAO.buscarPorId(conexion, idPaciente).isEmpty()) {
-                    throw new IllegalArgumentException("El paciente seleccionado no existe.");
-                }
-                EstadoCita estado = estadoDAO.buscarPorCodigo(conexion, ESTADO_SOLICITADA)
-                        .orElseThrow(() -> new SQLException("No existe el estado inicial de citas."));
-                if (citaDAO.existeSuperposicion(conexion, idPaciente, idMedico,
-                        idConsultorio, inicio, fin)) {
-                    throw new IllegalArgumentException(
-                            "El paciente, médico o consultorio ya posee una cita en ese horario.");
-                }
+        if (pacienteDAO.buscarPorId(conexion, idPaciente).isEmpty()) {
+            throw new IllegalArgumentException("El paciente seleccionado no existe.");
+        }
+        EstadoCita estado = estadoDAO.buscarPorCodigo(conexion, ESTADO_SOLICITADA)
+                .orElseThrow(() -> new SQLException("No existe el estado inicial de citas."));
+        if (citaDAO.existeSuperposicion(conexion, idPaciente, idMedico,
+                idConsultorio, inicio, fin)) {
+            throw new IllegalArgumentException(
+                    "El paciente, médico o consultorio ya posee una cita en ese horario.");
+        }
 
-                Cita cita = new Cita();
-                cita.setIdPaciente(idPaciente);
-                cita.setIdMedico(idMedico);
-                cita.setIdEspecialidad(idEspecialidad);
-                cita.setIdConsultorio(idConsultorio);
-                cita.setIdHorario(idHorario);
-                cita.setIdEstadoCita(estado.getIdEstadoCita());
-                cita.setFechaHoraInicio(inicio);
-                cita.setFechaHoraFin(fin);
-                cita.setMotivoConsulta(motivo);
-                cita.setObservaciones(observaciones);
-                cita.setCanalReserva(canal);
-                cita.setIdUsuarioCreador(idUsuarioCreador);
+        Cita cita = new Cita();
+        cita.setIdPaciente(idPaciente);
+        cita.setIdMedico(idMedico);
+        cita.setIdEspecialidad(idEspecialidad);
+        cita.setIdConsultorio(idConsultorio);
+        cita.setIdHorario(idHorario);
+        cita.setIdEstadoCita(estado.getIdEstadoCita());
+        cita.setFechaHoraInicio(inicio);
+        cita.setFechaHoraFin(fin);
+        cita.setMotivoConsulta(motivo);
+        cita.setObservaciones(observaciones);
+        cita.setCanalReserva(canal);
+        cita.setIdUsuarioCreador(idUsuarioCreador);
 
-                Cita creada = citaDAO.crear(conexion, cita);
-                conexion.commit();
-                return creada;
-            } catch (Exception error) {
-                rollback(conexion, error);
-                if (error instanceof IllegalArgumentException validacion) throw validacion;
-                if (error instanceof SQLException sql) {
-                    if (esSuperposicion(sql)) {
-                        throw new IllegalArgumentException(
-                                "El turno acaba de ser ocupado. Elegí otro horario.", sql);
-                    }
-                    throw sql;
-                }
-                throw new SQLException("No fue posible crear la cita.", error);
+        try {
+            return citaDAO.crear(conexion, cita);
+        } catch (SQLException error) {
+            if (esSuperposicion(error)) {
+                throw new IllegalArgumentException(
+                        "El turno acaba de ser ocupado. Elegí otro horario.", error);
             }
+            throw error;
         }
     }
 
@@ -145,6 +155,7 @@ public class CitaService {
                 EstadoCita cancelada = estadoDAO.buscarPorCodigo(conexion, ESTADO_CANCELADA)
                         .orElseThrow(() -> new SQLException("No existe el estado de cancelación."));
                 citaDAO.cancelar(conexion, idCita, cancelada.getIdEstadoCita(), idUsuario, motivoNormalizado);
+                pagoDAO.resolverCancelacion(conexion, idCita, idUsuario);
                 conexion.commit();
             } catch (Exception error) {
                 rollback(conexion, error);
@@ -180,6 +191,7 @@ public class CitaService {
                 EstadoCita cancelada = estadoDAO.buscarPorCodigo(conexion, ESTADO_CANCELADA)
                         .orElseThrow(() -> new SQLException("No existe el estado de cancelacion."));
                 citaDAO.cancelar(conexion, idCita, cancelada.getIdEstadoCita(), idUsuario, motivoNormalizado);
+                pagoDAO.resolverCancelacion(conexion, idCita, idUsuario);
                 conexion.commit();
             } catch (Exception error) {
                 rollback(conexion, error);

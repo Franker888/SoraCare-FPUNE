@@ -16,7 +16,8 @@ import java.io.IOException;
 @WebFilter(
         filterName = "FiltroAutenticacion",
         urlPatterns = {
-                "/dashboard"
+                "/dashboard",
+                "/comprobantes/*"
         }
 )
 public class FiltroAutenticacion implements Filter {

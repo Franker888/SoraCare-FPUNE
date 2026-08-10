@@ -1,0 +1,95 @@
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
+<%@ page import="py.fpune.soracare.dto.PagoResumenDTO" %>
+<%@ page import="py.fpune.soracare.service.DisponibilidadService" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
+<%!
+    private String h(String valor) {
+        if (valor == null) return "";
+        return valor.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
+    }
+%>
+<%
+    PagoResumenDTO pago = (PagoResumenDTO) request.getAttribute("pago");
+    DateTimeFormatter fechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+%>
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Pago simulado | SoraCare-FPUNE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f3f8f6; }
+        .barra { background: #0f766e; }
+        .tarjeta { border: 0; border-radius: 1rem; }
+        .qr-demo { display: grid; grid-template-columns: repeat(9, 13px); gap: 2px; width: max-content; padding: 14px; background: white; border: 1px solid #d8e4df; }
+        .qr-demo span { width: 13px; height: 13px; background: #d5e2dc; }
+        .qr-demo span:nth-child(2n), .qr-demo span:nth-child(5n), .qr-demo span:nth-child(11n) { background: #123d34; }
+    </style>
+</head>
+<body>
+<nav class="navbar barra shadow-sm"><div class="container py-2">
+    <a class="navbar-brand fw-bold text-white" href="${pageContext.request.contextPath}/mis-citas">SoraCare-FPUNE</a>
+    <a class="btn btn-outline-light btn-sm" href="${pageContext.request.contextPath}/mis-citas">Volver a mis citas</a>
+</div></nav>
+<main class="container py-4 py-md-5" style="max-width: 900px">
+    <div class="mb-4"><p class="text-success fw-semibold mb-1">Etapa 5</p>
+        <h1 class="h2">Pago simulado</h1>
+        <p class="text-secondary">Este entorno no se conecta con bancos, procesadoras ni tarjetas reales.</p>
+    </div>
+    <% if (request.getAttribute("mensajeExito") != null) { %><div class="alert alert-success"><%= h((String) request.getAttribute("mensajeExito")) %></div><% } %>
+    <% if (request.getAttribute("error") != null) { %><div class="alert alert-danger"><%= h((String) request.getAttribute("error")) %></div><% } %>
+
+    <section class="card tarjeta shadow-sm mb-4"><div class="card-body p-4">
+        <div class="row g-3">
+            <div class="col-md-7"><small class="text-secondary">Consulta</small><h2 class="h5"><%= h(pago.nombreEspecialidad()) %></h2>
+                <div><%= h(pago.nombreMedico()) %></div>
+                <div class="text-secondary"><%= pago.fechaCita().atZoneSameInstant(DisponibilidadService.ZONA_HORARIA).format(fechaHora) %></div></div>
+            <div class="col-md-5 text-md-end"><small class="text-secondary">Importe</small>
+                <div class="display-6 fw-semibold">Gs. <%= pago.monto().setScale(0).toPlainString() %></div>
+                <span class="badge <%= pago.estaConfirmado() ? "text-bg-success" : "text-bg-warning" %>"><%= h(pago.nombreEstado()) %></span></div>
+        </div>
+    </div></section>
+
+    <% if (pago.estaPendiente()) { %>
+    <section class="card tarjeta shadow-sm"><div class="card-body p-4">
+        <h2 class="h5 mb-3"><%= h(pago.nombreMetodo()) %></h2>
+        <form method="post" action="${pageContext.request.contextPath}/pagos/procesar" class="row g-3">
+            <input type="hidden" name="idPago" value="<%= pago.idPago() %>">
+            <% if ("QR".equals(pago.codigoMetodo())) { %>
+            <div class="col-md-5"><div class="qr-demo" aria-label="Código QR de demostración">
+                <% for (int i = 0; i < 81; i++) { %><span></span><% } %>
+            </div><small class="text-secondary">QR visual de demostración; no puede cobrar dinero.</small></div>
+            <div class="col-md-7"><label class="form-label" for="codigoConfirmacion">Código de confirmación de prueba</label>
+                <input class="form-control" id="codigoConfirmacion" name="codigoConfirmacion" required maxlength="100" value="QR-DEMO-OK">
+                <div class="form-text">Usá el código de prueba mostrado. No abras una aplicación bancaria.</div></div>
+            <% } else if ("TRANSFERENCIA".equals(pago.codigoMetodo())) { %>
+            <div class="col-12"><div class="alert alert-light border"><strong>Cuenta académica:</strong> Banco Demo · 000123456 · SoraCare-FPUNE<br>
+                <small>No transfieras dinero real a ninguna cuenta.</small></div></div>
+            <div class="col-12"><label class="form-label" for="referenciaTransferencia">Referencia de prueba</label>
+                <input class="form-control" id="referenciaTransferencia" name="referenciaTransferencia" required maxlength="100" value="TRANS-DEMO-OK"></div>
+            <% } else if ("TARJETA".equals(pago.codigoMetodo())) { %>
+            <div class="col-12"><div class="alert alert-warning"><strong>No ingreses el número completo ni el código de seguridad de una tarjeta.</strong> Esta pantalla solo solicita cuatro dígitos ficticios.</div></div>
+            <div class="col-md-6"><label class="form-label" for="ultimos4">Últimos 4 dígitos de prueba</label>
+                <input class="form-control" id="ultimos4" name="ultimos4" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required value="4242"></div>
+            <% } %>
+            <div class="col-12"><button class="btn btn-success">Confirmar pago simulado</button></div>
+        </form>
+    </div></section>
+    <% } else { %>
+    <section class="card tarjeta shadow-sm"><div class="card-body p-4">
+        <h2 class="h5">Operación finalizada</h2>
+        <p class="text-secondary">Referencia: <%= h(pago.referenciaExterna()) %></p>
+        <% if (pago.idComprobante() != null) { %>
+        <a class="btn btn-success" target="_blank" href="${pageContext.request.contextPath}/comprobantes/pago?id=<%= pago.idComprobante() %>">Abrir comprobante PDF</a>
+        <% } %>
+        <a class="btn btn-outline-success" href="${pageContext.request.contextPath}/mis-citas">Ver mis citas</a>
+        <div class="alert alert-info mt-3 mb-0">El envío a <strong><%= h(pago.correoFacturacion()) %></strong> quedó registrado como simulación local.</div>
+    </div></section>
+    <% } %>
+</main>
+</body>
+</html>
