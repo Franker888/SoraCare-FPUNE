@@ -9,6 +9,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class PacienteDAO {
@@ -45,6 +47,48 @@ public class PacienteDAO {
             INNER JOIN soracare.personas per
                 ON per.id_persona = pac.id_persona
             WHERE pac.id_paciente = ?
+            """;
+
+    private static final String SQL_LISTAR_TODOS = """
+            SELECT
+                per.id_persona,
+                per.nombres,
+                per.apellidos,
+                per.cedula,
+                per.fecha_nacimiento,
+                per.telefono,
+                per.correo,
+                per.direccion,
+                pac.id_paciente,
+                pac.numero_historia_clinica,
+                pac.grupo_sanguineo,
+                pac.contacto_emergencia,
+                pac.telefono_emergencia
+            FROM soracare.pacientes pac
+            INNER JOIN soracare.personas per
+                ON per.id_persona = pac.id_persona
+            ORDER BY per.apellidos, per.nombres, pac.id_paciente
+            """;
+
+    private static final String SQL_BUSCAR_POR_ID_PERSONA = """
+            SELECT
+                per.id_persona,
+                per.nombres,
+                per.apellidos,
+                per.cedula,
+                per.fecha_nacimiento,
+                per.telefono,
+                per.correo,
+                per.direccion,
+                pac.id_paciente,
+                pac.numero_historia_clinica,
+                pac.grupo_sanguineo,
+                pac.contacto_emergencia,
+                pac.telefono_emergencia
+            FROM soracare.pacientes pac
+            INNER JOIN soracare.personas per
+                ON per.id_persona = pac.id_persona
+            WHERE pac.id_persona = ?
             """;
 
     public long registrar(
@@ -147,6 +191,34 @@ public class PacienteDAO {
                     idPaciente
             );
         }
+    }
+
+    public Optional<Paciente> buscarPorIdPersona(long idPersona)
+            throws SQLException {
+        if (idPersona <= 0) {
+            throw new SQLException("El ID de la persona debe ser mayor que cero.");
+        }
+        try (Connection conexion = ConexionBD.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(SQL_BUSCAR_POR_ID_PERSONA)) {
+            sentencia.setLong(1, idPersona);
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                return resultado.next()
+                        ? Optional.of(mapearPaciente(resultado))
+                        : Optional.empty();
+            }
+        }
+    }
+
+    public List<Paciente> listarTodos() throws SQLException {
+        List<Paciente> pacientes = new ArrayList<>();
+        try (Connection conexion = ConexionBD.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(SQL_LISTAR_TODOS);
+             ResultSet resultado = sentencia.executeQuery()) {
+            while (resultado.next()) {
+                pacientes.add(mapearPaciente(resultado));
+            }
+        }
+        return pacientes;
     }
 
     public Optional<Paciente> buscarPorId(
