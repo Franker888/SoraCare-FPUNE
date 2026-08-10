@@ -49,6 +49,12 @@
             usuarioAutenticado.tieneRol(
                     "ADMINISTRADOR"
             );
+
+    boolean puedeGestionarAgenda =
+            esAdministrador
+                    || usuarioAutenticado.tieneRol(
+                    "RECEPCIONISTA"
+            );
 %>
 
 <!DOCTYPE html>
@@ -312,18 +318,31 @@
                         </h3>
 
                         <p class="text-secondary">
-                            Próximamente permitirá consultar
-                            horarios, médicos y citas.
+                            Consultar turnos disponibles,
+                            solicitar citas y administrar la agenda diaria.
                         </p>
 
-                        <button
-                                type="button"
-                                class="btn btn-outline-secondary"
-                                disabled>
+                        <% if (puedeGestionarAgenda) { %>
 
-                            Próximamente
+                        <a
+                                href="${pageContext.request.contextPath}/agenda/citas"
+                                class="btn btn-outline-success">
 
-                        </button>
+                            Ir a agenda
+
+                        </a>
+
+                        <% } else { %>
+
+                        <a
+                                href="${pageContext.request.contextPath}/disponibilidad"
+                                class="btn btn-outline-success">
+
+                            Ver disponibilidad
+
+                        </a>
+
+                        <% } %>
 
                     </div>
 

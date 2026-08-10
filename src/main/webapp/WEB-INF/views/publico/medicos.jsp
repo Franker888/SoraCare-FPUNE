@@ -585,6 +585,14 @@
 
                         </div>
 
+                        <a
+                                class="btn btn-outline-primary mt-4"
+                                href="${pageContext.request.contextPath}/disponibilidad?idMedico=<%= medico.getIdMedico() %><%= especialidadPrincipal == null ? "" : "&idEspecialidad=" + especialidadPrincipal.getIdEspecialidad() %>">
+
+                            Ver disponibilidad
+
+                        </a>
+
                     </div>
 
                 </div>

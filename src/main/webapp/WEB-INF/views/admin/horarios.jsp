@@ -210,13 +210,16 @@
 
         </a>
 
-        <a
-                class="btn btn-outline-light btn-sm"
-                href="${pageContext.request.contextPath}/admin/inicio">
-
-            Volver a administración
-
-        </a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-light btn-sm"
+               href="${pageContext.request.contextPath}/admin/excepciones-horarios">
+                Gestionar excepciones
+            </a>
+            <a class="btn btn-outline-light btn-sm"
+               href="${pageContext.request.contextPath}/admin/inicio">
+                Volver a administración
+            </a>
+        </div>
 
     </div>
 
