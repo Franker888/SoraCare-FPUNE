@@ -43,8 +43,20 @@ try {
 
     $shutdown = Join-Path $tomcat 'bin\shutdown.bat'
     $startup = Join-Path $tomcat 'bin\startup.bat'
-    & $shutdown 2>$null | Out-Null
-    Start-Sleep -Seconds 2
+    $errorActionAnterior = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & $shutdown *> $null
+        $codigoShutdown = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $errorActionAnterior
+    }
+
+    if ($codigoShutdown -eq 0) {
+        Start-Sleep -Seconds 2
+    } else {
+        Write-Host 'Tomcat ya estaba detenido; se continuara con el inicio.' -ForegroundColor Yellow
+    }
 
     $env:JAVA_HOME = $javaHomeEtapa5
     $env:CATALINA_HOME = $tomcat

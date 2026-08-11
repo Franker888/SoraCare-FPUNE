@@ -77,7 +77,7 @@
             <div class="col-md-6"><label class="form-label" for="ultimos4">Últimos 4 dígitos de prueba</label>
                 <input class="form-control" id="ultimos4" name="ultimos4" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required value="4242"></div>
             <% } %>
-            <div class="col-12"><button class="btn btn-success">Confirmar pago simulado</button></div>
+            <div class="col-12"><button class="btn btn-success">Realizar Pago</button></div>
         </form>
     </div></section>
     <% } else { %>
