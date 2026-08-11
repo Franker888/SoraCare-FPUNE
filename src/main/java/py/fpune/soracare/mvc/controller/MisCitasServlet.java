@@ -152,6 +152,7 @@ public class MisCitasServlet extends HttpServlet {
             List<LocalDate> fechasDisponibles = disponibilidadService.listarFechasDisponibles(
                     LocalDate.now(DisponibilidadService.ZONA_HORARIA),
                     120, 30, idMedico, idEspecialidad);
+            boolean busquedaRealizada = "turnos".equals(request.getParameter("busqueda"));
             LocalDate fechaSeleccionada = fechasDisponibles.contains(fecha)
                     ? fecha
                     : fechasDisponibles.stream().findFirst().orElse(null);
@@ -165,9 +166,10 @@ public class MisCitasServlet extends HttpServlet {
             request.setAttribute("paciente", paciente);
             request.setAttribute("fecha", fechaSeleccionada);
             request.setAttribute("fechasDisponibles", fechasDisponibles);
+            request.setAttribute("busquedaRealizada", busquedaRealizada);
             request.setAttribute("idMedicoSeleccionado", idMedico);
             request.setAttribute("idEspecialidadSeleccionada", idEspecialidad);
-            request.setAttribute("slots", fechaSeleccionada == null
+            request.setAttribute("slots", !busquedaRealizada || fechaSeleccionada == null
                     ? List.of()
                     : disponibilidadService.listar(fechaSeleccionada, idMedico, idEspecialidad));
             request.setAttribute("citas", citaService.listarPorPaciente(paciente.getIdPaciente()).stream()
@@ -191,6 +193,8 @@ public class MisCitasServlet extends HttpServlet {
             if (request.getAttribute("error") == null) request.setAttribute("error", "No fue posible cargar tus citas.");
             request.setAttribute("fecha", fecha);
             request.setAttribute("fechasDisponibles", List.of());
+            request.setAttribute("busquedaRealizada",
+                    "turnos".equals(request.getParameter("busqueda")));
             request.setAttribute("slots", List.of());
             request.setAttribute("citas", List.of());
             request.setAttribute("pagos", List.of());

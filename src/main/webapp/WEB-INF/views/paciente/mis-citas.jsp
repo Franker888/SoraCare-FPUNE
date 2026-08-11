@@ -59,6 +59,7 @@
     LocalDate fecha = (LocalDate) request.getAttribute("fecha");
     Long idMedico = (Long) request.getAttribute("idMedicoSeleccionado");
     Integer idEspecialidad = (Integer) request.getAttribute("idEspecialidadSeleccionada");
+    boolean busquedaRealizada = Boolean.TRUE.equals(request.getAttribute("busquedaRealizada"));
     DateTimeFormatter formatoFechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     DateTimeFormatter formatoFechaDisponible = DateTimeFormatter.ofPattern(
             "EEEE dd/MM/yyyy", new Locale("es", "PY"));
@@ -116,6 +117,7 @@
         <div class="card-body p-4">
             <h2 class="h5 mb-3">1. Buscar un turno</h2>
             <form method="get" action="${pageContext.request.contextPath}/mis-citas" class="row g-3 align-items-end">
+                <input type="hidden" name="busqueda" value="turnos">
                 <div class="col-md-4">
                     <label for="idEspecialidad" class="form-label">Especialidad</label>
                     <select id="idEspecialidad" name="idEspecialidad" class="form-select">
@@ -172,6 +174,7 @@
             </div>
             <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="row g-3">
                 <input type="hidden" name="fecha" value="<%= fecha %>">
+                <input type="hidden" name="busqueda" value="turnos">
                 <input type="hidden" name="idMedico" value="<%= idMedico == null ? "" : idMedico %>">
                 <input type="hidden" name="idEspecialidad" value="<%= idEspecialidad == null ? "" : idEspecialidad %>">
                 <div class="col-12">
@@ -239,6 +242,12 @@
             </form>
         </div>
     </section>
+    <% } %>
+
+    <% if (busquedaRealizada && slots.isEmpty() && !fechasDisponibles.isEmpty()) { %>
+    <div class="alert alert-info mb-4">
+        Ya no quedan turnos libres para esa búsqueda. Elegí otra fecha y volvé a consultar.
+    </div>
     <% } %>
 
     <section>
