@@ -28,6 +28,8 @@
         body { background: #f3f8f6; }
         .barra { background: #0f766e; }
         .tarjeta { border: 0; border-radius: 1rem; }
+        .tarjeta-demo { background: linear-gradient(135deg, #123d34, #0f766e); border-radius: 1rem; color: white; }
+        .marca-tarjeta { letter-spacing: .04em; }
         .qr-demo { display: grid; grid-template-columns: repeat(9, 13px); gap: 2px; width: max-content; padding: 14px; background: white; border: 1px solid #d8e4df; }
         .qr-demo span { width: 13px; height: 13px; background: #d5e2dc; }
         .qr-demo span:nth-child(2n), .qr-demo span:nth-child(5n), .qr-demo span:nth-child(11n) { background: #123d34; }
@@ -119,9 +121,53 @@
                 </div>
             </div>
             <% } else if ("TARJETA".equals(pago.codigoMetodo())) { %>
-            <div class="col-12"><div class="alert alert-warning"><strong>No ingreses el número completo ni el código de seguridad de una tarjeta.</strong> Esta pantalla solo solicita cuatro dígitos ficticios.</div></div>
-            <div class="col-md-6"><label class="form-label" for="ultimos4">Últimos 4 dígitos de prueba</label>
-                <input class="form-control" id="ultimos4" name="ultimos4" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required value="4242"></div>
+            <div class="col-12">
+                <div class="tarjeta-demo p-4">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <small class="opacity-75">Tarjeta de prueba</small>
+                            <div class="fs-5 mt-3" id="numeroVista">4242 4242 4242 4242</div>
+                        </div>
+                        <strong class="marca-tarjeta" id="marcaTarjeta">VISA</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <div><small class="opacity-75 d-block">Titular</small><span id="titularVista">PACIENTE DE PRUEBA</span></div>
+                        <div><small class="opacity-75 d-block">Vence</small><span id="vencimientoVista">12/30</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="numeroTarjeta">Número de tarjeta</label>
+                <div class="input-group">
+                    <input class="form-control" id="numeroTarjeta" name="numeroTarjeta"
+                           inputmode="numeric" autocomplete="off" maxlength="19" required
+                           value="4242 4242 4242 4242" aria-describedby="ayudaTarjeta">
+                    <span class="input-group-text" id="marcaDetectada">Visa</span>
+                </div>
+                <div class="form-text" id="ayudaTarjeta">
+                    Tarjetas ficticias habilitadas: Visa 4242 4242 4242 4242 y Mastercard 5555 5555 5555 4444.
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="nombreTitularTarjeta">Nombre del titular</label>
+                <input class="form-control" id="nombreTitularTarjeta" name="nombreTitularTarjeta"
+                       autocomplete="off" maxlength="80" required value="PACIENTE DE PRUEBA">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="vencimientoTarjeta">Vencimiento</label>
+                <input class="form-control" id="vencimientoTarjeta" name="vencimientoTarjeta"
+                       inputmode="numeric" autocomplete="off" maxlength="5" placeholder="MM/AA"
+                       pattern="(0[1-9]|1[0-2])/[0-9]{2}" required value="12/30">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="codigoSeguridadTarjeta">CVV/CVC</label>
+                <input class="form-control" type="password" id="codigoSeguridadTarjeta"
+                       name="codigoSeguridadTarjeta" inputmode="numeric" autocomplete="off"
+                       minlength="3" maxlength="3" pattern="[0-9]{3}" required value="123">
+            </div>
+            <div class="col-12">
+                <small class="text-secondary">Esta simulación acepta únicamente los datos ficticios indicados.</small>
+            </div>
             <% } %>
             <div class="col-12"><button class="btn btn-success">Realizar Pago</button></div>
         </form>
@@ -138,5 +184,50 @@
     </div></section>
     <% } %>
 </main>
+<% if (pago.estaPendiente() && "TARJETA".equals(pago.codigoMetodo())) { %>
+<script>
+    const numeroTarjeta = document.getElementById('numeroTarjeta');
+    const titularTarjeta = document.getElementById('nombreTitularTarjeta');
+    const vencimientoTarjeta = document.getElementById('vencimientoTarjeta');
+    const marcaTarjeta = document.getElementById('marcaTarjeta');
+    const marcaDetectada = document.getElementById('marcaDetectada');
+    const numeroVista = document.getElementById('numeroVista');
+    const titularVista = document.getElementById('titularVista');
+    const vencimientoVista = document.getElementById('vencimientoVista');
+
+    function detectarMarca(numero) {
+        if (numero.startsWith('4')) return 'VISA';
+        const inicioDosDigitos = Number(numero.substring(0, 2));
+        const inicioCuatroDigitos = Number(numero.substring(0, 4));
+        if ((inicioDosDigitos >= 51 && inicioDosDigitos <= 55)
+                || (inicioCuatroDigitos >= 2221 && inicioCuatroDigitos <= 2720)) {
+            return 'MASTERCARD';
+        }
+        return 'NO DETECTADA';
+    }
+
+    numeroTarjeta.addEventListener('input', () => {
+        const digitos = numeroTarjeta.value.replace(/\D/g, '').substring(0, 16);
+        numeroTarjeta.value = digitos.replace(/(.{4})/g, '$1 ').trim();
+        const marca = detectarMarca(digitos);
+        marcaTarjeta.textContent = marca;
+        marcaDetectada.textContent = marca === 'NO DETECTADA' ? 'Sin detectar' :
+                marca.charAt(0) + marca.substring(1).toLowerCase();
+        numeroVista.textContent = numeroTarjeta.value || '0000 0000 0000 0000';
+    });
+
+    titularTarjeta.addEventListener('input', () => {
+        titularVista.textContent = titularTarjeta.value.trim().toUpperCase() || 'TITULAR';
+    });
+
+    vencimientoTarjeta.addEventListener('input', () => {
+        const digitos = vencimientoTarjeta.value.replace(/\D/g, '').substring(0, 4);
+        vencimientoTarjeta.value = digitos.length > 2
+                ? digitos.substring(0, 2) + '/' + digitos.substring(2)
+                : digitos;
+        vencimientoVista.textContent = vencimientoTarjeta.value || 'MM/AA';
+    });
+</script>
+<% } %>
 </body>
 </html>

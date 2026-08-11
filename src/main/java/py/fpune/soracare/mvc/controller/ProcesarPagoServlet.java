@@ -11,6 +11,7 @@ import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 import py.fpune.soracare.mvc.model.Paciente;
 import py.fpune.soracare.service.PacienteService;
 import py.fpune.soracare.service.PagoService;
+import py.fpune.soracare.service.TarjetaPruebaService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -20,11 +21,13 @@ public class ProcesarPagoServlet extends HttpServlet {
 
     private PagoService pagoService;
     private PacienteService pacienteService;
+    private TarjetaPruebaService tarjetaPruebaService;
 
     @Override
     public void init() {
         pagoService = new PagoService();
         pacienteService = new PacienteService();
+        tarjetaPruebaService = new TarjetaPruebaService();
     }
 
     @Override
@@ -87,19 +90,19 @@ public class ProcesarPagoServlet extends HttpServlet {
                 convertirLong(request.getParameter("idPago")), paciente.getIdPaciente());
     }
 
-    private static String detalleSimulacion(HttpServletRequest request, String metodo) {
+    private String detalleSimulacion(HttpServletRequest request, String metodo) {
         return switch (metodo) {
             case "QR" -> normalizar(request.getParameter("codigoConfirmacion"),
                     "Ingresa el codigo de confirmacion mostrado en la simulacion QR.");
             case "TRANSFERENCIA" -> normalizar(request.getParameter("referenciaTransferencia"),
                     "Ingresa una referencia de transferencia de prueba.");
             case "TARJETA" -> {
-                String ultimos4 = normalizar(request.getParameter("ultimos4"),
-                        "Ingresa los ultimos cuatro digitos de una tarjeta de prueba.");
-                if (!ultimos4.matches("\\d{4}")) {
-                    throw new IllegalArgumentException("Los ultimos cuatro digitos deben ser numericos.");
-                }
-                yield "TARJETA-" + ultimos4;
+                TarjetaPruebaService.Resultado resultado = tarjetaPruebaService.validar(
+                        request.getParameter("numeroTarjeta"),
+                        request.getParameter("vencimientoTarjeta"),
+                        request.getParameter("nombreTitularTarjeta"),
+                        request.getParameter("codigoSeguridadTarjeta"));
+                yield "TARJETA-" + resultado.marca() + "-" + resultado.ultimos4();
             }
             default -> throw new IllegalArgumentException(
                     "El pago en efectivo debe ser confirmado por recepcion.");
