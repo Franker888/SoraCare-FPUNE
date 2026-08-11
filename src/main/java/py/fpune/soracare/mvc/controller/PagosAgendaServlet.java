@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @WebServlet("/agenda/pagos")
@@ -114,21 +112,12 @@ public class PagosAgendaServlet extends HttpServlet {
         return new FiltroAgendaPagosDTO(
                 parametro(request, "cedula"),
                 parametro(request, "metodo"),
-                parametro(request, "estado"),
-                convertirFecha(request.getParameter("fechaDesde"), "La fecha desde no es valida."),
-                convertirFecha(request.getParameter("fechaHasta"), "La fecha hasta no es valida."),
+                "",
+                null,
+                null,
                 convertirPagina(request.getParameter("pagina")),
                 TAMANO_PAGINA
         );
-    }
-
-    private static LocalDate convertirFecha(String valor, String mensaje) {
-        if (valor == null || valor.isBlank()) return null;
-        try {
-            return LocalDate.parse(valor.strip());
-        } catch (DateTimeParseException error) {
-            throw new IllegalArgumentException(mensaje, error);
-        }
     }
 
     private static int convertirPagina(String valor) {
@@ -149,9 +138,7 @@ public class PagosAgendaServlet extends HttpServlet {
 
     private static String construirConsultaFiltros(HttpServletRequest request) {
         StringBuilder consulta = new StringBuilder();
-        for (String nombre : new String[]{
-                "cedula", "metodo", "estado", "fechaDesde", "fechaHasta", "pagina"
-        }) {
+        for (String nombre : new String[]{"cedula", "metodo", "pagina"}) {
             String valor = parametro(request, nombre);
             if (valor.isBlank()) continue;
             if (!consulta.isEmpty()) consulta.append('&');

@@ -101,6 +101,15 @@ public class PagoService {
                     "La cedula debe contener solamente numeros."
             );
         }
+        if (!cedula.isBlank()) {
+            try {
+                long numeroCedula = Long.parseLong(cedula);
+                if (numeroCedula <= 0) throw new NumberFormatException();
+                cedula = Long.toString(numeroCedula);
+            } catch (NumberFormatException error) {
+                throw new IllegalArgumentException("La cedula ingresada no es valida.", error);
+            }
+        }
         String metodo = filtro.metodo().strip().toUpperCase(Locale.ROOT);
         if (!metodo.isBlank() && !METODOS.contains(metodo)) {
             throw new IllegalArgumentException("El metodo de pago seleccionado no es valido.");

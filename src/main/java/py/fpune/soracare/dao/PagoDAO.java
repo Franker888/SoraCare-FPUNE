@@ -333,7 +333,7 @@ public class PagoDAO {
     private static String condicionesAgenda(FiltroAgendaPagosDTO filtro) {
         StringBuilder condiciones = new StringBuilder(" WHERE 1 = 1");
         if (!filtro.cedula().isBlank()) {
-            condiciones.append(" AND paciente_persona.cedula::TEXT LIKE ?");
+            condiciones.append(" AND paciente_persona.cedula = ?");
         }
         if (!filtro.metodo().isBlank()) {
             condiciones.append(" AND mp.codigo = ?");
@@ -355,7 +355,7 @@ public class PagoDAO {
     ) throws SQLException {
         int indice = 1;
         if (!filtro.cedula().isBlank()) {
-            sentencia.setString(indice++, filtro.cedula() + "%");
+            sentencia.setLong(indice++, Long.parseLong(filtro.cedula()));
         }
         if (!filtro.metodo().isBlank()) {
             sentencia.setString(indice++, filtro.metodo());

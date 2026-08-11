@@ -22,9 +22,6 @@
     private String consultaPagina(FiltroAgendaPagosDTO filtro, int pagina) {
         return "cedula=" + u(filtro.cedula())
                 + "&metodo=" + u(filtro.metodo())
-                + "&estado=" + u(filtro.estado())
-                + "&fechaDesde=" + u(filtro.fechaDesde() == null ? "" : filtro.fechaDesde().toString())
-                + "&fechaHasta=" + u(filtro.fechaHasta() == null ? "" : filtro.fechaHasta().toString())
                 + "&pagina=" + pagina;
     }
 %>
@@ -110,10 +107,11 @@
         <div class="card-body p-4">
             <div class="mb-4">
                 <h2 class="h4 mb-1">Buscar operaciones</h2>
-                <p class="text-secondary mb-0">Filtrá por paciente, fecha, método o estado del pago.</p>
+                <p class="text-secondary mb-0">Ingresá la cédula del paciente o elegí directamente un método de pago.</p>
             </div>
-            <form method="get" action="${pageContext.request.contextPath}/agenda/pagos" class="row g-3">
-                <div class="col-lg-4">
+            <form method="get" action="${pageContext.request.contextPath}/agenda/pagos" class="row g-3 align-items-end">
+                <input type="hidden" name="metodo" value="<%= h(filtro.metodo()) %>">
+                <div class="col-lg-7">
                     <label class="form-label" for="cedula">Cédula del paciente</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -121,50 +119,31 @@
                                pattern="[0-9]*" maxlength="20" placeholder="Ej.: 1234567"
                                value="<%= h(filtro.cedula()) %>">
                     </div>
-                    <div class="form-text">Podés escribir la cédula completa o sus primeros números.</div>
+                    <div class="form-text">Ingresá el número completo para encontrar exactamente al paciente.</div>
                 </div>
-                <div class="col-sm-6 col-lg-3">
-                    <label class="form-label" for="fechaDesde">Desde</label>
-                    <input class="form-control" id="fechaDesde" name="fechaDesde" type="date"
-                           value="<%= filtro.fechaDesde() == null ? "" : filtro.fechaDesde() %>">
-                </div>
-                <div class="col-sm-6 col-lg-3">
-                    <label class="form-label" for="fechaHasta">Hasta</label>
-                    <input class="form-control" id="fechaHasta" name="fechaHasta" type="date"
-                           value="<%= filtro.fechaHasta() == null ? "" : filtro.fechaHasta() %>">
-                </div>
-                <div class="col-lg-2">
-                    <label class="form-label" for="estado">Estado</label>
-                    <select class="form-select" id="estado" name="estado">
-                        <option value="" <%= filtro.estado().isBlank() ? "selected" : "" %>>Todos</option>
-                        <option value="PENDIENTE" <%= "PENDIENTE".equals(filtro.estado()) ? "selected" : "" %>>Pendientes</option>
-                        <option value="CONFIRMADO" <%= "CONFIRMADO".equals(filtro.estado()) ? "selected" : "" %>>Confirmados</option>
-                        <option value="ANULADO" <%= "ANULADO".equals(filtro.estado()) ? "selected" : "" %>>Anulados</option>
-                        <option value="REEMBOLSADO" <%= "REEMBOLSADO".equals(filtro.estado()) ? "selected" : "" %>>Reembolsados</option>
-                    </select>
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label d-block">Método de pago</label>
-                    <div class="metodos-filtro" role="group" aria-label="Filtrar por método de pago">
-                        <input class="btn-check" type="radio" name="metodo" id="metodo-todos" value=""
-                               <%= filtro.metodo().isBlank() ? "checked" : "" %>>
-                        <label class="btn btn-outline-primary" for="metodo-todos">Todos</label>
-                        <% for (MetodoPago metodo : metodos) {
-                            String codigoMetodo = metodo.getCodigo();
-                            String idMetodo = "metodo-" + codigoMetodo.toLowerCase();
-                        %>
-                        <input class="btn-check" type="radio" name="metodo" id="<%= h(idMetodo) %>"
-                               value="<%= h(codigoMetodo) %>" <%= codigoMetodo.equals(filtro.metodo()) ? "checked" : "" %>>
-                        <label class="btn btn-outline-primary" for="<%= h(idMetodo) %>"><%= h(metodo.getNombre()) %></label>
-                        <% } %>
-                    </div>
-                </div>
-                <div class="col-12 d-flex flex-wrap gap-2 pt-2">
-                    <button class="btn btn-primary px-4" type="submit"><i class="bi bi-search me-2"></i>Buscar</button>
-                    <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/agenda/pagos">Limpiar filtros</a>
+                <div class="col-lg-5 d-flex flex-wrap gap-2">
+                    <button class="btn btn-primary px-4" type="submit"><i class="bi bi-search me-2"></i>Buscar paciente</button>
+                    <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/agenda/pagos">Limpiar</a>
                 </div>
             </form>
+
+            <hr class="my-4">
+            <div>
+                <label class="form-label d-block">Separar por método de pago</label>
+                <form method="get" action="${pageContext.request.contextPath}/agenda/pagos"
+                      class="metodos-filtro" role="group" aria-label="Filtrar por método de pago">
+                    <input type="hidden" name="cedula" value="<%= h(filtro.cedula()) %>">
+                    <button class="btn <%= filtro.metodo().isBlank() ? "btn-primary" : "btn-outline-primary" %>"
+                            type="submit" name="metodo" value="">Todos</button>
+                    <% for (MetodoPago metodo : metodos) {
+                        String codigoMetodo = metodo.getCodigo();
+                    %>
+                    <button class="btn <%= codigoMetodo.equals(filtro.metodo()) ? "btn-primary" : "btn-outline-primary" %>"
+                            type="submit" name="metodo" value="<%= h(codigoMetodo) %>"><%= h(metodo.getNombre()) %></button>
+                    <% } %>
+                </form>
+                <div class="form-text mt-2">El filtro se aplica inmediatamente al pulsar un método.</div>
+            </div>
         </div>
     </section>
 
@@ -185,7 +164,7 @@
 
             <% if (pagos.isEmpty()) { %>
             <div class="alert alert-light border mb-0">
-                No encontramos pagos con estos filtros. Revisá la cédula, las fechas o seleccioná otro método.
+                No encontramos pagos para esa cédula y método. Revisá el número o seleccioná otra opción.
             </div>
             <% } else { %>
             <div class="table-responsive">
@@ -211,9 +190,6 @@
                                 <input type="hidden" name="idPago" value="<%= pago.idPago() %>">
                                 <input type="hidden" name="cedula" value="<%= h(filtro.cedula()) %>">
                                 <input type="hidden" name="metodo" value="<%= h(filtro.metodo()) %>">
-                                <input type="hidden" name="estado" value="<%= h(filtro.estado()) %>">
-                                <input type="hidden" name="fechaDesde" value="<%= filtro.fechaDesde() == null ? "" : filtro.fechaDesde() %>">
-                                <input type="hidden" name="fechaHasta" value="<%= filtro.fechaHasta() == null ? "" : filtro.fechaHasta() %>">
                                 <input type="hidden" name="pagina" value="<%= resultado.paginaActual() %>">
                                 <button class="btn btn-sm btn-success">Confirmar cobro</button>
                             </form>
