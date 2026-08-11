@@ -15,7 +15,7 @@ public class ComprobantePdfServiceValidacionTest {
                 "QR", "Codigo QR", "CONFIRMADO", "Confirmado",
                 new BigDecimal("150000.00"), "PYG", "PAGO-25-QR-DEMO",
                 OffsetDateTime.now(), OffsetDateTime.now().plusDays(3),
-                "Paciente Prueba", "Medico Prueba", "Cardiologia",
+                "Paciente Prueba", "1234567", "Medico Prueba", "Cardiologia",
                 "paciente@example.com", null, null, null
         );
         DatosFacturacionDTO facturacion = new DatosFacturacionDTO(

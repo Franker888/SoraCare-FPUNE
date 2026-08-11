@@ -3,7 +3,9 @@ package py.fpune.soracare.dao;
 import py.fpune.soracare.config.ConexionBD;
 import py.fpune.soracare.dto.ComprobantePagoDTO;
 import py.fpune.soracare.dto.DatosFacturacionDTO;
+import py.fpune.soracare.dto.FiltroAgendaPagosDTO;
 import py.fpune.soracare.dto.PagoResumenDTO;
+import py.fpune.soracare.dto.ResultadoAgendaPagosDTO;
 import py.fpune.soracare.mvc.model.MetodoPago;
 
 import java.math.BigDecimal;
@@ -12,24 +14,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class PagoDAO {
 
-    private static final String RESUMEN_SELECT = """
-            SELECT p.id_pago, p.id_cita, c.id_paciente,
-                   mp.codigo AS codigo_metodo, mp.nombre AS nombre_metodo,
-                   ep.codigo AS codigo_estado, ep.nombre AS nombre_estado,
-                   p.monto, p.moneda, p.referencia_externa, p.fecha_confirmacion,
-                   c.fecha_hora_inicio AS fecha_cita,
-                   CONCAT_WS(' ', paciente_persona.nombres, paciente_persona.apellidos) AS nombre_paciente,
-                   CONCAT_WS(' ', medico_persona.nombres, medico_persona.apellidos) AS nombre_medico,
-                   especialidad.nombre AS nombre_especialidad,
-                   datos.correo AS correo_facturacion,
-                   comprobante.id_comprobante, comprobante.numero_comprobante,
-                   comprobante.estado_envio_email
+    private static final ZoneId ZONA_HORARIA = ZoneId.of("America/Asuncion");
+
+    private static final String RESUMEN_FROM = """
               FROM soracare.pagos p
               INNER JOIN soracare.metodos_pago mp
                       ON mp.id_metodo_pago = p.id_metodo_pago
@@ -51,14 +45,29 @@ public class PagoDAO {
                      ON comprobante.id_pago = p.id_pago
             """;
 
+    private static final String RESUMEN_SELECT = """
+            SELECT p.id_pago, p.id_cita, c.id_paciente,
+                   mp.codigo AS codigo_metodo, mp.nombre AS nombre_metodo,
+                   ep.codigo AS codigo_estado, ep.nombre AS nombre_estado,
+                   p.monto, p.moneda, p.referencia_externa, p.fecha_confirmacion,
+                   c.fecha_hora_inicio AS fecha_cita,
+                   CONCAT_WS(' ', paciente_persona.nombres, paciente_persona.apellidos) AS nombre_paciente,
+                   paciente_persona.cedula::TEXT AS cedula_paciente,
+                   CONCAT_WS(' ', medico_persona.nombres, medico_persona.apellidos) AS nombre_medico,
+                   especialidad.nombre AS nombre_especialidad,
+                   datos.correo AS correo_facturacion,
+                   comprobante.id_comprobante, comprobante.numero_comprobante,
+                   comprobante.estado_envio_email
+            """ + RESUMEN_FROM;
+
     public List<MetodoPago> listarMetodosActivos() throws SQLException {
         String sql = """
                 SELECT id_metodo_pago, codigo, nombre, descripcion, requiere_referencia
                   FROM soracare.metodos_pago
                  WHERE activo = TRUE
                  ORDER BY CASE codigo
-                     WHEN 'QR' THEN 1 WHEN 'TARJETA' THEN 2
-                     WHEN 'TRANSFERENCIA' THEN 3 ELSE 4 END
+                     WHEN 'QR' THEN 1 WHEN 'TRANSFERENCIA' THEN 2
+                     WHEN 'TARJETA' THEN 3 WHEN 'EFECTIVO' THEN 4 ELSE 5 END
                 """;
         List<MetodoPago> metodos = new ArrayList<>();
         try (Connection conexion = ConexionBD.obtenerConexion();
@@ -236,6 +245,133 @@ public class PagoDAO {
                  LIMIT 300
                 """;
         return listar(sql, null);
+    }
+
+    public ResultadoAgendaPagosDTO buscarParaAgenda(FiltroAgendaPagosDTO filtro)
+            throws SQLException {
+        try (Connection conexion = ConexionBD.obtenerConexion()) {
+            long totalResultados = contarCoincidencias(conexion, filtro);
+            int totalPaginas = totalResultados == 0
+                    ? 0
+                    : (int) Math.ceil((double) totalResultados / filtro.tamanoPagina());
+            int paginaActual = totalPaginas == 0
+                    ? 1
+                    : Math.min(filtro.pagina(), totalPaginas);
+            FiltroAgendaPagosDTO filtroPaginado = new FiltroAgendaPagosDTO(
+                    filtro.cedula(), filtro.metodo(), filtro.estado(),
+                    filtro.fechaDesde(), filtro.fechaHasta(), paginaActual,
+                    filtro.tamanoPagina()
+            );
+            List<PagoResumenDTO> pagos = listarAgenda(conexion, filtroPaginado);
+            long[] resumen = contarResumenOperativo(conexion);
+            return new ResultadoAgendaPagosDTO(
+                    pagos, totalResultados, paginaActual, totalPaginas,
+                    filtro.tamanoPagina(), resumen[0], resumen[1], resumen[2]
+            );
+        }
+    }
+
+    private long contarCoincidencias(
+            Connection conexion, FiltroAgendaPagosDTO filtro
+    ) throws SQLException {
+        String sql = "SELECT COUNT(*) " + RESUMEN_FROM + condicionesAgenda(filtro);
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            aplicarFiltrosAgenda(sentencia, filtro);
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                resultado.next();
+                return resultado.getLong(1);
+            }
+        }
+    }
+
+    private List<PagoResumenDTO> listarAgenda(
+            Connection conexion, FiltroAgendaPagosDTO filtro
+    ) throws SQLException {
+        String sql = RESUMEN_SELECT + condicionesAgenda(filtro) + """
+                 ORDER BY CASE ep.codigo WHEN 'PENDIENTE' THEN 0 ELSE 1 END,
+                          c.fecha_hora_inicio, p.id_pago DESC
+                 LIMIT ? OFFSET ?
+                """;
+        List<PagoResumenDTO> pagos = new ArrayList<>();
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            int indice = aplicarFiltrosAgenda(sentencia, filtro);
+            sentencia.setInt(indice++, filtro.tamanoPagina());
+            sentencia.setInt(indice, filtro.desplazamiento());
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                while (resultado.next()) pagos.add(mapear(resultado));
+            }
+        }
+        return pagos;
+    }
+
+    private long[] contarResumenOperativo(Connection conexion) throws SQLException {
+        String sql = """
+                SELECT COUNT(*) FILTER (WHERE ep.codigo = 'PENDIENTE') AS pendientes,
+                       COUNT(*) FILTER (
+                           WHERE ep.codigo = 'PENDIENTE' AND mp.codigo = 'EFECTIVO'
+                       ) AS efectivo_pendiente,
+                       COUNT(*) FILTER (
+                           WHERE ep.codigo = 'PENDIENTE' AND mp.codigo <> 'EFECTIVO'
+                       ) AS digital_pendiente
+                  FROM soracare.pagos p
+                  INNER JOIN soracare.metodos_pago mp
+                          ON mp.id_metodo_pago = p.id_metodo_pago
+                  INNER JOIN soracare.estados_pago ep
+                          ON ep.id_estado_pago = p.id_estado_pago
+                """;
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql);
+             ResultSet resultado = sentencia.executeQuery()) {
+            resultado.next();
+            return new long[]{
+                    resultado.getLong("pendientes"),
+                    resultado.getLong("efectivo_pendiente"),
+                    resultado.getLong("digital_pendiente")
+            };
+        }
+    }
+
+    private static String condicionesAgenda(FiltroAgendaPagosDTO filtro) {
+        StringBuilder condiciones = new StringBuilder(" WHERE 1 = 1");
+        if (!filtro.cedula().isBlank()) {
+            condiciones.append(" AND paciente_persona.cedula::TEXT LIKE ?");
+        }
+        if (!filtro.metodo().isBlank()) {
+            condiciones.append(" AND mp.codigo = ?");
+        }
+        if (!filtro.estado().isBlank()) {
+            condiciones.append(" AND ep.codigo = ?");
+        }
+        if (filtro.fechaDesde() != null) {
+            condiciones.append(" AND c.fecha_hora_inicio >= ?");
+        }
+        if (filtro.fechaHasta() != null) {
+            condiciones.append(" AND c.fecha_hora_inicio < ?");
+        }
+        return condiciones.toString();
+    }
+
+    private static int aplicarFiltrosAgenda(
+            PreparedStatement sentencia, FiltroAgendaPagosDTO filtro
+    ) throws SQLException {
+        int indice = 1;
+        if (!filtro.cedula().isBlank()) {
+            sentencia.setString(indice++, filtro.cedula() + "%");
+        }
+        if (!filtro.metodo().isBlank()) {
+            sentencia.setString(indice++, filtro.metodo());
+        }
+        if (!filtro.estado().isBlank()) {
+            sentencia.setString(indice++, filtro.estado());
+        }
+        if (filtro.fechaDesde() != null) {
+            sentencia.setObject(indice++, filtro.fechaDesde()
+                    .atStartOfDay(ZONA_HORARIA).toOffsetDateTime());
+        }
+        if (filtro.fechaHasta() != null) {
+            sentencia.setObject(indice++, filtro.fechaHasta().plusDays(1)
+                    .atStartOfDay(ZONA_HORARIA).toOffsetDateTime());
+        }
+        return indice;
     }
 
     public void bloquear(Connection conexion, long idPago) throws SQLException {
@@ -465,6 +601,7 @@ public class PagoDAO {
                 resultado.getObject("fecha_confirmacion", OffsetDateTime.class),
                 resultado.getObject("fecha_cita", OffsetDateTime.class),
                 resultado.getString("nombre_paciente"),
+                resultado.getString("cedula_paciente"),
                 resultado.getString("nombre_medico"),
                 resultado.getString("nombre_especialidad"),
                 resultado.getString("correo_facturacion"),

@@ -4,7 +4,9 @@ import py.fpune.soracare.config.ConexionBD;
 import py.fpune.soracare.dao.PagoDAO;
 import py.fpune.soracare.dto.ComprobantePagoDTO;
 import py.fpune.soracare.dto.DatosFacturacionDTO;
+import py.fpune.soracare.dto.FiltroAgendaPagosDTO;
 import py.fpune.soracare.dto.PagoResumenDTO;
+import py.fpune.soracare.dto.ResultadoAgendaPagosDTO;
 import py.fpune.soracare.dto.SolicitudPagoDTO;
 import py.fpune.soracare.mvc.model.Cita;
 import py.fpune.soracare.mvc.model.MetodoPago;
@@ -22,6 +24,8 @@ public class PagoService {
 
     private static final Set<String> METODOS =
             Set.of("EFECTIVO", "QR", "TRANSFERENCIA", "TARJETA");
+    private static final Set<String> ESTADOS_AGENDA =
+            Set.of("PENDIENTE", "CONFIRMADO", "ANULADO", "REEMBOLSADO");
     private static final Set<String> TIPOS_DOCUMENTO =
             Set.of("CI", "RUC", "PASAPORTE");
     private static final Pattern CORREO = Pattern.compile(
@@ -84,6 +88,40 @@ public class PagoService {
 
     public List<PagoResumenDTO> listarRecientes() throws SQLException {
         return pagoDAO.listarRecientes();
+    }
+
+    public ResultadoAgendaPagosDTO buscarParaAgenda(FiltroAgendaPagosDTO filtro)
+            throws SQLException {
+        if (filtro == null) {
+            throw new IllegalArgumentException("Los filtros de la agenda son obligatorios.");
+        }
+        String cedula = filtro.cedula().strip();
+        if (!cedula.isBlank() && !cedula.matches("\\d{1,20}")) {
+            throw new IllegalArgumentException(
+                    "La cedula debe contener solamente numeros."
+            );
+        }
+        String metodo = filtro.metodo().strip().toUpperCase(Locale.ROOT);
+        if (!metodo.isBlank() && !METODOS.contains(metodo)) {
+            throw new IllegalArgumentException("El metodo de pago seleccionado no es valido.");
+        }
+        String estado = filtro.estado().strip().toUpperCase(Locale.ROOT);
+        if (!estado.isBlank() && !ESTADOS_AGENDA.contains(estado)) {
+            throw new IllegalArgumentException("El estado de pago seleccionado no es valido.");
+        }
+        if (filtro.fechaDesde() != null && filtro.fechaHasta() != null
+                && filtro.fechaDesde().isAfter(filtro.fechaHasta())) {
+            throw new IllegalArgumentException(
+                    "La fecha desde no puede ser posterior a la fecha hasta."
+            );
+        }
+        if (filtro.tamanoPagina() > 100) {
+            throw new IllegalArgumentException("El tamano de pagina solicitado no es valido.");
+        }
+        return pagoDAO.buscarParaAgenda(new FiltroAgendaPagosDTO(
+                cedula, metodo, estado, filtro.fechaDesde(), filtro.fechaHasta(),
+                filtro.pagina(), filtro.tamanoPagina()
+        ));
     }
 
     public PagoResumenDTO confirmarDigital(

@@ -17,6 +17,7 @@ public record PagoResumenDTO(
         OffsetDateTime fechaConfirmacion,
         OffsetDateTime fechaCita,
         String nombrePaciente,
+        String cedulaPaciente,
         String nombreMedico,
         String nombreEspecialidad,
         String correoFacturacion,
