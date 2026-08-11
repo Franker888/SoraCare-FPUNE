@@ -3,6 +3,7 @@
     const medico = document.getElementById('idMedico');
     const sinMedicos = document.getElementById('sinMedicosEspecialidad');
     if (!especialidad || !medico || !sinMedicos) return;
+    const formulario = especialidad.closest('form');
 
     const filtrarMedicos = () => {
         const idEspecialidad = especialidad.value;
@@ -25,6 +26,10 @@
         sinMedicos.classList.toggle('d-none', !sinCoincidencias);
     };
 
-    especialidad.addEventListener('change', filtrarMedicos);
+    especialidad.addEventListener('change', () => {
+        filtrarMedicos();
+        formulario?.requestSubmit();
+    });
+    medico.addEventListener('change', () => formulario?.requestSubmit());
     filtrarMedicos();
 })();

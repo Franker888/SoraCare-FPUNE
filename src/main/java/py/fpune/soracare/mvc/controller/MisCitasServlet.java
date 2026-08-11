@@ -149,12 +149,30 @@ public class MisCitasServlet extends HttpServlet {
                 idMedico = null;
             }
 
+            List<LocalDate> fechasDisponibles = disponibilidadService.listarFechasDisponibles(
+                    LocalDate.now(DisponibilidadService.ZONA_HORARIA),
+                    120, 30, idMedico, idEspecialidad);
+            LocalDate fechaSeleccionada = fechasDisponibles.contains(fecha)
+                    ? fecha
+                    : fechasDisponibles.stream().findFirst().orElse(null);
+            if (request.getParameter("fecha") != null
+                    && fechaSeleccionada != null
+                    && !fechaSeleccionada.equals(fecha)) {
+                request.setAttribute("mensajeDisponibilidad",
+                        "La fecha indicada no tenía turnos. Te mostramos la próxima fecha disponible.");
+            }
+
             request.setAttribute("paciente", paciente);
-            request.setAttribute("fecha", fecha);
+            request.setAttribute("fecha", fechaSeleccionada);
+            request.setAttribute("fechasDisponibles", fechasDisponibles);
             request.setAttribute("idMedicoSeleccionado", idMedico);
             request.setAttribute("idEspecialidadSeleccionada", idEspecialidad);
-            request.setAttribute("slots", disponibilidadService.listar(fecha, idMedico, idEspecialidad));
-            request.setAttribute("citas", citaService.listarPorPaciente(paciente.getIdPaciente()));
+            request.setAttribute("slots", fechaSeleccionada == null
+                    ? List.of()
+                    : disponibilidadService.listar(fechaSeleccionada, idMedico, idEspecialidad));
+            request.setAttribute("citas", citaService.listarPorPaciente(paciente.getIdPaciente()).stream()
+                    .filter(cita -> !"CANCELADA".equals(cita.getCodigoEstado()))
+                    .toList());
             List<PagoResumenDTO> pagos = pagoService.listarPorPaciente(paciente.getIdPaciente());
             Map<Long, PagoResumenDTO> pagosPorCita = new LinkedHashMap<>();
             for (PagoResumenDTO pago : pagos) pagosPorCita.putIfAbsent(pago.idCita(), pago);
@@ -172,6 +190,7 @@ public class MisCitasServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             if (request.getAttribute("error") == null) request.setAttribute("error", "No fue posible cargar tus citas.");
             request.setAttribute("fecha", fecha);
+            request.setAttribute("fechasDisponibles", List.of());
             request.setAttribute("slots", List.of());
             request.setAttribute("citas", List.of());
             request.setAttribute("pagos", List.of());

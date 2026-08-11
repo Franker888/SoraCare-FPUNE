@@ -4,7 +4,9 @@
 <%@ page import="py.fpune.soracare.mvc.model.Medico" %>
 <%@ page import="py.fpune.soracare.mvc.model.MedicoEspecialidad" %>
 <%@ page import="java.time.LocalDate" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Locale" %>
 <%@ page import="java.util.Map" %>
 <%!
     private String h(String valor) {
@@ -25,6 +27,8 @@
 <%
     List<SlotDisponibleDTO> slots = request.getAttribute("slots") instanceof List<?>
             ? (List<SlotDisponibleDTO>) request.getAttribute("slots") : List.of();
+    List<LocalDate> fechasDisponibles = request.getAttribute("fechasDisponibles") instanceof List<?>
+            ? (List<LocalDate>) request.getAttribute("fechasDisponibles") : List.of();
     List<Medico> medicos = request.getAttribute("medicos") instanceof List<?>
             ? (List<Medico>) request.getAttribute("medicos") : List.of();
     List<Especialidad> especialidades = request.getAttribute("especialidades") instanceof List<?>
@@ -40,6 +44,8 @@
     LocalDate fecha = (LocalDate) request.getAttribute("fecha");
     Long idMedico = (Long) request.getAttribute("idMedicoSeleccionado");
     Integer idEspecialidad = (Integer) request.getAttribute("idEspecialidadSeleccionada");
+    DateTimeFormatter formatoFechaDisponible = DateTimeFormatter.ofPattern(
+            "EEEE dd/MM/yyyy", new Locale("es", "PY"));
 %>
 <!doctype html>
 <html lang="es">
@@ -74,12 +80,25 @@
     <% if (request.getAttribute("error") != null) { %>
     <div class="alert alert-danger"><%= h((String) request.getAttribute("error")) %></div>
     <% } %>
+    <% if (request.getAttribute("mensajeDisponibilidad") != null) { %>
+    <div class="alert alert-info"><%= h((String) request.getAttribute("mensajeDisponibilidad")) %></div>
+    <% } %>
     <section class="card shadow-sm border-0 mb-4">
         <div class="card-body p-4">
             <form method="get" action="${pageContext.request.contextPath}/disponibilidad" class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <label for="fecha" class="form-label">Fecha</label>
-                    <input id="fecha" name="fecha" type="date" class="form-control" required value="<%= fecha %>">
+                    <label for="fecha" class="form-label">Fecha disponible</label>
+                    <select id="fecha" name="fecha" class="form-select" required <%= fechasDisponibles.isEmpty() ? "disabled" : "" %>>
+                        <% if (fechasDisponibles.isEmpty()) { %>
+                        <option value="">Sin fechas disponibles</option>
+                        <% } else { %>
+                        <% for (LocalDate fechaDisponible : fechasDisponibles) { %>
+                        <option value="<%= fechaDisponible %>" <%= fechaDisponible.equals(fecha) ? "selected" : "" %>>
+                            <%= h(formatoFechaDisponible.format(fechaDisponible)) %>
+                        </option>
+                        <% } %>
+                        <% } %>
+                    </select>
                 </div>
                 <div class="col-md-3">
                     <label for="idMedico" class="form-label">Médico</label>
@@ -108,17 +127,20 @@
                         <% } %>
                     </select>
                 </div>
-                <div class="col-md-2 d-grid"><button class="btn btn-success">Buscar turnos</button></div>
+                <div class="col-md-2 d-grid"><button class="btn btn-success" <%= fechasDisponibles.isEmpty() ? "disabled" : "" %>>Ver turnos</button></div>
             </form>
+            <% if (fechasDisponibles.isEmpty()) { %>
+            <div class="alert alert-warning mt-3 mb-0">
+                No hay fechas con turnos disponibles para la especialidad y el médico seleccionados.
+            </div>
+            <% } %>
         </div>
     </section>
+    <% if (!slots.isEmpty()) { %>
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div><h2 class="h4 mb-1">Turnos del <%= fecha %></h2><p class="text-secondary mb-0">Los turnos ocupados o bloqueados no se muestran.</p></div>
         <span class="badge text-bg-success"><%= slots.size() %> disponibles</span>
     </div>
-    <% if (slots.isEmpty()) { %>
-    <div class="alert alert-light border">No hay turnos libres para los filtros seleccionados. Probá otra fecha.</div>
-    <% } else { %>
     <div class="row g-3">
         <% for (SlotDisponibleDTO slot : slots) {
             Medico medico = medicosPorId.get(slot.idMedico());

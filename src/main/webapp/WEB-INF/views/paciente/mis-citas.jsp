@@ -12,6 +12,7 @@
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Locale" %>
 <%@ page import="java.util.Map" %>
 <%!
     private String h(String valor) {
@@ -32,6 +33,8 @@
 <%
     List<SlotDisponibleDTO> slots = request.getAttribute("slots") instanceof List<?>
             ? (List<SlotDisponibleDTO>) request.getAttribute("slots") : List.of();
+    List<LocalDate> fechasDisponibles = request.getAttribute("fechasDisponibles") instanceof List<?>
+            ? (List<LocalDate>) request.getAttribute("fechasDisponibles") : List.of();
     List<Cita> citas = request.getAttribute("citas") instanceof List<?>
             ? (List<Cita>) request.getAttribute("citas") : List.of();
     List<Medico> medicosLista = request.getAttribute("medicos") instanceof List<?>
@@ -57,6 +60,8 @@
     Long idMedico = (Long) request.getAttribute("idMedicoSeleccionado");
     Integer idEspecialidad = (Integer) request.getAttribute("idEspecialidadSeleccionada");
     DateTimeFormatter formatoFechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    DateTimeFormatter formatoFechaDisponible = DateTimeFormatter.ofPattern(
+            "EEEE dd/MM/yyyy", new Locale("es", "PY"));
 %>
 <!doctype html>
 <html lang="es">
@@ -103,6 +108,9 @@
     <% if (request.getAttribute("error") != null) { %>
     <div class="alert alert-danger"><%= h((String) request.getAttribute("error")) %></div>
     <% } %>
+    <% if (request.getAttribute("mensajeDisponibilidad") != null) { %>
+    <div class="alert alert-info"><%= h((String) request.getAttribute("mensajeDisponibilidad")) %></div>
+    <% } %>
 
     <section class="card tarjeta shadow-sm mb-4">
         <div class="card-body p-4">
@@ -132,23 +140,36 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <label for="fecha" class="form-label">Fecha</label>
-                    <input id="fecha" name="fecha" type="date" class="form-control" required value="<%= fecha %>">
+                    <label for="fecha" class="form-label">Fecha disponible</label>
+                    <select id="fecha" name="fecha" class="form-select" required <%= fechasDisponibles.isEmpty() ? "disabled" : "" %>>
+                        <% if (fechasDisponibles.isEmpty()) { %>
+                        <option value="">Sin fechas disponibles</option>
+                        <% } else { %>
+                        <% for (LocalDate fechaDisponible : fechasDisponibles) { %>
+                        <option value="<%= fechaDisponible %>" <%= fechaDisponible.equals(fecha) ? "selected" : "" %>>
+                            <%= h(formatoFechaDisponible.format(fechaDisponible)) %>
+                        </option>
+                        <% } %>
+                        <% } %>
+                    </select>
                 </div>
-                <div class="col-md-2 d-grid"><button class="btn btn-success">Buscar</button></div>
+                <div class="col-md-2 d-grid"><button class="btn btn-success" <%= fechasDisponibles.isEmpty() ? "disabled" : "" %>>Ver turnos</button></div>
             </form>
+            <% if (fechasDisponibles.isEmpty()) { %>
+            <div class="alert alert-warning mt-3 mb-0">
+                No hay fechas con turnos disponibles para la especialidad y el médico seleccionados.
+            </div>
+            <% } %>
         </div>
     </section>
 
+    <% if (!slots.isEmpty()) { %>
     <section class="card tarjeta shadow-sm mb-4">
         <div class="card-body p-4">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <h2 class="h5 mb-0">2. Seleccionar y solicitar</h2>
                 <span class="badge text-bg-success"><%= slots.size() %> turnos disponibles</span>
             </div>
-            <% if (slots.isEmpty()) { %>
-            <div class="alert alert-light border mb-0">No hay turnos libres con estos filtros. Probá otra fecha, médico o especialidad.</div>
-            <% } else { %>
             <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="row g-3">
                 <input type="hidden" name="fecha" value="<%= fecha %>">
                 <input type="hidden" name="idMedico" value="<%= idMedico == null ? "" : idMedico %>">
@@ -216,14 +237,14 @@
                     <small class="text-secondary">El efectivo conserva el turno pendiente; los medios digitales continúan a la simulación.</small>
                 </div>
             </form>
-            <% } %>
         </div>
     </section>
+    <% } %>
 
     <section>
-        <h2 class="h4 mb-3">Historial de mis citas</h2>
+        <h2 class="h4 mb-3">Mis citas</h2>
         <% if (citas.isEmpty()) { %>
-        <div class="alert alert-light border">Todavía no tenés citas registradas.</div>
+        <div class="alert alert-light border">No tenés citas activas en este momento.</div>
         <% } else { %>
         <div class="row g-3">
             <% for (Cita cita : citas) {
@@ -264,7 +285,7 @@
                                 <% if (cancelable) { %>
                                 <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="d-flex gap-2">
                                     <input type="hidden" name="accion" value="cancelar">
-                                    <input type="hidden" name="fecha" value="<%= fecha %>">
+                                    <input type="hidden" name="fecha" value="<%= fecha == null ? "" : fecha %>">
                                     <input type="hidden" name="idCita" value="<%= cita.getIdCita() %>">
                                     <input name="motivoCancelacion" class="form-control form-control-sm" maxlength="500" required placeholder="Motivo de cancelación">
                                     <button class="btn btn-outline-danger btn-sm">Cancelar</button>

@@ -43,9 +43,53 @@ public class DisponibilidadService {
         OffsetDateTime desde = fecha.atStartOfDay(ZONA_HORARIA).toOffsetDateTime();
         OffsetDateTime hasta = fecha.plusDays(1).atStartOfDay(ZONA_HORARIA).toOffsetDateTime();
         List<Cita> citas = citaDAO.listarEntre(desde, hasta);
+
+        return listar(fecha, idMedico, idEspecialidad, horarios, excepciones, citas);
+    }
+
+    public List<LocalDate> listarFechasDisponibles(
+            LocalDate desde,
+            int cantidadDias,
+            int limite,
+            Long idMedico,
+            Integer idEspecialidad
+    ) throws SQLException {
+        LocalDate hoy = LocalDate.now(ZONA_HORARIA);
+        LocalDate inicio = desde == null || desde.isBefore(hoy) ? hoy : desde;
+        if (cantidadDias < 1 || cantidadDias > 365 || limite < 1 || limite > 100) {
+            throw new IllegalArgumentException("El rango de disponibilidad solicitado no es valido.");
+        }
+
+        LocalDate finExclusivo = inicio.plusDays(cantidadDias);
+        List<HorarioMedico> horarios = horarioDAO.listarTodos();
+        List<ExcepcionHorarioMedico> excepciones = excepcionDAO.listarTodas();
+        List<Cita> citas = citaDAO.listarEntre(
+                inicio.atStartOfDay(ZONA_HORARIA).toOffsetDateTime(),
+                finExclusivo.atStartOfDay(ZONA_HORARIA).toOffsetDateTime());
+        List<LocalDate> fechas = new ArrayList<>();
+
+        for (LocalDate fecha = inicio;
+             fecha.isBefore(finExclusivo) && fechas.size() < limite;
+             fecha = fecha.plusDays(1)) {
+            if (!listar(fecha, idMedico, idEspecialidad, horarios, excepciones, citas).isEmpty()) {
+                fechas.add(fecha);
+            }
+        }
+        return List.copyOf(fechas);
+    }
+
+    private List<SlotDisponibleDTO> listar(
+            LocalDate fecha,
+            Long idMedico,
+            Integer idEspecialidad,
+            List<HorarioMedico> horarios,
+            List<ExcepcionHorarioMedico> excepciones,
+            List<Cita> citas
+    ) throws SQLException {
         Map<String, SlotDisponibleDTO> slots = new LinkedHashMap<>();
 
         for (HorarioMedico horario : horarios) {
+            if (!estaVigente(horario, fecha)) continue;
             if (horario.getDiaSemana() != fecha.getDayOfWeek().getValue()) continue;
             if (!coincideFiltro(horario.getIdMedico(), horario.getIdEspecialidad(), idMedico, idEspecialidad)) continue;
             generarSlots(slots, horario.getIdHorario(), null, horario.getIdMedico(),
@@ -55,6 +99,7 @@ public class DisponibilidadService {
         }
 
         for (ExcepcionHorarioMedico excepcion : excepciones) {
+            if (!excepcion.isActivo() || !fecha.equals(excepcion.getFecha())) continue;
             if (excepcion.getTipo() != TipoExcepcionHorario.DISPONIBILIDAD_EXTRA) continue;
             if (!coincideFiltro(excepcion.getIdMedico(), excepcion.getIdEspecialidad(), idMedico, idEspecialidad)) continue;
             Especialidad especialidad = especialidadService.buscarPorId(excepcion.getIdEspecialidad())
@@ -71,6 +116,12 @@ public class DisponibilidadService {
                         .thenComparing(SlotDisponibleDTO::idMedico)
                         .thenComparing(SlotDisponibleDTO::idConsultorio))
                 .toList();
+    }
+
+    private static boolean estaVigente(HorarioMedico horario, LocalDate fecha) {
+        return horario.isActivo()
+                && !horario.getFechaDesde().isAfter(fecha)
+                && (horario.getFechaHasta() == null || !horario.getFechaHasta().isBefore(fecha));
     }
 
     private void generarSlots(

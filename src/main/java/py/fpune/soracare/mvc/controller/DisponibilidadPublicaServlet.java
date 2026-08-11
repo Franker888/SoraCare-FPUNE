@@ -59,7 +59,20 @@ public class DisponibilidadPublicaServlet extends HttpServlet {
             if (!atiendeEspecialidad(especialidadesPorMedico, idMedico, idEspecialidad)) {
                 idMedico = null;
             }
-            request.setAttribute("fecha", fecha);
+            List<LocalDate> fechasDisponibles = disponibilidadService.listarFechasDisponibles(
+                    LocalDate.now(DisponibilidadService.ZONA_HORARIA),
+                    120, 30, idMedico, idEspecialidad);
+            LocalDate fechaSeleccionada = fechasDisponibles.contains(fecha)
+                    ? fecha
+                    : fechasDisponibles.stream().findFirst().orElse(null);
+            if (request.getParameter("fecha") != null
+                    && fechaSeleccionada != null
+                    && !fechaSeleccionada.equals(fecha)) {
+                request.setAttribute("mensajeDisponibilidad",
+                        "La fecha indicada no tenía turnos. Te mostramos la próxima fecha disponible.");
+            }
+            request.setAttribute("fecha", fechaSeleccionada);
+            request.setAttribute("fechasDisponibles", fechasDisponibles);
             request.setAttribute("idMedicoSeleccionado", idMedico);
             request.setAttribute("idEspecialidadSeleccionada", idEspecialidad);
             request.setAttribute("medicos", medicos);
@@ -67,7 +80,9 @@ public class DisponibilidadPublicaServlet extends HttpServlet {
             request.setAttribute("especialidades", especialidades);
             request.setAttribute("medicosPorId", medicosPorId);
             request.setAttribute("especialidadesPorId", especialidadesPorId);
-            request.setAttribute("slots", disponibilidadService.listar(fecha, idMedico, idEspecialidad));
+            request.setAttribute("slots", fechaSeleccionada == null
+                    ? List.of()
+                    : disponibilidadService.listar(fechaSeleccionada, idMedico, idEspecialidad));
         } catch (SQLException error) {
             log("Error al consultar disponibilidad pública.", error);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
