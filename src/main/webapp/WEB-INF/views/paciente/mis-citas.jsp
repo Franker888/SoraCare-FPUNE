@@ -60,6 +60,7 @@
     Long idMedico = (Long) request.getAttribute("idMedicoSeleccionado");
     Integer idEspecialidad = (Integer) request.getAttribute("idEspecialidadSeleccionada");
     boolean busquedaRealizada = Boolean.TRUE.equals(request.getAttribute("busquedaRealizada"));
+    boolean agendandoNuevaCita = Boolean.TRUE.equals(request.getAttribute("agendandoNuevaCita"));
     DateTimeFormatter formatoFechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     DateTimeFormatter formatoFechaDisponible = DateTimeFormatter.ofPattern(
             "EEEE dd/MM/yyyy", new Locale("es", "PY"));
@@ -94,13 +95,22 @@
 </nav>
 
 <main class="container py-4 py-md-5">
-    <div class="mb-4">
-        <p class="text-success fw-semibold mb-1">Portal del paciente</p>
-        <h1 class="h2 mb-1">Mis citas</h1>
-        <p class="text-secondary mb-0">
-            <% if (paciente != null) { %>Hola, <%= h(paciente.getNombres()) %>. <% } %>
-            Elegí especialidad, médico, fecha y turno para reservar por tu cuenta.
-        </p>
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <div>
+            <p class="text-success fw-semibold mb-1">Portal del paciente</p>
+            <h1 class="h2 mb-1"><%= agendandoNuevaCita ? "Agendar nueva cita" : "Mis citas" %></h1>
+            <p class="text-secondary mb-0">
+                <% if (paciente != null) { %>Hola, <%= h(paciente.getNombres()) %>. <% } %>
+                <%= agendandoNuevaCita
+                        ? "Elegí especialidad, médico y fecha para consultar los turnos disponibles."
+                        : "Consultá tus citas pendientes y confirmadas." %>
+            </p>
+        </div>
+        <% if (agendandoNuevaCita) { %>
+        <a class="btn btn-outline-success" href="${pageContext.request.contextPath}/mis-citas">Volver a mis citas</a>
+        <% } else { %>
+        <a class="btn btn-success" href="${pageContext.request.contextPath}/mis-citas?nueva=1">Agendar nueva cita</a>
+        <% } %>
     </div>
 
     <% if (request.getAttribute("mensajeExito") != null) { %>
@@ -113,10 +123,12 @@
     <div class="alert alert-info"><%= h((String) request.getAttribute("mensajeDisponibilidad")) %></div>
     <% } %>
 
+    <% if (agendandoNuevaCita) { %>
     <section class="card tarjeta shadow-sm mb-4">
         <div class="card-body p-4">
             <h2 class="h5 mb-3">1. Buscar un turno</h2>
             <form method="get" action="${pageContext.request.contextPath}/mis-citas" class="row g-3 align-items-end">
+                <input type="hidden" name="nueva" value="1">
                 <input type="hidden" name="busqueda" value="turnos">
                 <div class="col-md-4">
                     <label for="idEspecialidad" class="form-label">Especialidad</label>
@@ -174,6 +186,7 @@
             </div>
             <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="row g-3">
                 <input type="hidden" name="fecha" value="<%= fecha %>">
+                <input type="hidden" name="nueva" value="1">
                 <input type="hidden" name="busqueda" value="turnos">
                 <input type="hidden" name="idMedico" value="<%= idMedico == null ? "" : idMedico %>">
                 <input type="hidden" name="idEspecialidad" value="<%= idEspecialidad == null ? "" : idEspecialidad %>">
@@ -249,11 +262,15 @@
         Ya no quedan turnos libres para esa búsqueda. Elegí otra fecha y volvé a consultar.
     </div>
     <% } %>
+    <% } %>
 
     <section>
-        <h2 class="h4 mb-3">Mis citas</h2>
+        <div class="mb-3">
+            <h2 class="h4 mb-1">Historial de mis citas</h2>
+            <p class="text-secondary mb-0">Aquí aparecen tus citas pendientes y confirmadas.</p>
+        </div>
         <% if (citas.isEmpty()) { %>
-        <div class="alert alert-light border">No tenés citas activas en este momento.</div>
+        <div class="alert alert-light border">No tenés citas pendientes o confirmadas en este momento.</div>
         <% } else { %>
         <div class="row g-3">
             <% for (Cita cita : citas) {

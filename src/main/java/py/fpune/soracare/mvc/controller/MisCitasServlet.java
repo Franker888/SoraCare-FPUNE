@@ -153,6 +153,8 @@ public class MisCitasServlet extends HttpServlet {
                     LocalDate.now(DisponibilidadService.ZONA_HORARIA),
                     120, 30, idMedico, idEspecialidad);
             boolean busquedaRealizada = "turnos".equals(request.getParameter("busqueda"));
+            boolean agendandoNuevaCita = "1".equals(request.getParameter("nueva"))
+                    || busquedaRealizada;
             LocalDate fechaSeleccionada = fechasDisponibles.contains(fecha)
                     ? fecha
                     : fechasDisponibles.stream().findFirst().orElse(null);
@@ -167,6 +169,7 @@ public class MisCitasServlet extends HttpServlet {
             request.setAttribute("fecha", fechaSeleccionada);
             request.setAttribute("fechasDisponibles", fechasDisponibles);
             request.setAttribute("busquedaRealizada", busquedaRealizada);
+            request.setAttribute("agendandoNuevaCita", agendandoNuevaCita);
             request.setAttribute("idMedicoSeleccionado", idMedico);
             request.setAttribute("idEspecialidadSeleccionada", idEspecialidad);
             request.setAttribute("slots", !busquedaRealizada || fechaSeleccionada == null
@@ -195,6 +198,9 @@ public class MisCitasServlet extends HttpServlet {
             request.setAttribute("fechasDisponibles", List.of());
             request.setAttribute("busquedaRealizada",
                     "turnos".equals(request.getParameter("busqueda")));
+            request.setAttribute("agendandoNuevaCita",
+                    "1".equals(request.getParameter("nueva"))
+                            || "turnos".equals(request.getParameter("busqueda")));
             request.setAttribute("slots", List.of());
             request.setAttribute("citas", List.of());
             request.setAttribute("pagos", List.of());

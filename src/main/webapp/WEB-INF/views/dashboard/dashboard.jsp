@@ -356,13 +356,13 @@
 
                         <h3 class="h5">
                             <%= esPaciente
-                                    ? "Mis citas y pagos"
+                                    ? "Mis citas"
                                     : "Agenda médica" %>
                         </h3>
 
                         <p class="text-secondary">
                             <%= esPaciente
-                                    ? "Reservar consultas, revisar tus citas y consultar sus pagos."
+                                    ? "Revisar tus citas pendientes y confirmadas, o agendar una nueva consulta."
                                     : "Consultar turnos disponibles, solicitar citas y administrar la agenda diaria." %>
                         </p>
 
