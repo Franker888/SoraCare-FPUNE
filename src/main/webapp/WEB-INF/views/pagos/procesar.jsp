@@ -2,6 +2,8 @@
 <%@ page import="py.fpune.soracare.dto.PagoResumenDTO" %>
 <%@ page import="py.fpune.soracare.service.DisponibilidadService" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
+<%@ page import="java.text.NumberFormat" %>
+<%@ page import="java.util.Locale" %>
 <%!
     private String h(String valor) {
         if (valor == null) return "";
@@ -12,6 +14,7 @@
 <%
     PagoResumenDTO pago = (PagoResumenDTO) request.getAttribute("pago");
     DateTimeFormatter fechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    NumberFormat formatoImporte = NumberFormat.getIntegerInstance(new Locale("es", "PY"));
 %>
 <!doctype html>
 <html lang="es">
@@ -68,10 +71,59 @@
                 <input class="form-control" id="codigoConfirmacion" name="codigoConfirmacion" required maxlength="100" value="QR-DEMO-OK">
                 <div class="form-text">Usá el código de prueba mostrado. No abras una aplicación bancaria.</div></div>
             <% } else if ("TRANSFERENCIA".equals(pago.codigoMetodo())) { %>
-            <div class="col-12"><div class="alert alert-light border"><strong>Cuenta académica:</strong> Banco Demo · 000123456 · SoraCare-FPUNE<br>
-                <small>No transfieras dinero real a ninguna cuenta.</small></div></div>
-            <div class="col-12"><label class="form-label" for="referenciaTransferencia">Referencia de prueba</label>
-                <input class="form-control" id="referenciaTransferencia" name="referenciaTransferencia" required maxlength="100" value="TRANS-DEMO-OK"></div>
+            <div class="col-12">
+                <div class="alert alert-warning mb-0">
+                    <strong>Transferencia de demostración.</strong>
+                    No envíes dinero real: los siguientes datos existen solamente para probar el sistema.
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card bg-light border-0">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+                            <div>
+                                <small class="text-success fw-semibold text-uppercase">Datos para transferir</small>
+                                <h3 class="h5 mb-0">Cuenta académica SoraCare</h3>
+                            </div>
+                            <span class="badge text-bg-secondary">Solo simulación</span>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <small class="text-secondary d-block">Banco</small>
+                                <strong>Banco Demo SoraCare</strong>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-secondary d-block">Titular</small>
+                                <strong>SoraCare-FPUNE</strong>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-secondary d-block">Tipo y moneda</small>
+                                <strong>Cuenta corriente · Guaraníes</strong>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-secondary d-block">Número de cuenta</small>
+                                <strong class="user-select-all">000123456</strong>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-secondary d-block">Importe exacto</small>
+                                <strong>Gs. <%= formatoImporte.format(pago.monto()) %></strong>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-secondary d-block">Concepto de la transferencia</small>
+                                <strong class="user-select-all"><%= h(pago.referenciaExterna()) %></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="referenciaTransferencia">Código de confirmación de prueba</label>
+                <input class="form-control" id="referenciaTransferencia" name="referenciaTransferencia"
+                       required maxlength="100" value="TRANS-DEMO-OK">
+                <div class="form-text">
+                    En esta simulación, este código representa la confirmación que entregaría el banco.
+                </div>
+            </div>
             <% } else if ("TARJETA".equals(pago.codigoMetodo())) { %>
             <div class="col-12"><div class="alert alert-warning"><strong>No ingreses el número completo ni el código de seguridad de una tarjeta.</strong> Esta pantalla solo solicita cuatro dígitos ficticios.</div></div>
             <div class="col-md-6"><label class="form-label" for="ultimos4">Últimos 4 dígitos de prueba</label>
