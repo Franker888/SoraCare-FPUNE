@@ -43,7 +43,7 @@
             <td><%= h(pago.nombreMetodo()) %></td><td>Gs. <%= pago.monto().setScale(0).toPlainString() %></td>
             <td><span class="badge <%= pago.estaConfirmado() ? "text-bg-success" : (pago.estaPendiente() ? "text-bg-warning" : "text-bg-secondary") %>"><%= h(pago.nombreEstado()) %></span></td>
             <td><% if (pago.idComprobante() != null) { %><a target="_blank" href="${pageContext.request.contextPath}/comprobantes/pago?id=<%= pago.idComprobante() %>"><%= h(pago.numeroComprobante()) %></a><br><small class="text-secondary">Correo simulado</small><% } else { %><span class="text-secondary">Pendiente</span><% } %></td>
-            <td><% if (pago.estaPendiente() && pago.esEfectivo()) { %><form method="post" action="${pageContext.request.contextPath}/agenda/pagos"><input type="hidden" name="accion" value="confirmarEfectivo"><input type="hidden" name="idPago" value="<%= pago.idPago() %>"><button class="btn btn-sm btn-success">Confirmar cobro</button></form><% } else if (pago.estaPendiente()) { %><small class="text-secondary">Espera al paciente</small><% } else { %><span class="text-secondary">—</span><% } %></td>
+            <td><% if (pago.estaPendiente() && pago.esEfectivo()) { %><form method="post" action="${pageContext.request.contextPath}/agenda/pagos"><input type="hidden" name="accion" value="confirmarEfectivo"><input type="hidden" name="idPago" value="<%= pago.idPago() %>"><button class="btn btn-sm btn-success">Confirmar cobro</button></form><% } else if (pago.estaPendiente()) { %><small class="text-secondary">Pendiente de pago del paciente</small><% } else { %><span class="text-secondary">—</span><% } %></td>
         </tr><% } %>
         </tbody></table></div><% } %>
     </div></section>
