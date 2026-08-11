@@ -72,12 +72,6 @@
                 <div class="form-text">Usá el código de prueba mostrado. No abras una aplicación bancaria.</div></div>
             <% } else if ("TRANSFERENCIA".equals(pago.codigoMetodo())) { %>
             <div class="col-12">
-                <div class="alert alert-warning mb-0">
-                    <strong>Transferencia de demostración.</strong>
-                    No envíes dinero real: los siguientes datos existen solamente para probar el sistema.
-                </div>
-            </div>
-            <div class="col-12">
                 <div class="card bg-light border-0">
                     <div class="card-body p-4">
                         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
