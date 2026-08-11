@@ -2,6 +2,7 @@
 <%@ page import="py.fpune.soracare.dto.SlotDisponibleDTO" %>
 <%@ page import="py.fpune.soracare.mvc.model.Especialidad" %>
 <%@ page import="py.fpune.soracare.mvc.model.Medico" %>
+<%@ page import="py.fpune.soracare.mvc.model.MedicoEspecialidad" %>
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
@@ -10,6 +11,15 @@
         if (valor == null) return "";
         return valor.replace("&", "&amp;").replace("<", "&lt;")
                 .replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
+    }
+
+    private String idsEspecialidades(List<MedicoEspecialidad> relaciones) {
+        StringBuilder ids = new StringBuilder();
+        for (MedicoEspecialidad relacion : relaciones) {
+            if (ids.length() > 0) ids.append(',');
+            ids.append(relacion.getIdEspecialidad());
+        }
+        return ids.toString();
     }
 %>
 <%
@@ -21,6 +31,10 @@
             ? (List<Especialidad>) request.getAttribute("especialidades") : List.of();
     Map<Long, Medico> medicosPorId = request.getAttribute("medicosPorId") instanceof Map<?, ?>
             ? (Map<Long, Medico>) request.getAttribute("medicosPorId") : Map.of();
+    Map<Long, List<MedicoEspecialidad>> especialidadesPorMedico =
+            request.getAttribute("especialidadesPorMedico") instanceof Map<?, ?>
+                    ? (Map<Long, List<MedicoEspecialidad>>) request.getAttribute("especialidadesPorMedico")
+                    : Map.of();
     Map<Integer, Especialidad> especialidadesPorId = request.getAttribute("especialidadesPorId") instanceof Map<?, ?>
             ? (Map<Integer, Especialidad>) request.getAttribute("especialidadesPorId") : Map.of();
     LocalDate fecha = (LocalDate) request.getAttribute("fecha");
@@ -70,13 +84,18 @@
                 <div class="col-md-3">
                     <label for="idMedico" class="form-label">Médico</label>
                     <select id="idMedico" name="idMedico" class="form-select">
-                        <option value="">Todos</option>
+                        <option value="">Todos los médicos</option>
                         <% for (Medico medico : medicos) { %>
-                        <option value="<%= medico.getIdMedico() %>" <%= medico.getIdMedico().equals(idMedico) ? "selected" : "" %>>
+                        <option value="<%= medico.getIdMedico() %>"
+                                data-especialidades="<%= idsEspecialidades(especialidadesPorMedico.getOrDefault(medico.getIdMedico(), List.of())) %>"
+                                <%= medico.getIdMedico().equals(idMedico) ? "selected" : "" %>>
                             <%= h(medico.getNombres() + " " + medico.getApellidos()) %>
                         </option>
                         <% } %>
                     </select>
+                    <div id="sinMedicosEspecialidad" class="form-text text-danger d-none">
+                        No hay médicos activos para esta especialidad.
+                    </div>
                 </div>
                 <div class="col-md-3">
                     <label for="idEspecialidad" class="form-label">Especialidad</label>
@@ -125,5 +144,6 @@
         </span>
     </div>
 </main>
+<script src="${pageContext.request.contextPath}/assets/app/js/filtro-medicos-especialidad.js"></script>
 </body>
 </html>

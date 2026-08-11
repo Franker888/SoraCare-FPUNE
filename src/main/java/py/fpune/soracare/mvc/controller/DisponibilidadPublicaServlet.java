@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import py.fpune.soracare.service.DisponibilidadService;
 import py.fpune.soracare.service.EspecialidadService;
+import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
 
 import java.io.IOException;
@@ -18,18 +19,21 @@ import java.util.List;
 import java.util.Map;
 import py.fpune.soracare.mvc.model.Especialidad;
 import py.fpune.soracare.mvc.model.Medico;
+import py.fpune.soracare.mvc.model.MedicoEspecialidad;
 
 @WebServlet("/disponibilidad")
 public class DisponibilidadPublicaServlet extends HttpServlet {
 
     private DisponibilidadService disponibilidadService;
     private MedicoService medicoService;
+    private MedicoEspecialidadService medicoEspecialidadService;
     private EspecialidadService especialidadService;
 
     @Override
     public void init() {
         disponibilidadService = new DisponibilidadService();
         medicoService = new MedicoService();
+        medicoEspecialidadService = new MedicoEspecialidadService();
         especialidadService = new EspecialidadService();
     }
 
@@ -44,13 +48,22 @@ public class DisponibilidadPublicaServlet extends HttpServlet {
             List<Medico> medicos = medicoService.listarActivos();
             List<Especialidad> especialidades = especialidadService.listarActivas();
             Map<Long, Medico> medicosPorId = new LinkedHashMap<>();
+            Map<Long, List<MedicoEspecialidad>> especialidadesPorMedico = new LinkedHashMap<>();
             Map<Integer, Especialidad> especialidadesPorId = new LinkedHashMap<>();
-            for (Medico medico : medicos) medicosPorId.put(medico.getIdMedico(), medico);
+            for (Medico medico : medicos) {
+                medicosPorId.put(medico.getIdMedico(), medico);
+                especialidadesPorMedico.put(medico.getIdMedico(),
+                        medicoEspecialidadService.listarActivasPorMedico(medico.getIdMedico()));
+            }
             for (Especialidad especialidad : especialidades) especialidadesPorId.put(especialidad.getIdEspecialidad(), especialidad);
+            if (!atiendeEspecialidad(especialidadesPorMedico, idMedico, idEspecialidad)) {
+                idMedico = null;
+            }
             request.setAttribute("fecha", fecha);
             request.setAttribute("idMedicoSeleccionado", idMedico);
             request.setAttribute("idEspecialidadSeleccionada", idEspecialidad);
             request.setAttribute("medicos", medicos);
+            request.setAttribute("especialidadesPorMedico", especialidadesPorMedico);
             request.setAttribute("especialidades", especialidades);
             request.setAttribute("medicosPorId", medicosPorId);
             request.setAttribute("especialidadesPorId", especialidadesPorId);
@@ -62,6 +75,16 @@ public class DisponibilidadPublicaServlet extends HttpServlet {
         }
         request.getRequestDispatcher("/WEB-INF/views/publico/disponibilidad.jsp")
                 .forward(request, response);
+    }
+
+    private static boolean atiendeEspecialidad(
+            Map<Long, List<MedicoEspecialidad>> especialidadesPorMedico,
+            Long idMedico,
+            Integer idEspecialidad
+    ) {
+        if (idMedico == null || idEspecialidad == null) return true;
+        return especialidadesPorMedico.getOrDefault(idMedico, List.of()).stream()
+                .anyMatch(relacion -> idEspecialidad.equals(relacion.getIdEspecialidad()));
     }
 
     private static LocalDate convertirFecha(String valor) {
