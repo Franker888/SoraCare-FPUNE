@@ -178,7 +178,7 @@
                 <div class="d-grid">
 
                     <button type="submit" class="btn btn-primary">
-                        Ingresar a mi panel
+                        Ingresar
                         <i class="bi bi-arrow-right ms-2"></i>
                     </button>
 
