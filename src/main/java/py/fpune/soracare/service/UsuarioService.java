@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 public class UsuarioService {
 
@@ -37,6 +38,10 @@ public class UsuarioService {
                 solicitud,
                 null
         );
+    }
+
+    public Set<Long> listarIdsPersonasConCuenta() throws SQLException {
+        return usuarioDAO.listarIdsPersonasConCuenta();
     }
 
     public Usuario crearUsuario(

@@ -5,20 +5,26 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import py.fpune.soracare.dto.AsignacionMedicoEspecialidadDTO;
 import py.fpune.soracare.dto.RegistroMedicoDTO;
+import py.fpune.soracare.dto.SolicitudCreacionUsuarioDTO;
+import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 import py.fpune.soracare.mvc.model.Especialidad;
+import py.fpune.soracare.mvc.model.EstadoMedico;
 import py.fpune.soracare.mvc.model.Medico;
 import py.fpune.soracare.mvc.model.MedicoEspecialidad;
 import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
+import py.fpune.soracare.service.UsuarioService;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @WebServlet("/admin/medicos")
 public class MedicosServlet extends HttpServlet {
@@ -36,6 +42,8 @@ public class MedicosServlet extends HttpServlet {
     private MedicoEspecialidadService
             medicoEspecialidadService;
 
+    private UsuarioService usuarioService;
+
     @Override
     public void init() {
 
@@ -47,6 +55,9 @@ public class MedicosServlet extends HttpServlet {
 
         medicoEspecialidadService =
                 new MedicoEspecialidadService();
+
+        usuarioService =
+                new UsuarioService();
     }
 
     @Override
@@ -81,6 +92,16 @@ public class MedicosServlet extends HttpServlet {
                     "mensajeExito",
                     "La especialidad fue asignada "
                             + "al médico correctamente."
+            );
+
+        } else if ("cuenta-creada".equals(
+                resultado
+        )) {
+
+            request.setAttribute(
+                    "mensajeExito",
+                    "La cuenta del médico fue creada correctamente. "
+                            + "Deberá cambiar la contraseña en su primer ingreso."
             );
         }
 
@@ -121,10 +142,78 @@ public class MedicosServlet extends HttpServlet {
             return;
         }
 
+        if ("crearCuentaMedico".equals(
+                accion
+        )) {
+
+            procesarCreacionCuentaMedico(
+                    request,
+                    response
+            );
+
+            return;
+        }
+
         procesarRegistroMedico(
                 request,
                 response
         );
+    }
+
+    private void procesarCreacionCuentaMedico(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws ServletException, IOException {
+
+        String idMedico = request.getParameter("cuentaIdMedico");
+        String nombreUsuario = request.getParameter("cuentaNombreUsuario");
+        String contrasena = request.getParameter("cuentaContrasena");
+        String confirmacion = request.getParameter("cuentaConfirmacion");
+
+        request.setAttribute("cuentaIdMedico", idMedico);
+        request.setAttribute("cuentaNombreUsuario", nombreUsuario);
+
+        try {
+            long idMedicoNumerico = convertirIdMedico(idMedico);
+            Medico medico = medicoService.buscarPorId(idMedicoNumerico)
+                    .orElseThrow(() -> new SQLException(
+                            "El médico seleccionado no existe."));
+            if (medico.getEstado() != EstadoMedico.ACTIVO) {
+                throw new SQLException(
+                        "La cuenta solamente puede crearse para un médico activo."
+                );
+            }
+
+            SolicitudCreacionUsuarioDTO solicitud =
+                    new SolicitudCreacionUsuarioDTO(
+                            String.valueOf(medico.getId()),
+                            nombreUsuario,
+                            contrasena,
+                            confirmacion,
+                            "MEDICO",
+                            true
+                    );
+
+            usuarioService.crearUsuario(
+                    solicitud,
+                    usuarioAutenticado(request).getIdUsuario()
+            );
+
+            response.sendRedirect(
+                    request.getContextPath()
+                            + RUTA_MEDICOS
+                            + "?resultado=cuenta-creada"
+            );
+
+        } catch (SQLException error) {
+            procesarErrorOperacion(
+                    request,
+                    response,
+                    error,
+                    "Error de base de datos al crear la cuenta del médico.",
+                    "No fue posible crear la cuenta del médico. Intentá nuevamente."
+            );
+        }
     }
 
     private void procesarRegistroMedico(
@@ -368,6 +457,11 @@ public class MedicosServlet extends HttpServlet {
                 medicos
         );
 
+        cargarCuentasMedicos(
+                request,
+                response
+        );
+
         request.getRequestDispatcher(
                 VISTA_MEDICOS
         ).forward(
@@ -568,6 +662,55 @@ public class MedicosServlet extends HttpServlet {
                             .SC_INTERNAL_SERVER_ERROR
             );
         }
+    }
+
+    private void cargarCuentasMedicos(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        try {
+            Set<Long> idsPersonasConCuenta =
+                    usuarioService.listarIdsPersonasConCuenta();
+            request.setAttribute(
+                    "idsPersonasConCuenta",
+                    idsPersonasConCuenta
+            );
+        } catch (SQLException error) {
+            log("Error al cargar las cuentas de médicos.", error);
+            if (request.getAttribute("error") == null) {
+                request.setAttribute(
+                        "error",
+                        "No fue posible cargar el estado de las cuentas médicas."
+                );
+            }
+            request.setAttribute("idsPersonasConCuenta", Set.of());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private static long convertirIdMedico(String valor) throws SQLException {
+        try {
+            long idMedico = Long.parseLong(valor == null ? "" : valor.strip());
+            if (idMedico <= 0) {
+                throw new NumberFormatException();
+            }
+            return idMedico;
+        } catch (NumberFormatException error) {
+            throw new SQLException("Seleccioná un médico válido.", error);
+        }
+    }
+
+    private static UsuarioAutenticadoDTO usuarioAutenticado(
+            HttpServletRequest request
+    ) throws SQLException {
+        HttpSession sesion = request.getSession(false);
+        Object usuario = sesion == null
+                ? null
+                : sesion.getAttribute("usuarioAutenticado");
+        if (!(usuario instanceof UsuarioAutenticadoDTO autenticado)) {
+            throw new SQLException("No existe una sesión administrativa válida.");
+        }
+        return autenticado;
     }
 
     private static boolean esErrorDeValidacion(

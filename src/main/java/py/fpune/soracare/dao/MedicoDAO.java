@@ -80,6 +80,27 @@ public class MedicoDAO {
                   LOWER(BTRIM(?))
             """;
 
+    private static final String SQL_BUSCAR_POR_ID_PERSONA = """
+            SELECT
+                per.id_persona,
+                per.nombres,
+                per.apellidos,
+                per.cedula,
+                per.fecha_nacimiento,
+                per.telefono,
+                per.correo,
+                per.direccion,
+                med.id_medico,
+                med.matricula_profesional,
+                med.fecha_ingreso,
+                med.estado,
+                med.biografia
+            FROM soracare.medicos med
+            INNER JOIN soracare.personas per
+                ON per.id_persona = med.id_persona
+            WHERE med.id_persona = ?
+            """;
+
     private static final String SQL_LISTAR_TODOS = """
             SELECT
                 per.id_persona,
@@ -362,6 +383,47 @@ public class MedicoDAO {
                     conexion,
                     matriculaProfesional
             );
+        }
+    }
+
+    public Optional<Medico> buscarPorIdPersona(
+            long idPersona
+    ) throws SQLException {
+
+        if (idPersona <= 0) {
+            throw new SQLException(
+                    "El ID de la persona debe ser mayor que cero."
+            );
+        }
+
+        try (
+                Connection conexion =
+                        ConexionBD.obtenerConexion();
+
+                PreparedStatement sentencia =
+                        conexion.prepareStatement(
+                                SQL_BUSCAR_POR_ID_PERSONA
+                        )
+        ) {
+            sentencia.setLong(
+                    1,
+                    idPersona
+            );
+
+            try (
+                    ResultSet resultado =
+                            sentencia.executeQuery()
+            ) {
+                if (!resultado.next()) {
+                    return Optional.empty();
+                }
+
+                return Optional.of(
+                        mapearMedico(
+                                resultado
+                        )
+                );
+            }
         }
     }
 

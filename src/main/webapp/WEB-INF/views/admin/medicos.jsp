@@ -7,6 +7,7 @@
 <%@ page import="py.fpune.soracare.mvc.model.MedicoEspecialidad" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.util.Set" %>
 
 <%!
     private String escaparHtml(String texto) {
@@ -168,6 +169,31 @@
                     "asignacionFechaDesde"
             );
 
+    Object atributoIdsPersonasConCuenta =
+            request.getAttribute(
+                    "idsPersonasConCuenta"
+            );
+
+    Set<Long> idsPersonasConCuenta;
+
+    if (atributoIdsPersonasConCuenta instanceof Set<?>) {
+        idsPersonasConCuenta =
+                (Set<Long>) atributoIdsPersonasConCuenta;
+    } else {
+        idsPersonasConCuenta =
+                Set.of();
+    }
+
+    String cuentaIdMedico =
+            (String) request.getAttribute(
+                    "cuentaIdMedico"
+            );
+
+    String cuentaNombreUsuario =
+            (String) request.getAttribute(
+                    "cuentaNombreUsuario"
+            );
+
     if (nombres == null) {
         nombres = "";
     }
@@ -218,6 +244,14 @@
 
     if (asignacionFechaDesde == null) {
         asignacionFechaDesde = "";
+    }
+
+    if (cuentaIdMedico == null) {
+        cuentaIdMedico = "";
+    }
+
+    if (cuentaNombreUsuario == null) {
+        cuentaNombreUsuario = "";
     }
 
     boolean asignacionEsPrincipal =
@@ -844,6 +878,152 @@
 
     </section>
 
+    <section class="card tarjeta-asignacion shadow-sm mb-4">
+
+        <div class="card-body p-4">
+
+            <div class="d-flex align-items-center gap-3 mb-4">
+
+                <div class="icono-relacion">@</div>
+
+                <div>
+
+                    <h2 class="h5 mb-1">
+                        Crear acceso al portal médico
+                    </h2>
+
+                    <p class="text-secondary mb-0">
+                        Asigná una cuenta a un profesional registrado
+                        para que consulte exclusivamente su propia agenda.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <% boolean hayMedicoSinCuenta =
+                    medicos.stream().anyMatch(medico ->
+                            medico.getId() != null
+                                    && medico.getEstado() != null
+                                    && "ACTIVO".equals(medico.getEstado().name())
+                                    && !idsPersonasConCuenta.contains(medico.getId()));
+
+            if (!hayMedicoSinCuenta) { %>
+
+            <div class="alert alert-light border mb-0">
+                Todos los médicos registrados ya poseen una cuenta de acceso.
+            </div>
+
+            <% } else { %>
+
+            <form method="post"
+                  action="${pageContext.request.contextPath}/admin/medicos">
+
+                <input type="hidden" name="accion" value="crearCuentaMedico">
+
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-12 col-lg-4">
+
+                        <label for="cuentaIdMedico" class="form-label fw-semibold">
+                            Médico sin cuenta
+                        </label>
+
+                        <select id="cuentaIdMedico" name="cuentaIdMedico"
+                                class="form-select" required>
+
+                            <option value="">Seleccionar médico</option>
+
+                            <% for (Medico medico : medicos) {
+                                if (medico.getId() == null
+                                        || medico.getEstado() == null
+                                        || !"ACTIVO".equals(medico.getEstado().name())
+                                        || idsPersonasConCuenta.contains(medico.getId())) {
+                                    continue;
+                                }
+                                String idMedicoActual =
+                                        String.valueOf(medico.getIdMedico());
+                            %>
+
+                            <option value="<%= escaparHtml(idMedicoActual) %>"
+                                    <%= idMedicoActual.equals(cuentaIdMedico)
+                                            ? "selected" : "" %>>
+                                <%= escaparHtml(medico.getNombres()) %>
+                                <%= escaparHtml(medico.getApellidos()) %>
+                                — <%= escaparHtml(medico.getMatriculaProfesional()) %>
+                            </option>
+
+                            <% } %>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-12 col-lg-3">
+
+                        <label for="cuentaNombreUsuario" class="form-label fw-semibold">
+                            Nombre de usuario
+                        </label>
+
+                        <input type="text" id="cuentaNombreUsuario"
+                               name="cuentaNombreUsuario" class="form-control"
+                               minlength="4" maxlength="50"
+                               pattern="[A-Za-z0-9._-]+" required
+                               autocomplete="off"
+                               value="<%= escaparHtml(cuentaNombreUsuario) %>">
+
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-2">
+
+                        <label for="cuentaContrasena" class="form-label fw-semibold">
+                            Contraseña temporal
+                        </label>
+
+                        <input type="password" id="cuentaContrasena"
+                               name="cuentaContrasena" class="form-control"
+                               minlength="10" maxlength="72" required
+                               autocomplete="new-password">
+
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-2">
+
+                        <label for="cuentaConfirmacion" class="form-label fw-semibold">
+                            Confirmar contraseña
+                        </label>
+
+                        <input type="password" id="cuentaConfirmacion"
+                               name="cuentaConfirmacion" class="form-control"
+                               minlength="10" maxlength="72" required
+                               autocomplete="new-password">
+
+                    </div>
+
+                    <div class="col-12 col-lg-1 d-grid">
+                        <button type="submit" class="btn btn-primary boton-principal">
+                            Crear
+                        </button>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-text">
+                            La contraseña debe tener mayúscula, minúscula,
+                            número y al menos 10 caracteres. El médico deberá
+                            reemplazarla al iniciar sesión por primera vez.
+                        </div>
+                    </div>
+
+                </div>
+
+            </form>
+
+            <% } %>
+
+        </div>
+
+    </section>
+
     <section class="row g-4">
 
         <div class="col-12 col-xl-5">
@@ -1222,6 +1402,10 @@
                                     Estado
                                 </th>
 
+                                <th scope="col">
+                                    Acceso
+                                </th>
+
                             </tr>
 
                             </thead>
@@ -1469,6 +1653,25 @@
 
                                     <span class="badge estado-inactivo">
                                         Inactivo
+                                    </span>
+
+                                    <% } %>
+
+                                </td>
+
+                                <td>
+
+                                    <% if (medico.getId() != null
+                                            && idsPersonasConCuenta.contains(medico.getId())) { %>
+
+                                    <span class="badge estado-activo">
+                                        Cuenta creada
+                                    </span>
+
+                                    <% } else { %>
+
+                                    <span class="badge estado-inactivo">
+                                        Sin cuenta
                                     </span>
 
                                     <% } %>

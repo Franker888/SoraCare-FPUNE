@@ -11,7 +11,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.OffsetDateTime;
+import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.Set;
 
 public class UsuarioDAO {
 
@@ -29,6 +31,12 @@ public class UsuarioDAO {
                 FROM soracare.usuarios
                 WHERE id_persona = ?
             ) AS existe
+            """;
+
+    private static final String SQL_LISTAR_PERSONAS_CON_CUENTA = """
+            SELECT id_persona
+            FROM soracare.usuarios
+            ORDER BY id_persona
             """;
 
     private static final String SQL_REGISTRAR_USUARIO = """
@@ -302,6 +310,21 @@ public class UsuarioDAO {
                 );
             }
         }
+    }
+
+    public Set<Long> listarIdsPersonasConCuenta() throws SQLException {
+        Set<Long> idsPersonas = new LinkedHashSet<>();
+
+        try (Connection conexion = ConexionBD.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(
+                     SQL_LISTAR_PERSONAS_CON_CUENTA);
+             ResultSet resultado = sentencia.executeQuery()) {
+            while (resultado.next()) {
+                idsPersonas.add(resultado.getLong("id_persona"));
+            }
+        }
+
+        return idsPersonas;
     }
 
     public long registrar(

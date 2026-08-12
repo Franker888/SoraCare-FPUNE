@@ -61,13 +61,20 @@
                     "PACIENTE"
             );
 
+    boolean esMedico =
+            usuarioAutenticado.tieneRol(
+                    "MEDICO"
+            );
+
     String nombrePanel = esAdministrador
             ? "Panel de administración"
             : puedeGestionarAgenda
                     ? "Panel de recepción"
                     : esPaciente
                             ? "Portal del paciente"
-                            : "Panel principal";
+                            : esMedico
+                                    ? "Portal médico"
+                                    : "Panel principal";
 
     String descripcionPanel = esAdministrador
             ? "Control general de la operación de SoraCare"
@@ -75,7 +82,9 @@
                     ? "Citas, pacientes y cobros de recepción"
                     : esPaciente
                             ? "Tus citas, pagos y servicios médicos"
-                            : "Accesos disponibles para tu cuenta";
+                            : esMedico
+                                    ? "Tu agenda de pacientes y atención clínica"
+                                    : "Accesos disponibles para tu cuenta";
 %>
 
 <!DOCTYPE html>
@@ -357,13 +366,17 @@
                         <h3 class="h5">
                             <%= esPaciente
                                     ? "Mis citas"
-                                    : "Agenda médica" %>
+                                    : esMedico
+                                            ? "Mi agenda médica"
+                                            : "Agenda médica" %>
                         </h3>
 
                         <p class="text-secondary">
                             <%= esPaciente
                                     ? "Revisar tus citas pendientes y confirmadas, o agendar una nueva consulta."
-                                    : "Consultar turnos disponibles, solicitar citas y administrar la agenda diaria." %>
+                                    : esMedico
+                                            ? "Consultar los pacientes y las citas asignadas exclusivamente a tu perfil."
+                                            : "Consultar turnos disponibles, solicitar citas y administrar la agenda diaria." %>
                         </p>
 
                         <% if (puedeGestionarAgenda) { %>
@@ -383,6 +396,16 @@
                                 class="btn btn-outline-success">
 
                             Ir a mis citas
+
+                        </a>
+
+                        <% } else if (esMedico) { %>
+
+                        <a
+                                href="${pageContext.request.contextPath}/medico/agenda"
+                                class="btn btn-outline-success">
+
+                            Ver mi agenda
 
                         </a>
 
