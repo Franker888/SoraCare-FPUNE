@@ -71,6 +71,9 @@ public class MisCitasServlet extends HttpServlet {
                     "Tu turno quedo reservado. El pago en efectivo sigue pendiente hasta que recepcion registre el cobro.");
         } else if ("cancelada".equals(resultado)) {
             request.setAttribute("mensajeExito", "Tu cita fue cancelada correctamente.");
+        } else if ("reprogramada".equals(resultado)) {
+            request.setAttribute("mensajeExito",
+                    "Tu cita fue reprogramada correctamente. El pago y el comprobante se conservaron.");
         }
         mostrarVista(request, response, convertirFecha(request.getParameter("fecha")));
     }

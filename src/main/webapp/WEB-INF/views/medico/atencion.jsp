@@ -776,7 +776,7 @@
                                         DisponibilidadService.ZONA_HORARIA).format(fechaHora) %></strong>
                                 <div class="text-secondary">
                                     <%= h(anterior.especialidad()) %>
-                                    · Dr./Dra. <%= h(anterior.medicoNombreCompleto()) %>
+                                    · <%= h(anterior.medicoNombreCompleto()) %>
                                 </div>
                             </div>
                             <span class="badge estado-cita estado-atendida align-self-start">Ver detalle</span>

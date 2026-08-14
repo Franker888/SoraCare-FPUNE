@@ -7,6 +7,7 @@ import py.fpune.soracare.dao.PacienteDAO;
 import py.fpune.soracare.dao.PagoDAO;
 import py.fpune.soracare.dto.SlotDisponibleDTO;
 import py.fpune.soracare.dto.SolicitudCitaDTO;
+import py.fpune.soracare.dto.SolicitudReprogramacionCitaDTO;
 import py.fpune.soracare.mvc.model.Cita;
 import py.fpune.soracare.mvc.model.EstadoCita;
 
@@ -23,6 +24,8 @@ public class CitaService {
 
     private static final String ESTADO_SOLICITADA = "SOLICITADA";
     private static final String ESTADO_CANCELADA = "CANCELADA";
+    private static final List<String> ESTADOS_REPROGRAMABLES =
+            List.of("SOLICITADA", "PENDIENTE_PAGO", "CONFIRMADA");
     private static final List<String> CANALES =
             List.of("WEB", "RECEPCION", "TELEFONO", "ADMINISTRACION");
 
@@ -199,6 +202,108 @@ public class CitaService {
                 if (error instanceof SQLException sql) throw sql;
                 throw new SQLException("No fue posible cancelar la cita.", error);
             }
+        }
+    }
+
+    public Cita buscarParaReprogramarPorPaciente(long idCita, long idPaciente)
+            throws SQLException {
+        if (idCita <= 0 || idPaciente <= 0) {
+            throw new IllegalArgumentException("La cita seleccionada no es válida.");
+        }
+        try (Connection conexion = ConexionBD.obtenerConexion()) {
+            Cita cita = citaDAO.buscarPorId(conexion, idCita)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "La cita seleccionada no existe."));
+            validarReprogramable(cita, idPaciente);
+            return cita;
+        }
+    }
+
+    public Cita reprogramarPorPaciente(
+            SolicitudReprogramacionCitaDTO datos,
+            long idPaciente,
+            long idUsuario
+    ) throws SQLException {
+        if (datos == null || idPaciente <= 0 || idUsuario <= 0) {
+            throw new IllegalArgumentException("Los datos para reprogramar la cita no son válidos.");
+        }
+        long idCita = convertirLong(datos.idCita(), "La cita seleccionada no es válida.");
+        Long idHorario = convertirLongOpcional(datos.idHorario());
+        Long idExcepcion = convertirLongOpcional(datos.idExcepcion());
+        long idMedico = convertirLong(datos.idMedico(), "El médico del turno no es válido.");
+        int idEspecialidad = convertirEntero(datos.idEspecialidad(),
+                "La especialidad del turno no es válida.");
+        long idConsultorio = convertirLong(datos.idConsultorio(),
+                "El consultorio del turno no es válido.");
+        LocalDate fecha = convertirFecha(datos.fecha());
+        LocalTime horaInicio = convertirHora(datos.horaInicio());
+        String motivo = normalizarObligatorio(datos.motivo(), 500,
+                "El motivo de reprogramación es obligatorio.",
+                "El motivo de reprogramación no puede superar 500 caracteres.");
+
+        try (Connection conexion = ConexionBD.obtenerConexion()) {
+            try {
+                conexion.setAutoCommit(false);
+                Cita cita = citaDAO.buscarPorIdParaActualizar(conexion, idCita)
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "La cita seleccionada no existe."));
+                validarReprogramable(cita, idPaciente);
+                if (cita.getIdMedico() != idMedico
+                        || cita.getIdEspecialidad() != idEspecialidad) {
+                    throw new IllegalArgumentException(
+                            "La reprogramación debe conservar el médico y la especialidad originales.");
+                }
+
+                SlotDisponibleDTO slot = disponibilidadService
+                        .listar(fecha, idMedico, idEspecialidad).stream()
+                        .filter(actual -> actual.idMedico() == idMedico
+                                && actual.idEspecialidad() == idEspecialidad
+                                && actual.idConsultorio() == idConsultorio
+                                && actual.horaInicio().equals(horaInicio)
+                                && iguales(actual.idHorario(), idHorario)
+                                && iguales(actual.idExcepcion(), idExcepcion))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "El nuevo turno ya no está disponible."));
+
+                OffsetDateTime nuevoInicio = fecha.atTime(slot.horaInicio())
+                        .atZone(DisponibilidadService.ZONA_HORARIA).toOffsetDateTime();
+                if (nuevoInicio.equals(cita.getFechaHoraInicio())) {
+                    throw new IllegalArgumentException(
+                            "Elegí un turno diferente al que ya tiene la cita.");
+                }
+
+                Cita actualizada = citaDAO.reprogramar(
+                        conexion, cita, slot, idUsuario, motivo);
+                pagoDAO.reprogramarConfirmacionAsistencia(
+                        conexion, idCita, actualizada.getFechaHoraInicio());
+                conexion.commit();
+                return actualizada;
+            } catch (Exception error) {
+                rollback(conexion, error);
+                if (error instanceof IllegalArgumentException validacion) throw validacion;
+                if (error instanceof SQLException sql && esSuperposicion(sql)) {
+                    throw new IllegalArgumentException(
+                            "El nuevo turno acaba de ser ocupado. Elegí otro horario.", sql);
+                }
+                if (error instanceof SQLException sql) throw sql;
+                throw new SQLException("No fue posible reprogramar la cita.", error);
+            }
+        }
+    }
+
+    private static void validarReprogramable(Cita cita, long idPaciente) {
+        if (!Long.valueOf(idPaciente).equals(cita.getIdPaciente())) {
+            throw new IllegalArgumentException("No podés reprogramar una cita de otro paciente.");
+        }
+        if (!ESTADOS_REPROGRAMABLES.contains(cita.getCodigoEstado())) {
+            throw new IllegalArgumentException(
+                    "Esta cita ya no admite reprogramación por su estado actual.");
+        }
+        if (!cita.getFechaHoraInicio().isAfter(
+                OffsetDateTime.now(DisponibilidadService.ZONA_HORARIA))) {
+            throw new IllegalArgumentException(
+                    "Una cita que ya comenzó no puede reprogramarse.");
         }
     }
 

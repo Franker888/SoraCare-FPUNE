@@ -105,7 +105,9 @@
                     </h1>
                     <p class="mb-0">
                         <% if (medico != null) { %>
-                        Dr./Dra. <%= h(medico.getNombres() + " " + medico.getApellidos()) %>
+                        <%= medico.getTratamiento() == null
+                                ? "Dr." : h(medico.getTratamiento().getAbreviatura()) %>
+                        <%= h(medico.getNombres() + " " + medico.getApellidos()) %>
                         · Matrícula <%= h(medico.getMatriculaProfesional()) %>
                         <% } else { %>
                         Consultá las citas asignadas a tu perfil profesional.

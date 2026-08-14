@@ -6,6 +6,7 @@ import py.fpune.soracare.dao.PersonaDAO;
 import py.fpune.soracare.dto.RegistroMedicoDTO;
 import py.fpune.soracare.mvc.model.EstadoMedico;
 import py.fpune.soracare.mvc.model.Medico;
+import py.fpune.soracare.mvc.model.TratamientoMedico;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -108,6 +109,12 @@ public class MedicoService {
 
         medico.setEstado(
                 EstadoMedico.ACTIVO
+        );
+
+        medico.setTratamiento(
+                convertirTratamiento(
+                        datosRegistro.getTratamiento()
+                )
         );
 
         medico.setBiografia(
@@ -423,5 +430,19 @@ public class MedicoService {
         }
 
         return valorNormalizado;
+    }
+
+    private static TratamientoMedico convertirTratamiento(String valor)
+            throws SQLException {
+        try {
+            return TratamientoMedico.valueOf(
+                    valor == null ? "" : valor.strip().toUpperCase()
+            );
+        } catch (IllegalArgumentException error) {
+            throw new SQLException(
+                    "Seleccioná si corresponde Dr. o Dra.",
+                    error
+            );
+        }
     }
 }

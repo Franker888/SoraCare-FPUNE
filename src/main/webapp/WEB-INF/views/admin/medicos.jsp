@@ -139,6 +139,15 @@
                     "matriculaProfesional"
             );
 
+    String tratamiento =
+            (String) request.getAttribute(
+                    "tratamiento"
+            );
+
+    if (tratamiento == null || tratamiento.isBlank()) {
+        tratamiento = "DR";
+    }
+
     String fechaIngreso =
             (String) request.getAttribute(
                     "fechaIngreso"
@@ -1058,7 +1067,37 @@
 
                         <div class="row">
 
-                            <div class="col-12 col-md-6 mb-3">
+                            <div class="col-12 col-md-3 mb-3">
+
+                                <label
+                                        for="tratamiento"
+                                        class="form-label fw-semibold">
+
+                                    Tratamiento
+
+                                </label>
+
+                                <select
+                                        id="tratamiento"
+                                        name="tratamiento"
+                                        class="form-select"
+                                        required>
+
+                                    <option value="DR"
+                                            <%= "DR".equals(tratamiento) ? "selected" : "" %>>
+                                        Dr.
+                                    </option>
+
+                                    <option value="DRA"
+                                            <%= "DRA".equals(tratamiento) ? "selected" : "" %>>
+                                        Dra.
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-12 col-md-5 mb-3">
 
                                 <label
                                         for="nombres"
@@ -1080,7 +1119,7 @@
 
                             </div>
 
-                            <div class="col-12 col-md-6 mb-3">
+                            <div class="col-12 col-md-4 mb-3">
 
                                 <label
                                         for="apellidos"
@@ -1435,6 +1474,14 @@
                                 <td>
 
                                     <strong>
+
+                                        <% if (medico.getTratamiento() != null) { %>
+
+                                        <%= escaparHtml(
+                                                medico.getTratamiento().getAbreviatura()
+                                        ) %>
+
+                                        <% } %>
 
                                         <%= escaparHtml(
                                                 medico.getNombres()

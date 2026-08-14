@@ -261,6 +261,11 @@ public class MedicosServlet extends HttpServlet {
                         "matriculaProfesional"
                 );
 
+        String tratamiento =
+                request.getParameter(
+                        "tratamiento"
+                );
+
         String fechaIngreso =
                 request.getParameter(
                         "fechaIngreso"
@@ -281,6 +286,7 @@ public class MedicosServlet extends HttpServlet {
                 correo,
                 direccion,
                 matriculaProfesional,
+                tratamiento,
                 fechaIngreso,
                 biografia
         );
@@ -296,7 +302,8 @@ public class MedicosServlet extends HttpServlet {
                         direccion,
                         matriculaProfesional,
                         fechaIngreso,
-                        biografia
+                        biografia,
+                        tratamiento
                 );
 
         try {
@@ -730,6 +737,7 @@ public class MedicosServlet extends HttpServlet {
             String correo,
             String direccion,
             String matriculaProfesional,
+            String tratamiento,
             String fechaIngreso,
             String biografia
     ) {
@@ -772,6 +780,11 @@ public class MedicosServlet extends HttpServlet {
         request.setAttribute(
                 "matriculaProfesional",
                 matriculaProfesional
+        );
+
+        request.setAttribute(
+                "tratamiento",
+                tratamiento
         );
 
         request.setAttribute(

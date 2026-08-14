@@ -15,7 +15,7 @@ import java.io.IOException;
 
 @WebFilter(
         filterName = "FiltroPortalPaciente",
-        urlPatterns = {"/mis-citas", "/mis-documentos", "/pagos/*"}
+        urlPatterns = {"/mis-citas", "/mis-citas/*", "/mis-documentos", "/pagos/*"}
 )
 public class FiltroPortalPaciente implements Filter {
 

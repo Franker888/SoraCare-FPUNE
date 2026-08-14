@@ -194,6 +194,33 @@ public class PagoDAO {
         }
     }
 
+    public void reprogramarConfirmacionAsistencia(
+            Connection conexion,
+            long idCita,
+            OffsetDateTime nuevaFechaCita
+    ) throws SQLException {
+        String sql = """
+                UPDATE soracare.confirmaciones_asistencia
+                   SET estado = 'PENDIENTE',
+                       token_hash = NULL,
+                       fecha_programada_primer_aviso = ?,
+                       fecha_programada_segundo_aviso = ?,
+                       fecha_primer_aviso = NULL,
+                       fecha_segundo_aviso = NULL,
+                       fecha_respuesta = NULL,
+                       fecha_vencimiento = ?,
+                       actualizado_en = CURRENT_TIMESTAMP
+                 WHERE id_cita = ?
+                """;
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setObject(1, nuevaFechaCita.minusHours(24));
+            sentencia.setObject(2, nuevaFechaCita.minusHours(18));
+            sentencia.setObject(3, nuevaFechaCita.minusHours(12));
+            sentencia.setLong(4, idCita);
+            sentencia.executeUpdate();
+        }
+    }
+
     public Optional<PagoResumenDTO> buscarPorId(long idPago) throws SQLException {
         try (Connection conexion = ConexionBD.obtenerConexion()) {
             return buscarPorId(conexion, idPago);

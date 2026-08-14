@@ -41,7 +41,10 @@ public class AtencionMedicaDAO {
             ate.requiere_seguimiento,
             ate.fecha_proximo_control,
             ate.estado,
-            CONCAT_WS(' ', per.nombres, per.apellidos) AS medico_nombre_completo,
+            CONCAT(
+                CASE med.tratamiento WHEN 'DRA' THEN 'Dra.' ELSE 'Dr.' END,
+                ' ', per.nombres, ' ', per.apellidos
+            ) AS medico_nombre_completo,
             esp.nombre AS especialidad
             """;
 

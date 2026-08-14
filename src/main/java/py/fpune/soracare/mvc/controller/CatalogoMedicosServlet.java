@@ -6,14 +6,17 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import py.fpune.soracare.mvc.model.Especialidad;
+import py.fpune.soracare.mvc.model.HorarioMedico;
 import py.fpune.soracare.mvc.model.Medico;
 import py.fpune.soracare.mvc.model.MedicoEspecialidad;
 import py.fpune.soracare.service.EspecialidadService;
+import py.fpune.soracare.service.HorarioMedicoService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +35,8 @@ public class CatalogoMedicosServlet extends HttpServlet {
     private MedicoEspecialidadService
             medicoEspecialidadService;
 
+    private HorarioMedicoService horarioMedicoService;
+
     @Override
     public void init() {
 
@@ -43,6 +48,9 @@ public class CatalogoMedicosServlet extends HttpServlet {
 
         medicoEspecialidadService =
                 new MedicoEspecialidadService();
+
+        horarioMedicoService =
+                new HorarioMedicoService();
     }
 
     @Override
@@ -70,6 +78,12 @@ public class CatalogoMedicosServlet extends HttpServlet {
                             especialidadesPorId
                     );
 
+            Map<Long, List<HorarioMedico>>
+                    horariosPorMedico =
+                    cargarHorariosPublicosPorMedico(
+                            medicos
+                    );
+
             request.setAttribute(
                     "medicos",
                     medicos
@@ -83,6 +97,11 @@ public class CatalogoMedicosServlet extends HttpServlet {
             request.setAttribute(
                     "especialidadesPorMedico",
                     especialidadesPorMedico
+            );
+
+            request.setAttribute(
+                    "horariosPorMedico",
+                    horariosPorMedico
             );
 
         } catch (SQLException error) {
@@ -105,6 +124,11 @@ public class CatalogoMedicosServlet extends HttpServlet {
 
             request.setAttribute(
                     "especialidadesPorMedico",
+                    Map.of()
+            );
+
+            request.setAttribute(
+                    "horariosPorMedico",
                     Map.of()
             );
 
@@ -210,6 +234,51 @@ public class CatalogoMedicosServlet extends HttpServlet {
         }
 
         return especialidadesPorMedico;
+    }
+
+    private Map<Long, List<HorarioMedico>>
+    cargarHorariosPublicosPorMedico(
+            List<Medico> medicos
+    ) throws SQLException {
+
+        Map<Long, List<HorarioMedico>>
+                horariosPorMedico =
+                new LinkedHashMap<>();
+
+        for (Medico medico : medicos) {
+            if (medico.getIdMedico() != null) {
+                horariosPorMedico.put(
+                        medico.getIdMedico(),
+                        new ArrayList<>()
+                );
+            }
+        }
+
+        LocalDate hoy = LocalDate.now();
+
+        for (
+                HorarioMedico horario
+                : horarioMedicoService.listarTodos()
+        ) {
+
+            if (!horario.isActivo()
+                    || horario.getIdMedico() == null
+                    || (horario.getFechaHasta() != null
+                    && horario.getFechaHasta().isBefore(hoy))) {
+                continue;
+            }
+
+            List<HorarioMedico> horariosDelMedico =
+                    horariosPorMedico.get(
+                            horario.getIdMedico()
+                    );
+
+            if (horariosDelMedico != null) {
+                horariosDelMedico.add(horario);
+            }
+        }
+
+        return horariosPorMedico;
     }
 
     private static void configurarRespuestaSinCache(

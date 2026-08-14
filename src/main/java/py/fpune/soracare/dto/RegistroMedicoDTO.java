@@ -13,6 +13,7 @@ public class RegistroMedicoDTO {
     private final String matriculaProfesional;
     private final String fechaIngreso;
     private final String biografia;
+    private final String tratamiento;
 
     public RegistroMedicoDTO(
             String nombres,
@@ -25,6 +26,23 @@ public class RegistroMedicoDTO {
             String matriculaProfesional,
             String fechaIngreso,
             String biografia
+    ) {
+        this(nombres, apellidos, cedula, fechaNacimiento, telefono, correo,
+                direccion, matriculaProfesional, fechaIngreso, biografia, "DR");
+    }
+
+    public RegistroMedicoDTO(
+            String nombres,
+            String apellidos,
+            String cedula,
+            String fechaNacimiento,
+            String telefono,
+            String correo,
+            String direccion,
+            String matriculaProfesional,
+            String fechaIngreso,
+            String biografia,
+            String tratamiento
     ) {
         this.nombres =
                 nombres;
@@ -55,6 +73,9 @@ public class RegistroMedicoDTO {
 
         this.biografia =
                 biografia;
+
+        this.tratamiento =
+                tratamiento;
     }
 
     public String getNombres() {
@@ -95,5 +116,9 @@ public class RegistroMedicoDTO {
 
     public String getBiografia() {
         return biografia;
+    }
+
+    public String getTratamiento() {
+        return tratamiento;
     }
 }

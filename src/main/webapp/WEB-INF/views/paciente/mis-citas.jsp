@@ -10,6 +10,7 @@
 <%@ page import="py.fpune.soracare.mvc.model.MetodoPago" %>
 <%@ page import="py.fpune.soracare.service.DisponibilidadService" %>
 <%@ page import="java.time.LocalDate" %>
+<%@ page import="java.time.OffsetDateTime" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Locale" %>
@@ -281,6 +282,10 @@
                 Consultorio consultorio = consultorios.get(cita.getIdConsultorio());
                 PagoResumenDTO pago = pagosPorCita.get(cita.getIdCita());
                 boolean cancelable = !"CANCELADA".equals(cita.getCodigoEstado()) && !"ATENDIDA".equals(cita.getCodigoEstado());
+                boolean reprogramable = List.of("SOLICITADA", "PENDIENTE_PAGO", "CONFIRMADA")
+                        .contains(cita.getCodigoEstado())
+                        && cita.getFechaHoraInicio().isAfter(
+                                OffsetDateTime.now(DisponibilidadService.ZONA_HORARIA));
             %>
             <div class="col-12">
                 <article class="card tarjeta slot shadow-sm">
@@ -310,6 +315,14 @@
                                 <% } %>
                             </div>
                             <div class="col-lg-5">
+                                <% if (reprogramable) { %>
+                                <div class="d-flex justify-content-lg-end mb-2">
+                                    <a class="btn btn-outline-primary btn-sm"
+                                       href="${pageContext.request.contextPath}/mis-citas/reprogramar?idCita=<%= cita.getIdCita() %>">
+                                        Reprogramar cita
+                                    </a>
+                                </div>
+                                <% } %>
                                 <% if (cancelable) { %>
                                 <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="d-flex gap-2">
                                     <input type="hidden" name="accion" value="cancelar">

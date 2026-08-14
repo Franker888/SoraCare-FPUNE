@@ -31,9 +31,10 @@ public class MedicoDAO {
                 matricula_profesional,
                 fecha_ingreso,
                 estado,
-                biografia
+                biografia,
+                tratamiento
             )
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
             RETURNING id_medico
             """;
 
@@ -51,7 +52,9 @@ public class MedicoDAO {
                 med.matricula_profesional,
                 med.fecha_ingreso,
                 med.estado,
-                med.biografia
+                med.biografia,
+                med.tratamiento,
+                med.foto_perfil
             FROM soracare.medicos med
             INNER JOIN soracare.personas per
                 ON per.id_persona = med.id_persona
@@ -72,7 +75,9 @@ public class MedicoDAO {
                 med.matricula_profesional,
                 med.fecha_ingreso,
                 med.estado,
-                med.biografia
+                med.biografia,
+                med.tratamiento,
+                med.foto_perfil
             FROM soracare.medicos med
             INNER JOIN soracare.personas per
                 ON per.id_persona = med.id_persona
@@ -94,7 +99,9 @@ public class MedicoDAO {
                 med.matricula_profesional,
                 med.fecha_ingreso,
                 med.estado,
-                med.biografia
+                med.biografia,
+                med.tratamiento,
+                med.foto_perfil
             FROM soracare.medicos med
             INNER JOIN soracare.personas per
                 ON per.id_persona = med.id_persona
@@ -115,7 +122,9 @@ public class MedicoDAO {
                 med.matricula_profesional,
                 med.fecha_ingreso,
                 med.estado,
-                med.biografia
+                med.biografia,
+                med.tratamiento,
+                med.foto_perfil
             FROM soracare.medicos med
             INNER JOIN soracare.personas per
                 ON per.id_persona = med.id_persona
@@ -139,7 +148,9 @@ public class MedicoDAO {
                 med.matricula_profesional,
                 med.fecha_ingreso,
                 med.estado,
-                med.biografia
+                med.biografia,
+                med.tratamiento,
+                med.foto_perfil
             FROM soracare.medicos med
             INNER JOIN soracare.personas per
                 ON per.id_persona = med.id_persona
@@ -287,6 +298,11 @@ public class MedicoDAO {
                     sentencia,
                     5,
                     medico.getBiografia()
+            );
+
+            sentencia.setString(
+                    6,
+                    medico.getTratamiento().name()
             );
 
             try (
@@ -669,6 +685,16 @@ public class MedicoDAO {
                 resultado.getString(
                         "biografia"
                 )
+        );
+
+        medico.setTratamiento(
+                py.fpune.soracare.mvc.model.TratamientoMedico.valueOf(
+                        resultado.getString("tratamiento")
+                )
+        );
+
+        medico.setFotoPerfil(
+                resultado.getString("foto_perfil")
         );
 
         return medico;

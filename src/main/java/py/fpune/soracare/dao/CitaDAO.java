@@ -1,6 +1,7 @@
 package py.fpune.soracare.dao;
 
 import py.fpune.soracare.config.ConexionBD;
+import py.fpune.soracare.dto.SlotDisponibleDTO;
 import py.fpune.soracare.mvc.model.Cita;
 
 import java.sql.Connection;
@@ -220,6 +221,75 @@ public class CitaDAO {
                 throw new SQLException("No fue posible actualizar el estado de la cita.");
             }
         }
+    }
+
+    public Cita reprogramar(
+            Connection conexion,
+            Cita citaAnterior,
+            SlotDisponibleDTO nuevoSlot,
+            long idUsuario,
+            String motivo
+    ) throws SQLException {
+        OffsetDateTime nuevoInicio = nuevoSlot.fecha().atTime(nuevoSlot.horaInicio())
+                .atZone(java.time.ZoneId.of("America/Asuncion")).toOffsetDateTime();
+        OffsetDateTime nuevoFin = nuevoSlot.fecha().atTime(nuevoSlot.horaFin())
+                .atZone(java.time.ZoneId.of("America/Asuncion")).toOffsetDateTime();
+
+        String sqlHistorial = """
+                INSERT INTO soracare.reprogramaciones_citas (
+                    id_cita, fecha_hora_inicio_anterior, fecha_hora_fin_anterior,
+                    id_medico_anterior, id_especialidad_anterior,
+                    id_consultorio_anterior, id_horario_anterior,
+                    fecha_hora_inicio_nueva, fecha_hora_fin_nueva,
+                    id_medico_nuevo, id_especialidad_nueva,
+                    id_consultorio_nuevo, id_horario_nuevo,
+                    motivo, id_usuario
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """;
+        try (PreparedStatement sentencia = conexion.prepareStatement(sqlHistorial)) {
+            sentencia.setLong(1, citaAnterior.getIdCita());
+            sentencia.setObject(2, citaAnterior.getFechaHoraInicio());
+            sentencia.setObject(3, citaAnterior.getFechaHoraFin());
+            sentencia.setLong(4, citaAnterior.getIdMedico());
+            sentencia.setInt(5, citaAnterior.getIdEspecialidad());
+            sentencia.setLong(6, citaAnterior.getIdConsultorio());
+            if (citaAnterior.getIdHorario() == null) sentencia.setNull(7, Types.BIGINT);
+            else sentencia.setLong(7, citaAnterior.getIdHorario());
+            sentencia.setObject(8, nuevoInicio);
+            sentencia.setObject(9, nuevoFin);
+            sentencia.setLong(10, nuevoSlot.idMedico());
+            sentencia.setInt(11, nuevoSlot.idEspecialidad());
+            sentencia.setLong(12, nuevoSlot.idConsultorio());
+            if (nuevoSlot.idHorario() == null) sentencia.setNull(13, Types.BIGINT);
+            else sentencia.setLong(13, nuevoSlot.idHorario());
+            sentencia.setString(14, motivo);
+            sentencia.setLong(15, idUsuario);
+            sentencia.executeUpdate();
+        }
+
+        String sqlCita = """
+                UPDATE soracare.citas
+                   SET id_medico = ?, id_especialidad = ?, id_consultorio = ?,
+                       id_horario = ?, fecha_hora_inicio = ?, fecha_hora_fin = ?,
+                       id_usuario_modificacion = ?, motivo_cancelacion = NULL
+                 WHERE id_cita = ?
+                """;
+        try (PreparedStatement sentencia = conexion.prepareStatement(sqlCita)) {
+            sentencia.setLong(1, nuevoSlot.idMedico());
+            sentencia.setInt(2, nuevoSlot.idEspecialidad());
+            sentencia.setLong(3, nuevoSlot.idConsultorio());
+            if (nuevoSlot.idHorario() == null) sentencia.setNull(4, Types.BIGINT);
+            else sentencia.setLong(4, nuevoSlot.idHorario());
+            sentencia.setObject(5, nuevoInicio);
+            sentencia.setObject(6, nuevoFin);
+            sentencia.setLong(7, idUsuario);
+            sentencia.setLong(8, citaAnterior.getIdCita());
+            if (sentencia.executeUpdate() != 1) {
+                throw new SQLException("No fue posible reprogramar la cita.");
+            }
+        }
+        return buscarPorId(conexion, citaAnterior.getIdCita())
+                .orElseThrow(() -> new SQLException("No fue posible recuperar la cita reprogramada."));
     }
 
     private static Cita mapear(ResultSet resultado) throws SQLException {

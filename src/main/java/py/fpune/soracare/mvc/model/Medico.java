@@ -9,12 +9,16 @@ public class Medico extends Persona {
     private LocalDate fechaIngreso;
     private EstadoMedico estado;
     private String biografia;
+    private TratamientoMedico tratamiento;
+    private String fotoPerfil;
 
     public Medico() {
         super();
 
         this.estado =
                 EstadoMedico.ACTIVO;
+        this.tratamiento =
+                TratamientoMedico.DR;
     }
 
     public Long getIdMedico() {
@@ -70,5 +74,21 @@ public class Medico extends Persona {
     ) {
         this.biografia =
                 biografia;
+    }
+
+    public TratamientoMedico getTratamiento() {
+        return tratamiento;
+    }
+
+    public void setTratamiento(TratamientoMedico tratamiento) {
+        this.tratamiento = tratamiento;
+    }
+
+    public String getFotoPerfil() {
+        return fotoPerfil;
+    }
+
+    public void setFotoPerfil(String fotoPerfil) {
+        this.fotoPerfil = fotoPerfil;
     }
 }
