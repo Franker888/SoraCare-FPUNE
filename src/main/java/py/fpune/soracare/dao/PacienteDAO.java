@@ -42,7 +42,10 @@ public class PacienteDAO {
                 pac.numero_historia_clinica,
                 pac.grupo_sanguineo,
                 pac.contacto_emergencia,
-                pac.telefono_emergencia
+                pac.telefono_emergencia,
+                pac.antecedentes_patologicos_personales,
+                pac.farmacos_utilizados,
+                pac.alergias
             FROM soracare.pacientes pac
             INNER JOIN soracare.personas per
                 ON per.id_persona = pac.id_persona
@@ -63,7 +66,10 @@ public class PacienteDAO {
                 pac.numero_historia_clinica,
                 pac.grupo_sanguineo,
                 pac.contacto_emergencia,
-                pac.telefono_emergencia
+                pac.telefono_emergencia,
+                pac.antecedentes_patologicos_personales,
+                pac.farmacos_utilizados,
+                pac.alergias
             FROM soracare.pacientes pac
             INNER JOIN soracare.personas per
                 ON per.id_persona = pac.id_persona
@@ -84,11 +90,23 @@ public class PacienteDAO {
                 pac.numero_historia_clinica,
                 pac.grupo_sanguineo,
                 pac.contacto_emergencia,
-                pac.telefono_emergencia
+                pac.telefono_emergencia,
+                pac.antecedentes_patologicos_personales,
+                pac.farmacos_utilizados,
+                pac.alergias
             FROM soracare.pacientes pac
             INNER JOIN soracare.personas per
                 ON per.id_persona = pac.id_persona
             WHERE pac.id_persona = ?
+            """;
+
+    private static final String SQL_ACTUALIZAR_PERFIL_CLINICO = """
+            UPDATE soracare.pacientes
+            SET antecedentes_patologicos_personales = ?,
+                farmacos_utilizados = ?,
+                alergias = ?,
+                actualizado_en = CURRENT_TIMESTAMP
+            WHERE id_paciente = ?
             """;
 
     public long registrar(
@@ -265,6 +283,31 @@ public class PacienteDAO {
         }
     }
 
+    public void actualizarPerfilClinico(
+            Connection conexion,
+            long idPaciente,
+            String antecedentesPatologicosPersonales,
+            String farmacosUtilizados,
+            String alergias
+    ) throws SQLException {
+        if (conexion == null) {
+            throw new SQLException("La conexión no puede ser nula.");
+        }
+        if (idPaciente <= 0) {
+            throw new SQLException("El ID del paciente debe ser mayor que cero.");
+        }
+        try (PreparedStatement sentencia =
+                     conexion.prepareStatement(SQL_ACTUALIZAR_PERFIL_CLINICO)) {
+            establecerTextoOpcional(sentencia, 1, antecedentesPatologicosPersonales);
+            establecerTextoOpcional(sentencia, 2, farmacosUtilizados);
+            establecerTextoOpcional(sentencia, 3, alergias);
+            sentencia.setLong(4, idPaciente);
+            if (sentencia.executeUpdate() != 1) {
+                throw new SQLException("No fue posible actualizar el perfil clínico.");
+            }
+        }
+    }
+
     private static Paciente mapearPaciente(
             ResultSet resultado
     ) throws SQLException {
@@ -355,6 +398,18 @@ public class PacienteDAO {
                 resultado.getString(
                         "telefono_emergencia"
                 )
+        );
+
+        paciente.setAntecedentesPatologicosPersonales(
+                resultado.getString("antecedentes_patologicos_personales")
+        );
+
+        paciente.setFarmacosUtilizados(
+                resultado.getString("farmacos_utilizados")
+        );
+
+        paciente.setAlergias(
+                resultado.getString("alergias")
         );
 
         return paciente;

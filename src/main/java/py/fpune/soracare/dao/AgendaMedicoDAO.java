@@ -10,10 +10,11 @@ import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class AgendaMedicoDAO {
 
-    private static final String SQL_LISTAR_POR_MEDICO_Y_FECHA = """
+    private static final String BASE_SELECT = """
             SELECT
                 c.id_cita,
                 c.id_paciente,
@@ -40,6 +41,9 @@ public class AgendaMedicoDAO {
                 ON esp.id_especialidad = c.id_especialidad
             INNER JOIN soracare.consultorios con
                 ON con.id_consultorio = c.id_consultorio
+            """;
+
+    private static final String SQL_LISTAR_POR_MEDICO_Y_FECHA = BASE_SELECT + """
             WHERE c.id_medico = ?
               AND c.fecha_hora_inicio >= ?
               AND c.fecha_hora_inicio < ?
@@ -73,6 +77,30 @@ public class AgendaMedicoDAO {
             }
         }
         return citas;
+    }
+
+    public Optional<CitaAgendaMedicoDTO> buscarPorCitaYMedico(
+            long idCita,
+            long idMedico
+    ) throws SQLException {
+        if (idCita <= 0 || idMedico <= 0) {
+            throw new IllegalArgumentException("La cita o el médico no son válidos.");
+        }
+        String sql = BASE_SELECT + """
+                WHERE c.id_cita = ?
+                  AND c.id_medico = ?
+                  AND est.codigo <> 'CANCELADA'
+                """;
+        try (Connection conexion = ConexionBD.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setLong(1, idCita);
+            sentencia.setLong(2, idMedico);
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                return resultado.next()
+                        ? Optional.of(mapear(resultado))
+                        : Optional.empty();
+            }
+        }
     }
 
     private static CitaAgendaMedicoDTO mapear(ResultSet resultado)

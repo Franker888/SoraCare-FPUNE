@@ -76,6 +76,21 @@ public class CitaDAO {
         }
     }
 
+    public Optional<Cita> buscarPorIdParaActualizar(
+            Connection conexion,
+            long idCita
+    ) throws SQLException {
+        String sql = BASE_SELECT + " WHERE c.id_cita = ? FOR UPDATE OF c";
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setLong(1, idCita);
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                return resultado.next()
+                        ? Optional.of(mapear(resultado))
+                        : Optional.empty();
+            }
+        }
+    }
+
     public Optional<Cita> buscarPorId(long idCita) throws SQLException {
         try (Connection conexion = ConexionBD.obtenerConexion()) {
             return buscarPorId(conexion, idCita);
@@ -183,6 +198,27 @@ public class CitaDAO {
             sentencia.setString(3, motivo);
             sentencia.setLong(4, idCita);
             if (sentencia.executeUpdate() != 1) throw new SQLException("No fue posible cancelar la cita.");
+        }
+    }
+
+    public void actualizarEstado(
+            Connection conexion,
+            long idCita,
+            int idEstado,
+            long idUsuario
+    ) throws SQLException {
+        String sql = """
+                UPDATE soracare.citas
+                SET id_estado_cita = ?, id_usuario_modificacion = ?
+                WHERE id_cita = ?
+                """;
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setInt(1, idEstado);
+            sentencia.setLong(2, idUsuario);
+            sentencia.setLong(3, idCita);
+            if (sentencia.executeUpdate() != 1) {
+                throw new SQLException("No fue posible actualizar el estado de la cita.");
+            }
         }
     }
 

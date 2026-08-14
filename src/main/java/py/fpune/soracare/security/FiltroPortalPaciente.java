@@ -13,7 +13,10 @@ import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 
 import java.io.IOException;
 
-@WebFilter(filterName = "FiltroPortalPaciente", urlPatterns = {"/mis-citas", "/pagos/*"})
+@WebFilter(
+        filterName = "FiltroPortalPaciente",
+        urlPatterns = {"/mis-citas", "/mis-documentos", "/pagos/*"}
+)
 public class FiltroPortalPaciente implements Filter {
 
     @Override

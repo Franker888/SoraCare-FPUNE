@@ -436,6 +436,34 @@
                     <div class="card-body p-4">
 
                         <div class="module-icon">
+                            <i class="bi bi-file-earmark-medical"></i>
+                        </div>
+
+                        <h3 class="h5">Documentos clínicos</h3>
+
+                        <p class="text-secondary">
+                            Guardá laboratorios, imágenes e informes
+                            para incorporarlos a tu historia clínica.
+                        </p>
+
+                        <a href="${pageContext.request.contextPath}/mis-documentos"
+                           class="btn btn-outline-success">
+                            Ver mis documentos
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-4">
+
+                <div class="card tarjeta-modulo shadow-sm h-100">
+
+                    <div class="card-body p-4">
+
+                        <div class="module-icon">
                             <i class="bi bi-person-badge"></i>
                         </div>
 

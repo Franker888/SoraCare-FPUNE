@@ -7,6 +7,9 @@ public class Paciente extends Persona {
     private String grupoSanguineo;
     private String contactoEmergencia;
     private String telefonoEmergencia;
+    private String antecedentesPatologicosPersonales;
+    private String farmacosUtilizados;
+    private String alergias;
 
     public Paciente() {
         super();
@@ -61,5 +64,32 @@ public class Paciente extends Persona {
     ) {
         this.telefonoEmergencia =
                 telefonoEmergencia;
+    }
+
+    public String getAntecedentesPatologicosPersonales() {
+        return antecedentesPatologicosPersonales;
+    }
+
+    public void setAntecedentesPatologicosPersonales(
+            String antecedentesPatologicosPersonales
+    ) {
+        this.antecedentesPatologicosPersonales =
+                antecedentesPatologicosPersonales;
+    }
+
+    public String getFarmacosUtilizados() {
+        return farmacosUtilizados;
+    }
+
+    public void setFarmacosUtilizados(String farmacosUtilizados) {
+        this.farmacosUtilizados = farmacosUtilizados;
+    }
+
+    public String getAlergias() {
+        return alergias;
+    }
+
+    public void setAlergias(String alergias) {
+        this.alergias = alergias;
     }
 }

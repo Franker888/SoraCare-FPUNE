@@ -258,6 +258,15 @@
                             </div>
                             <% } %>
                         </div>
+                        <div class="col-12 d-flex justify-content-end border-top pt-3">
+                            <a class="btn <%= "EN_ATENCION".equals(cita.codigoEstado())
+                                    ? "btn-primary" : "btn-outline-primary" %>"
+                               href="${pageContext.request.contextPath}/medico/atencion?idCita=<%= cita.idCita() %>">
+                                <%= "EN_ATENCION".equals(cita.codigoEstado())
+                                        ? "Continuar atención"
+                                        : "Abrir panel del paciente" %>
+                            </a>
+                        </div>
                     </div>
                 </article>
                 <% } %>

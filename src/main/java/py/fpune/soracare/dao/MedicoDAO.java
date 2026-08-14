@@ -390,6 +390,26 @@ public class MedicoDAO {
             long idPersona
     ) throws SQLException {
 
+        try (
+                Connection conexion =
+                        ConexionBD.obtenerConexion()
+        ) {
+            return buscarPorIdPersona(
+                    conexion,
+                    idPersona
+            );
+        }
+    }
+
+    public Optional<Medico> buscarPorIdPersona(
+            Connection conexion,
+            long idPersona
+    ) throws SQLException {
+
+        validarConexion(
+                conexion
+        );
+
         if (idPersona <= 0) {
             throw new SQLException(
                     "El ID de la persona debe ser mayor que cero."
@@ -397,9 +417,6 @@ public class MedicoDAO {
         }
 
         try (
-                Connection conexion =
-                        ConexionBD.obtenerConexion();
-
                 PreparedStatement sentencia =
                         conexion.prepareStatement(
                                 SQL_BUSCAR_POR_ID_PERSONA

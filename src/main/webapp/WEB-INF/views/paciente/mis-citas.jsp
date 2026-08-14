@@ -129,7 +129,6 @@
             <h2 class="h5 mb-3">1. Buscar un turno</h2>
             <form method="get" action="${pageContext.request.contextPath}/mis-citas" class="row g-3 align-items-end">
                 <input type="hidden" name="nueva" value="1">
-                <input type="hidden" name="busqueda" value="turnos">
                 <div class="col-md-4">
                     <label for="idEspecialidad" class="form-label">Especialidad</label>
                     <select id="idEspecialidad" name="idEspecialidad" class="form-select">
@@ -167,7 +166,10 @@
                         <% } %>
                     </select>
                 </div>
-                <div class="col-md-2 d-grid"><button class="btn btn-success" <%= fechasDisponibles.isEmpty() ? "disabled" : "" %>>Ver turnos</button></div>
+                <div class="col-md-2 d-grid">
+                    <button class="btn btn-success" name="busqueda" value="turnos"
+                            <%= fechasDisponibles.isEmpty() ? "disabled" : "" %>>Ver turnos</button>
+                </div>
             </form>
             <% if (fechasDisponibles.isEmpty()) { %>
             <div class="alert alert-warning mt-3 mb-0">
