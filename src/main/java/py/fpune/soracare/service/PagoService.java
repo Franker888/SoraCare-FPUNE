@@ -2,6 +2,7 @@ package py.fpune.soracare.service;
 
 import py.fpune.soracare.config.ConexionBD;
 import py.fpune.soracare.dao.PagoDAO;
+import py.fpune.soracare.dao.NotificacionDAO;
 import py.fpune.soracare.dto.ComprobantePagoDTO;
 import py.fpune.soracare.dto.DatosFacturacionDTO;
 import py.fpune.soracare.dto.FiltroAgendaPagosDTO;
@@ -32,6 +33,7 @@ public class PagoService {
             "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
 
     private final PagoDAO pagoDAO = new PagoDAO();
+    private final NotificacionDAO notificacionDAO = new NotificacionDAO();
     private final ComprobantePdfService comprobantePdfService = new ComprobantePdfService();
 
     public List<MetodoPago> listarMetodosActivos() throws SQLException {
@@ -203,6 +205,15 @@ public class PagoService {
                         conexion, idPago, idUsuario, numero, documento.nombreArchivo(),
                         documento.contenido(), documento.sha256(), facturacion.correo());
                 pagoDAO.registrarCorreoSimulado(conexion, confirmado, numero);
+                notificacionDAO.registrarPagoConfirmado(
+                        conexion,
+                        confirmado.idCita(),
+                        confirmado.idPago(),
+                        numero,
+                        "Tu pago de Gs. " + confirmado.monto().stripTrailingZeros().toPlainString()
+                                + " fue confirmado. El comprobante " + numero
+                                + " ya está disponible desde Mis citas."
+                );
 
                 PagoResumenDTO resultado = pagoDAO.buscarPorId(conexion, idPago)
                         .orElseThrow(() -> new SQLException("No fue posible recuperar el comprobante."));

@@ -355,6 +355,42 @@
                 <div class="card-body p-4">
 
                     <div class="icono-modulo mb-3">
+                        <i class="bi bi-capsule-pill"></i>
+                    </div>
+
+                    <h3 class="h5">
+                        Medicamentos
+                    </h3>
+
+                    <p class="text-secondary">
+
+                        Administrar el catálogo utilizado por
+                        los médicos para registrar indicaciones claras
+                        y consistentes.
+
+                    </p>
+
+                    <a
+                            href="${pageContext.request.contextPath}/admin/medicamentos"
+                            class="btn btn-outline-success">
+
+                        Administrar medicamentos
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-4">
+
+            <div class="card tarjeta-opcion shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <div class="icono-modulo mb-3">
                         <i class="bi bi-person-badge"></i>
                     </div>
 

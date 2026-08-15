@@ -36,6 +36,7 @@ public class AtencionMedicaDAO {
             ate.examen_fisico,
             ate.evaluacion_clinica,
             ate.plan_tratamiento,
+            ate.estudios_clinicos_solicitados,
             ate.indicaciones,
             ate.observaciones,
             ate.requiere_seguimiento,
@@ -84,6 +85,7 @@ public class AtencionMedicaDAO {
                 examen_fisico = ?,
                 evaluacion_clinica = ?,
                 plan_tratamiento = ?,
+                estudios_clinicos_solicitados = ?,
                 indicaciones = ?,
                 observaciones = ?,
                 requiere_seguimiento = ?,
@@ -180,6 +182,7 @@ public class AtencionMedicaDAO {
             String examenFisico,
             String evaluacionClinica,
             String planTratamiento,
+            String estudiosClinicosSolicitados,
             String indicaciones,
             String observaciones,
             boolean requiereSeguimiento,
@@ -203,18 +206,19 @@ public class AtencionMedicaDAO {
             establecerTexto(sentencia, 10, examenFisico);
             establecerTexto(sentencia, 11, evaluacionClinica);
             establecerTexto(sentencia, 12, planTratamiento);
-            establecerTexto(sentencia, 13, indicaciones);
-            establecerTexto(sentencia, 14, observaciones);
-            sentencia.setBoolean(15, requiereSeguimiento);
+            establecerTexto(sentencia, 13, estudiosClinicosSolicitados);
+            establecerTexto(sentencia, 14, indicaciones);
+            establecerTexto(sentencia, 15, observaciones);
+            sentencia.setBoolean(16, requiereSeguimiento);
             if (fechaProximoControl == null) {
-                sentencia.setNull(16, Types.DATE);
+                sentencia.setNull(17, Types.DATE);
             } else {
-                sentencia.setObject(16, fechaProximoControl);
+                sentencia.setObject(17, fechaProximoControl);
             }
-            sentencia.setString(17, estado);
             sentencia.setString(18, estado);
-            sentencia.setLong(19, idAtencion);
-            sentencia.setLong(20, idMedico);
+            sentencia.setString(19, estado);
+            sentencia.setLong(20, idAtencion);
+            sentencia.setLong(21, idMedico);
             if (sentencia.executeUpdate() != 1) {
                 throw new IllegalArgumentException(
                         "La atención ya fue finalizada o no pertenece al médico autenticado.");
@@ -273,6 +277,7 @@ public class AtencionMedicaDAO {
                 resultado.getString("examen_fisico"),
                 resultado.getString("evaluacion_clinica"),
                 resultado.getString("plan_tratamiento"),
+                resultado.getString("estudios_clinicos_solicitados"),
                 resultado.getString("indicaciones"),
                 resultado.getString("observaciones"),
                 resultado.getBoolean("requiere_seguimiento"),

@@ -11,6 +11,8 @@ import py.fpune.soracare.dto.RegistroAtencionMedicaDTO;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 import py.fpune.soracare.service.AtencionMedicaService;
 import py.fpune.soracare.service.DocumentoClinicoService;
+import py.fpune.soracare.service.MedicamentoService;
+import py.fpune.soracare.service.RecetaMedicaService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -22,11 +24,15 @@ public class AtencionMedicaServlet extends HttpServlet {
 
     private AtencionMedicaService atencionMedicaService;
     private DocumentoClinicoService documentoClinicoService;
+    private MedicamentoService medicamentoService;
+    private RecetaMedicaService recetaMedicaService;
 
     @Override
     public void init() {
         atencionMedicaService = new AtencionMedicaService();
         documentoClinicoService = new DocumentoClinicoService();
+        medicamentoService = new MedicamentoService();
+        recetaMedicaService = new RecetaMedicaService();
     }
 
     @Override
@@ -67,6 +73,17 @@ public class AtencionMedicaServlet extends HttpServlet {
             request.setAttribute(
                     "error", "No fue posible registrar el documento clínico. Intentá nuevamente."
             );
+        } else if ("receta-emitida".equals(resultado)) {
+            request.setAttribute("mensajeExito", "La indicación médica fue registrada y ya está disponible para el paciente.");
+        } else if ("receta-anulada".equals(resultado)) {
+            request.setAttribute("mensajeExito", "La indicación médica fue anulada y permanece en el historial.");
+        } else if ("receta-error".equals(resultado)) {
+            HttpSession sesion = request.getSession(false);
+            Object mensaje = sesion == null ? null : sesion.getAttribute("errorReceta");
+            if (mensaje instanceof String texto && !texto.isBlank()) {
+                request.setAttribute("error", texto);
+                sesion.removeAttribute("errorReceta");
+            }
         }
         mostrarVista(request, response, convertirIdCita(request.getParameter("idCita")));
     }
@@ -162,6 +179,14 @@ public class AtencionMedicaServlet extends HttpServlet {
                     documentoClinicoService.listarParaMedico(usuario, idCita)
             );
             request.setAttribute("tiposDocumentoClinico", documentoClinicoService.listarTipos());
+            if (panel.atencionActual() != null) {
+                request.setAttribute(
+                        "recetasAtencion",
+                        recetaMedicaService.listarPorAtencion(
+                                panel.atencionActual().idAtencion())
+                );
+            }
+            request.setAttribute("medicamentosActivos", medicamentoService.listarActivos());
         } catch (IllegalArgumentException error) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             request.setAttribute("error", error.getMessage());
@@ -198,6 +223,7 @@ public class AtencionMedicaServlet extends HttpServlet {
                 request.getParameter("examenFisico"),
                 request.getParameter("evaluacionClinica"),
                 request.getParameter("planTratamiento"),
+                request.getParameter("estudiosClinicosSolicitados"),
                 request.getParameter("indicaciones"),
                 request.getParameter("observaciones"),
                 request.getParameter("requiereSeguimiento"),

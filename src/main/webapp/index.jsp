@@ -1300,7 +1300,7 @@
 
 
 
-                <!-- RECETAS -->
+                <!-- INDICACIONES MEDICAS -->
 
                 <div class="col-lg-3 col-md-6">
 
@@ -1315,14 +1315,14 @@
 
                         <h4>
 
-                            Mis recetas
+                            Mis indicaciones médicas
 
                         </h4>
 
 
                         <p>
 
-                            Accedé a las recetas médicas
+                            Accedé a las indicaciones médicas
                             disponibles en tu cuenta.
 
                         </p>

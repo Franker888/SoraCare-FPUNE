@@ -66,6 +66,14 @@
                     "MEDICO"
             );
 
+    Object cantidadNotificacionesAtributo =
+            request.getAttribute("cantidadNotificacionesNoLeidas");
+
+    long cantidadNotificacionesNoLeidas =
+            cantidadNotificacionesAtributo instanceof Number
+                    ? ((Number) cantidadNotificacionesAtributo).longValue()
+                    : 0L;
+
     String nombrePanel = esAdministrador
             ? "Panel de administración"
             : puedeGestionarAgenda
@@ -165,6 +173,30 @@
 
         .boton-cerrar-sesion {
             min-width: 120px;
+        }
+
+        .icono-con-indicador {
+            position: relative;
+        }
+
+        .indicador-notificaciones {
+            position: absolute;
+            top: -0.55rem;
+            right: -0.7rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.55rem;
+            height: 1.55rem;
+            padding: 0 0.35rem;
+            border: 2px solid #ffffff;
+            border-radius: 999px;
+            background: #dc2626;
+            color: #ffffff;
+            font-size: 0.72rem;
+            font-weight: 800;
+            line-height: 1;
+            box-shadow: 0 0.2rem 0.5rem rgba(127, 29, 29, 0.28);
         }
     </style>
 
@@ -449,6 +481,70 @@
                         <a href="${pageContext.request.contextPath}/mis-documentos"
                            class="btn btn-outline-success">
                             Ver mis documentos
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-4">
+
+                <div class="card tarjeta-modulo shadow-sm h-100">
+
+                    <div class="card-body p-4">
+
+                        <div class="module-icon icono-con-indicador">
+                            <i class="bi bi-bell"></i>
+                            <% if (cantidadNotificacionesNoLeidas > 0) { %>
+                            <span class="indicador-notificaciones"
+                                  aria-label="<%= cantidadNotificacionesNoLeidas %> notificaciones sin leer">
+                                <%= cantidadNotificacionesNoLeidas > 9
+                                        ? "9+"
+                                        : cantidadNotificacionesNoLeidas %>
+                            </span>
+                            <% } %>
+                        </div>
+
+                        <h3 class="h5">Notificaciones</h3>
+
+                        <p class="text-secondary">
+                            Revisá avisos relacionados con tus citas,
+                            indicaciones médicas, pagos y documentos clínicos.
+                        </p>
+
+                        <a href="${pageContext.request.contextPath}/mis-notificaciones"
+                           class="btn btn-outline-success">
+                            Ver notificaciones
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-4">
+
+                <div class="card tarjeta-modulo shadow-sm h-100">
+
+                    <div class="card-body p-4">
+
+                        <div class="module-icon">
+                            <i class="bi bi-prescription2"></i>
+                        </div>
+
+                        <h3 class="h5">Mis indicaciones médicas</h3>
+
+                        <p class="text-secondary">
+                            Consultá la medicación y los cuidados indicados
+                            por tus médicos, con descarga en formato PDF.
+                        </p>
+
+                        <a href="${pageContext.request.contextPath}/mis-recetas"
+                           class="btn btn-outline-success">
+                            Ver indicaciones
                         </a>
 
                     </div>

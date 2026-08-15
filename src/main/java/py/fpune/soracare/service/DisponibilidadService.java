@@ -12,6 +12,7 @@ import py.fpune.soracare.mvc.model.TipoExcepcionHorario;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -139,21 +140,39 @@ public class DisponibilidadService {
             List<ExcepcionHorarioMedico> excepciones,
             List<Cita> citas
     ) {
-        if (inicio == null || fin == null || duracion <= 0) return;
-        LocalTime cursor = inicio;
+        if (inicio == null || fin == null || duracion <= 0 || !inicio.isBefore(fin)) return;
         OffsetDateTime ahora = OffsetDateTime.now(ZONA_HORARIA);
-        while (!cursor.plusMinutes(duracion).isAfter(fin)) {
-            LocalTime finSlot = cursor.plusMinutes(duracion);
+        for (IntervaloTurno intervalo : dividirIntervalo(inicio, fin, duracion)) {
             SlotDisponibleDTO slot = new SlotDisponibleDTO(idHorario, idExcepcion,
-                    idMedico, idEspecialidad, idConsultorio, fecha, cursor, finSlot, extra);
-            OffsetDateTime inicioReal = fecha.atTime(cursor).atZone(ZONA_HORARIA).toOffsetDateTime();
+                    idMedico, idEspecialidad, idConsultorio, fecha,
+                    intervalo.inicio(), intervalo.fin(), extra);
+            OffsetDateTime inicioReal = fecha.atTime(intervalo.inicio())
+                    .atZone(ZONA_HORARIA).toOffsetDateTime();
             if (inicioReal.isAfter(ahora)
                     && !estaBloqueado(slot, excepciones)
                     && !estaOcupado(slot, citas)) {
                 destino.putIfAbsent(clave(slot), slot);
             }
-            cursor = finSlot;
         }
+    }
+
+    static List<IntervaloTurno> dividirIntervalo(
+            LocalTime inicio, LocalTime fin, int duracionMinutos
+    ) {
+        if (inicio == null || fin == null || duracionMinutos <= 0
+                || !inicio.isBefore(fin)) {
+            return List.of();
+        }
+        LocalDate fechaReferencia = LocalDate.of(2000, 1, 1);
+        LocalDateTime cursor = fechaReferencia.atTime(inicio);
+        LocalDateTime limite = fechaReferencia.atTime(fin);
+        List<IntervaloTurno> intervalos = new ArrayList<>();
+        while (!cursor.plusMinutes(duracionMinutos).isAfter(limite)) {
+            LocalDateTime finTurno = cursor.plusMinutes(duracionMinutos);
+            intervalos.add(new IntervaloTurno(cursor.toLocalTime(), finTurno.toLocalTime()));
+            cursor = finTurno;
+        }
+        return List.copyOf(intervalos);
     }
 
     private static boolean estaBloqueado(
@@ -203,5 +222,8 @@ public class DisponibilidadService {
     private static String clave(SlotDisponibleDTO slot) {
         return slot.idMedico() + ":" + slot.idEspecialidad() + ":"
                 + slot.idConsultorio() + ":" + slot.fecha() + ":" + slot.horaInicio();
+    }
+
+    record IntervaloTurno(LocalTime inicio, LocalTime fin) {
     }
 }

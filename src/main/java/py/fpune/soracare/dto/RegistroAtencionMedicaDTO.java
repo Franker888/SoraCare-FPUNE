@@ -16,6 +16,7 @@ public record RegistroAtencionMedicaDTO(
         String examenFisico,
         String evaluacionClinica,
         String planTratamiento,
+        String estudiosClinicosSolicitados,
         String indicaciones,
         String observaciones,
         String requiereSeguimiento,

@@ -203,6 +203,7 @@ public class AtencionMedicaService {
                         normalizados.examenFisico(),
                         normalizados.evaluacionClinica(),
                         normalizados.planTratamiento(),
+                        normalizados.estudiosClinicosSolicitados(),
                         normalizados.indicaciones(),
                         normalizados.observaciones(),
                         normalizados.requiereSeguimiento(),
@@ -321,6 +322,8 @@ public class AtencionMedicaService {
         String evaluacion = textoOpcional(
                 datos.evaluacionClinica(), "Evaluación clínica");
         String plan = textoOpcional(datos.planTratamiento(), "Plan de tratamiento");
+        String estudiosClinicos = textoOpcional(
+                datos.estudiosClinicosSolicitados(), "Estudios clínicos solicitados");
         String indicaciones = textoOpcional(datos.indicaciones(), "Indicaciones");
         String observaciones = textoOpcional(datos.observaciones(), "Observaciones");
         boolean seguimiento = convertirBooleano(datos.requiereSeguimiento());
@@ -381,6 +384,7 @@ public class AtencionMedicaService {
                 examen,
                 evaluacion,
                 plan,
+                estudiosClinicos,
                 indicaciones,
                 observaciones,
                 seguimiento,
@@ -537,6 +541,7 @@ public class AtencionMedicaService {
             String examenFisico,
             String evaluacionClinica,
             String planTratamiento,
+            String estudiosClinicosSolicitados,
             String indicaciones,
             String observaciones,
             boolean requiereSeguimiento,

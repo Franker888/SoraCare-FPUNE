@@ -3,6 +3,7 @@ package py.fpune.soracare.service;
 import py.fpune.soracare.config.ConexionBD;
 import py.fpune.soracare.dao.CitaDAO;
 import py.fpune.soracare.dao.EstadoCitaDAO;
+import py.fpune.soracare.dao.NotificacionDAO;
 import py.fpune.soracare.dao.PacienteDAO;
 import py.fpune.soracare.dao.PagoDAO;
 import py.fpune.soracare.dto.SlotDisponibleDTO;
@@ -16,6 +17,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
@@ -33,7 +35,10 @@ public class CitaService {
     private final EstadoCitaDAO estadoDAO = new EstadoCitaDAO();
     private final PacienteDAO pacienteDAO = new PacienteDAO();
     private final PagoDAO pagoDAO = new PagoDAO();
+    private final NotificacionDAO notificacionDAO = new NotificacionDAO();
     private final DisponibilidadService disponibilidadService = new DisponibilidadService();
+    private static final DateTimeFormatter FECHA_HORA_AVISO =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy 'a las' HH:mm");
 
     public Cita solicitar(SolicitudCitaDTO datos, Long idUsuarioCreador)
             throws SQLException {
@@ -114,7 +119,18 @@ public class CitaService {
         cita.setIdUsuarioCreador(idUsuarioCreador);
 
         try {
-            return citaDAO.crear(conexion, cita);
+            Cita creada = citaDAO.crear(conexion, cita);
+            notificacionDAO.registrarEventoCita(
+                    conexion,
+                    creada.getIdCita(),
+                    "CITA_SOLICITADA_SISTEMA",
+                    "SOLICITADA-1",
+                    "Cita solicitada",
+                    "Tu cita fue solicitada para el "
+                            + formatearFechaAviso(creada.getFechaHoraInicio())
+                            + ". Podés consultar su estado y completar el pago desde Mis citas."
+            );
+            return creada;
         } catch (SQLException error) {
             if (esSuperposicion(error)) {
                 throw new IllegalArgumentException(
@@ -159,6 +175,7 @@ public class CitaService {
                         .orElseThrow(() -> new SQLException("No existe el estado de cancelación."));
                 citaDAO.cancelar(conexion, idCita, cancelada.getIdEstadoCita(), idUsuario, motivoNormalizado);
                 pagoDAO.resolverCancelacion(conexion, idCita, idUsuario);
+                registrarCancelacion(conexion, cita);
                 conexion.commit();
             } catch (Exception error) {
                 rollback(conexion, error);
@@ -195,6 +212,7 @@ public class CitaService {
                         .orElseThrow(() -> new SQLException("No existe el estado de cancelacion."));
                 citaDAO.cancelar(conexion, idCita, cancelada.getIdEstadoCita(), idUsuario, motivoNormalizado);
                 pagoDAO.resolverCancelacion(conexion, idCita, idUsuario);
+                registrarCancelacion(conexion, cita);
                 conexion.commit();
             } catch (Exception error) {
                 rollback(conexion, error);
@@ -277,6 +295,16 @@ public class CitaService {
                         conexion, cita, slot, idUsuario, motivo);
                 pagoDAO.reprogramarConfirmacionAsistencia(
                         conexion, idCita, actualizada.getFechaHoraInicio());
+                notificacionDAO.registrarEventoCita(
+                        conexion,
+                        idCita,
+                        "CITA_REPROGRAMADA_SISTEMA",
+                        "REPROGRAMADA-" + actualizada.getFechaHoraInicio().toEpochSecond(),
+                        "Cita reprogramada",
+                        "Tu cita fue reprogramada para el "
+                                + formatearFechaAviso(actualizada.getFechaHoraInicio())
+                                + ". El pago y el comprobante anterior se conservaron."
+                );
                 conexion.commit();
                 return actualizada;
             } catch (Exception error) {
@@ -309,6 +337,23 @@ public class CitaService {
 
     private static boolean iguales(Long a, Long b) {
         return a == null ? b == null : a.equals(b);
+    }
+
+    private void registrarCancelacion(Connection conexion, Cita cita) throws SQLException {
+        notificacionDAO.registrarEventoCita(
+                conexion,
+                cita.getIdCita(),
+                "CITA_CANCELADA_SISTEMA",
+                "CANCELADA-1",
+                "Cita cancelada",
+                "Tu cita del " + formatearFechaAviso(cita.getFechaHoraInicio())
+                        + " fue cancelada. Podés revisar el estado resultante del pago desde Mis citas."
+        );
+    }
+
+    private static String formatearFechaAviso(OffsetDateTime fechaHora) {
+        return fechaHora.atZoneSameInstant(DisponibilidadService.ZONA_HORARIA)
+                .format(FECHA_HORA_AVISO);
     }
 
     private static long convertirLong(String valor, String mensaje) {
