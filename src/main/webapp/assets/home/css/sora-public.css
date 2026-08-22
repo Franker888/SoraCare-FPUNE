@@ -1,0 +1,409 @@
+.sora-assistant {
+    --sora-blue: #1759d1;
+    --sora-blue-dark: #173f9d;
+    --sora-teal: #0f8f8a;
+    --sora-ink: #12213c;
+    --sora-muted: #66758d;
+    position: fixed;
+    right: max(clamp(1rem, 3vw, 2rem), env(safe-area-inset-right));
+    bottom: max(clamp(1rem, 3vw, 2rem), env(safe-area-inset-bottom));
+    z-index: 1080;
+    font-family: "Poppins", "Segoe UI", Arial, sans-serif;
+}
+
+.sora-launcher {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.78rem;
+    min-height: 70px;
+    padding: 0.48rem 1.1rem 0.48rem 0.5rem;
+    overflow: visible;
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    border-radius: 999px;
+    color: #ffffff;
+    background: linear-gradient(130deg, var(--sora-blue-dark), var(--sora-blue) 58%, var(--sora-teal));
+    box-shadow: 0 18px 42px rgba(18, 72, 145, 0.3);
+    text-align: left;
+    transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.sora-launcher:hover,
+.sora-launcher:focus-visible {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 48px rgba(18, 72, 145, 0.38);
+}
+
+.sora-avatar-shell {
+    position: relative;
+    display: inline-flex;
+    width: 58px;
+    height: 58px;
+    flex: 0 0 58px;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.88);
+    border-radius: 50%;
+    background: linear-gradient(145deg, #dff6ff, #ffffff);
+    box-shadow: 0 6px 16px rgba(10, 48, 99, 0.2);
+}
+
+.sora-avatar-shell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 17%;
+}
+
+.sora-launcher-copy strong,
+.sora-launcher-copy small {
+    display: block;
+}
+
+.sora-launcher-copy strong {
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+.sora-launcher-copy small {
+    margin-top: 0.12rem;
+    color: #dff8ff;
+    font-size: 0.72rem;
+    line-height: 1.25;
+}
+
+.sora-online {
+    position: absolute;
+    left: 48px;
+    bottom: 7px;
+    width: 0.78rem;
+    height: 0.78rem;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background: #2ad59b;
+    box-shadow: 0 0 0 3px rgba(42, 213, 155, 0.14);
+}
+
+.sora-panel[hidden] {
+    display: none !important;
+}
+
+.sora-panel {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 0.9rem);
+    width: min(430px, calc(100vw - 2rem));
+    overflow: hidden;
+    border: 1px solid #d9e7f7;
+    border-radius: 1.4rem;
+    background: #ffffff;
+    box-shadow: 0 28px 72px rgba(17, 45, 86, 0.27);
+    animation: sora-panel-in 180ms ease-out;
+}
+
+@keyframes sora-panel-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.sora-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 104px;
+    padding: 1rem 1.1rem;
+    overflow: hidden;
+    color: #ffffff;
+    background: linear-gradient(130deg, var(--sora-blue-dark), var(--sora-blue) 60%, var(--sora-teal));
+}
+
+.sora-header::after {
+    content: "";
+    position: absolute;
+    top: -65px;
+    right: -38px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sora-identity {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.sora-identity .sora-avatar-shell {
+    width: 70px;
+    height: 70px;
+    flex-basis: 70px;
+}
+
+.sora-identity strong,
+.sora-identity small,
+.sora-identity span {
+    display: block;
+}
+
+.sora-identity strong {
+    font-size: 1.12rem;
+}
+
+.sora-identity small {
+    margin-top: 0.1rem;
+    color: #dff8ff;
+    font-size: 0.76rem;
+}
+
+.sora-identity span {
+    margin-top: 0.25rem;
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.sora-close {
+    position: relative;
+    z-index: 2;
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.sora-close:hover,
+.sora-close:focus-visible {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.sora-conversation {
+    max-height: min(390px, 48vh);
+    min-height: 185px;
+    overflow-y: auto;
+    padding: 1rem;
+    background: radial-gradient(circle at 100% 0, rgba(47, 181, 180, 0.08), transparent 35%), #f7faff;
+}
+
+.sora-message {
+    width: fit-content;
+    max-width: 92%;
+    margin-bottom: 0.72rem;
+    padding: 0.76rem 0.9rem;
+    border-radius: 1rem;
+    font-size: 0.84rem;
+    line-height: 1.52;
+}
+
+.sora-message-bot {
+    border: 1px solid #e5edf7;
+    border-bottom-left-radius: 0.28rem;
+    color: #33445f;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(17, 45, 86, 0.06);
+}
+
+.sora-message-user {
+    margin-left: auto;
+    border-bottom-right-radius: 0.28rem;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--sora-blue), #3979e1);
+}
+
+.sora-result-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.65rem;
+}
+
+.sora-result-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    padding: 0.42rem 0.62rem;
+    border: 1px solid #bfd7fa;
+    border-radius: 999px;
+    color: var(--sora-blue);
+    background: #f0f6ff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.sora-result-link:hover,
+.sora-result-link:focus-visible {
+    color: #ffffff;
+    background: var(--sora-blue);
+}
+
+.sora-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.85rem;
+}
+
+.sora-quick-actions[hidden] {
+    display: none;
+}
+
+.sora-quick-actions button {
+    padding: 0.42rem 0.65rem;
+    border: 1px solid #c8dcf7;
+    border-radius: 999px;
+    color: var(--sora-blue);
+    background: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 650;
+}
+
+.sora-quick-actions button:hover,
+.sora-quick-actions button:focus-visible {
+    border-color: var(--sora-blue);
+    color: #ffffff;
+    background: var(--sora-blue);
+}
+
+.sora-typing {
+    display: flex;
+    gap: 0.28rem;
+    align-items: center;
+    min-width: 54px;
+}
+
+.sora-typing span {
+    width: 0.38rem;
+    height: 0.38rem;
+    border-radius: 50%;
+    background: #7d93b3;
+    animation: sora-dot 900ms infinite ease-in-out;
+}
+
+.sora-typing span:nth-child(2) { animation-delay: 120ms; }
+.sora-typing span:nth-child(3) { animation-delay: 240ms; }
+
+@keyframes sora-dot {
+    0%, 70%, 100% { transform: translateY(0); opacity: 0.5; }
+    35% { transform: translateY(-3px); opacity: 1; }
+}
+
+.sora-form {
+    display: flex;
+    gap: 0.55rem;
+    padding: 0.82rem;
+    border-top: 1px solid #e1eaf5;
+    background: #ffffff;
+}
+
+.sora-form input {
+    min-width: 0;
+    flex: 1;
+    padding: 0.7rem 0.78rem;
+    border: 1px solid #cbd8e8;
+    border-radius: 0.8rem;
+    color: var(--sora-ink);
+    outline: 0;
+    font-size: 0.82rem;
+}
+
+.sora-form input:focus {
+    border-color: #5c8ee4;
+    box-shadow: 0 0 0 3px rgba(23, 89, 209, 0.12);
+}
+
+.sora-form button {
+    width: 2.8rem;
+    border: 0;
+    border-radius: 0.8rem;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--sora-blue), var(--sora-teal));
+}
+
+.sora-form button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.sora-disclaimer {
+    margin: 0;
+    padding: 0 0.9rem 0.82rem;
+    color: var(--sora-muted);
+    background: #ffffff;
+    font-size: 0.65rem;
+    line-height: 1.4;
+}
+
+@media (max-width: 575.98px) {
+    .sora-assistant {
+        right: max(0.75rem, env(safe-area-inset-right));
+        bottom: max(0.75rem, env(safe-area-inset-bottom));
+    }
+
+    .sora-launcher {
+        width: 54px;
+        min-height: 54px;
+        justify-content: center;
+        padding: 0.18rem;
+    }
+
+    .sora-launcher-copy {
+        display: none;
+    }
+
+    .sora-launcher .sora-avatar-shell {
+        width: 48px;
+        height: 48px;
+        flex-basis: 48px;
+    }
+
+    .sora-online {
+        right: 3px;
+        bottom: 5px;
+        left: auto;
+    }
+
+    .sora-panel {
+        position: fixed;
+        right: max(0.65rem, env(safe-area-inset-right));
+        bottom: calc(4.5rem + max(0.65rem, env(safe-area-inset-bottom)));
+        left: max(0.65rem, env(safe-area-inset-left));
+        width: auto;
+        max-height: calc(100dvh - 6.5rem - env(safe-area-inset-top));
+    }
+
+    .sora-header {
+        min-height: 92px;
+    }
+
+    .sora-identity .sora-avatar-shell {
+        width: 61px;
+        height: 61px;
+        flex-basis: 61px;
+    }
+
+    .sora-conversation {
+        max-height: min(42dvh, 350px);
+    }
+
+    .sora-form input {
+        font-size: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sora-panel,
+    .sora-typing span {
+        animation: none;
+    }
+
+    .sora-launcher {
+        transition: none;
+    }
+}

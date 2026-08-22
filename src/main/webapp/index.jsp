@@ -62,7 +62,7 @@
     ========================== -->
 
     <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css"
         rel="stylesheet">
 
 
@@ -72,26 +72,7 @@
 
     <link
         rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-
-
-    <!-- =========================
-         FONT AWESOME
-         Utilizado para algunos íconos
-    ========================== -->
-
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
-
-    <!-- =========================
-         GOOGLE FONTS
-    ========================== -->
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+        href="${pageContext.request.contextPath}/assets/libs/bootstrap-icons/bootstrap-icons.min.css">
 
 
     <!-- =========================
@@ -99,7 +80,10 @@
     ========================== -->
 
     <link rel="stylesheet"
-          href="<%= contexto %>/assets/home/css/style.css">
+          href="<%= contexto %>/assets/home/css/style.css?v=20260820b">
+
+    <link rel="stylesheet"
+          href="<%= contexto %>/assets/home/css/sora-public.css?v=20260820a">
 
 </head>
 
@@ -328,6 +312,8 @@
                     <img
                         src="<%= contexto %>/assets/home/img/hero/hero1.jpg"
                         class="hero-slide-image"
+                        fetchpriority="high"
+                        decoding="async"
                         alt="Atención médica">
 
 
@@ -377,8 +363,10 @@
                 <div class="carousel-item">
 
                     <img
-                        src="<%= contexto %>/assets/home/img/hero/hero2.jpg"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'/%3E"
+                        data-src="<%= contexto %>/assets/home/img/hero/hero2.jpg"
                         class="hero-slide-image"
+                        decoding="async"
                         alt="Equipo médico">
 
 
@@ -428,8 +416,10 @@
                 <div class="carousel-item">
 
                     <img
-                        src="<%= contexto %>/assets/home/img/hero/hero3.jpg"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'/%3E"
+                        data-src="<%= contexto %>/assets/home/img/hero/hero3.jpg"
                         class="hero-slide-image"
+                        decoding="async"
                         alt="Gestión de atención médica">
 
 
@@ -784,7 +774,7 @@
 
                         <div class="card-body text-center">
 
-                            <i class="fa-solid fa-brain specialty-icon"></i>
+                            <i class="bi bi-activity specialty-icon"></i>
 
 
                             <h4 class="mt-3">
@@ -975,6 +965,8 @@
 
                             <img
                                 src="<%= contexto %>/assets/home/img/doctors/doctor1.jpg"
+                                loading="lazy"
+                                decoding="async"
                                 alt="Profesional del equipo médico">
 
                         </div>
@@ -1053,6 +1045,8 @@
 
                             <img
                                 src="<%= contexto %>/assets/home/img/doctors/doctor2.jpg"
+                                loading="lazy"
+                                decoding="async"
                                 alt="Profesional del equipo médico">
 
                         </div>
@@ -1131,6 +1125,8 @@
 
                             <img
                                 src="<%= contexto %>/assets/home/img/doctors/doctor3.jpg"
+                                loading="lazy"
+                                decoding="async"
                                 alt="Profesional del equipo médico">
 
                         </div>
@@ -1255,12 +1251,12 @@
 
 
 
-            <div class="row g-4">
+            <div class="row g-4 justify-content-center">
 
 
                 <!-- MIS CITAS -->
 
-                <div class="col-lg-3 col-md-6">
+                <div class="col-lg-5 col-md-6">
 
                     <div class="patient-service">
 
@@ -1298,51 +1294,9 @@
 
                 </div>
 
-
-
-                <!-- INDICACIONES MEDICAS -->
-
-                <div class="col-lg-3 col-md-6">
-
-                    <div class="patient-service">
-
-                        <div class="patient-service-icon">
-
-                            <i class="bi bi-file-medical"></i>
-
-                        </div>
-
-
-                        <h4>
-
-                            Mis indicaciones médicas
-
-                        </h4>
-
-
-                        <p>
-
-                            Accedé a las indicaciones médicas
-                            disponibles en tu cuenta.
-
-                        </p>
-
-
-                        <span class="service-coming-soon">
-
-                            Próximamente
-
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-
                 <!-- PAGOS -->
 
-                <div class="col-lg-3 col-md-6">
+                <div class="col-lg-5 col-md-6">
 
                     <div class="patient-service">
 
@@ -1379,47 +1333,6 @@
                     </div>
 
                 </div>
-
-
-
-                <!-- INFORMACIÓN -->
-
-                <div class="col-lg-3 col-md-6">
-
-                    <div class="patient-service">
-
-                        <div class="patient-service-icon">
-
-                            <i class="bi bi-person-vcard"></i>
-
-                        </div>
-
-
-                        <h4>
-
-                            Mi información
-
-                        </h4>
-
-
-                        <p>
-
-                            Consultá la información disponible
-                            de tu atención médica.
-
-                        </p>
-
-
-                        <span class="service-coming-soon">
-
-                            Próximamente
-
-                        </span>
-
-                    </div>
-
-                </div>
-
 
             </div>
 
@@ -1613,6 +1526,8 @@
                         <img
                             src="<%= contexto %>/assets/home/img/why-soracare/medical-team.jpg"
                             class="img-fluid"
+                            loading="lazy"
+                            decoding="async"
                             alt="Equipo médico">
 
                     </div>
@@ -1632,7 +1547,7 @@
          ¿CÓMO FUNCIONA?
     =================================================== -->
 
-    <section class="how-it-works">
+    <section class="how-it-works" id="como-funciona">
 
         <div class="container">
 
@@ -2104,6 +2019,8 @@
                     <img
                         src="<%= contexto %>/assets/home/img/logo/SoraCare1.png"
                         class="footer-logo"
+                        loading="lazy"
+                        decoding="async"
                         alt="Logo SoraCare">
 
 
@@ -2301,13 +2218,118 @@
     </footer>
 
 
+    <!-- ==================================================
+         SORA - GUÍA VIRTUAL PÚBLICA
+    =================================================== -->
+
+    <aside class="sora-assistant"
+           data-context-path="<%= contexto %>"
+           data-authenticated="<%= sesionIniciada %>"
+           data-patient="<%= esPaciente %>"
+           data-panel-route="<%= esPaciente ? "/paciente/inicio" : "/dashboard" %>">
+
+        <button type="button"
+                class="sora-launcher"
+                aria-label="Abrir a Sora, guía virtual de SoraCare"
+                aria-expanded="false"
+                aria-controls="sora-public-panel">
+            <span class="sora-avatar-shell" aria-hidden="true">
+                <img src="<%= contexto %>/assets/app/img/sora/sora-avatar-v1-512.png"
+                     alt=""
+                     width="58"
+                     height="58">
+            </span>
+            <span class="sora-launcher-copy">
+                <strong>Hola, soy Sora</strong>
+                <small>¿Tenés dudas? Te acompaño</small>
+            </span>
+            <span class="sora-online" aria-hidden="true"></span>
+        </button>
+
+        <section id="sora-public-panel"
+                 class="sora-panel"
+                 hidden
+                 role="dialog"
+                 aria-modal="false"
+                 aria-labelledby="sora-public-title">
+            <header class="sora-header">
+                <div class="sora-identity">
+                    <span class="sora-avatar-shell" aria-hidden="true">
+                        <img src="<%= contexto %>/assets/app/img/sora/sora-avatar-v1-512.png"
+                             alt=""
+                             width="70"
+                             height="70">
+                    </span>
+                    <div>
+                        <strong id="sora-public-title">Sora</strong>
+                        <small>Guía virtual de SoraCare</small>
+                        <span><i class="bi bi-circle-fill" aria-hidden="true"></i> Lista para orientarte</span>
+                    </div>
+                </div>
+                <button type="button" class="sora-close" aria-label="Cerrar a Sora">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="sora-conversation" aria-live="polite" aria-relevant="additions">
+                <div class="sora-message sora-message-bot">
+                    <span>
+                        ¡Hola! Soy Sora. Puedo guiarte para crear una cuenta,
+                        encontrar un médico o agendar tu primera cita.
+                        ¿Qué necesitás hacer?
+                    </span>
+                </div>
+                <div class="sora-quick-actions" aria-label="Preguntas frecuentes para Sora">
+                    <button type="button" data-sora-query="Soy nuevo">Soy nuevo</button>
+                    <button type="button" data-sora-query="Quiero agendar una cita">Agendar una cita</button>
+                    <button type="button" data-sora-query="Buscar un médico">Buscar médico</button>
+                    <button type="button" data-sora-query="Cómo puedo pagar">Métodos de pago</button>
+                </div>
+            </div>
+
+            <form class="sora-form">
+                <label class="visually-hidden" for="sora-public-input">
+                    Escribí tu consulta para Sora
+                </label>
+                <input id="sora-public-input"
+                       type="text"
+                       maxlength="400"
+                       placeholder="Ej.: ¿cómo agendo una cita?"
+                       autocomplete="off">
+                <button type="submit" aria-label="Enviar consulta a Sora">
+                    <i class="bi bi-send" aria-hidden="true"></i>
+                </button>
+            </form>
+            <p class="sora-disclaimer">
+                Sora orienta el uso de la plataforma. No brinda diagnósticos,
+                no receta medicamentos y no reemplaza la atención profesional.
+            </p>
+        </section>
+    </aside>
+
+
 
     <!-- ==================================================
          BOOTSTRAP JAVASCRIPT
     =================================================== -->
 
     <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
+        src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js">
+    </script>
+
+    <script src="<%= contexto %>/assets/app/js/sora-assistant.js?v=20260821a"></script>
+
+    <script>
+        const carruselPrincipal = document.getElementById('heroCarousel');
+        if (carruselPrincipal) {
+            carruselPrincipal.addEventListener('slide.bs.carousel', evento => {
+                const imagen = evento.relatedTarget.querySelector('img[data-src]');
+                if (imagen) {
+                    imagen.src = imagen.dataset.src;
+                    imagen.removeAttribute('data-src');
+                }
+            });
+        }
     </script>
 
 

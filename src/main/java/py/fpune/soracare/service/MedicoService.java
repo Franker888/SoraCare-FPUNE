@@ -227,6 +227,16 @@ public class MedicoService {
         );
     }
 
+    public Optional<Medico> buscarPorIdPersona(long idPersona)
+            throws SQLException {
+        if (idPersona <= 0) {
+            throw new SQLException(
+                    "El ID de la persona debe ser mayor que cero."
+            );
+        }
+        return medicoDAO.buscarPorIdPersona(idPersona);
+    }
+
     public Optional<Medico> buscarPorMatricula(
             String matriculaProfesional
     ) throws SQLException {

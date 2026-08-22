@@ -44,10 +44,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Reprogramar cita | SoraCare-FPUNE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css"
           rel="stylesheet">
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
     <style>
         body { background: #f3f7fb; color: #14213d; }
         .barra { background: #0f766e; }
@@ -78,7 +78,7 @@
 <nav class="navbar barra shadow-sm">
     <div class="container py-2">
         <a class="navbar-brand fw-bold text-white"
-           href="${pageContext.request.contextPath}/dashboard">SoraCare-FPUNE</a>
+           href="${pageContext.request.contextPath}/paciente/inicio">SoraCare-FPUNE</a>
         <div class="d-flex gap-2">
             <a class="btn btn-outline-light btn-sm"
                href="${pageContext.request.contextPath}/mis-citas">Mis citas</a>
@@ -238,6 +238,6 @@
     <% } %>
     <% } %>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js"></script>
 </body>
 </html>

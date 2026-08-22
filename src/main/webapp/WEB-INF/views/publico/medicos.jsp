@@ -75,9 +75,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Catálogo público de médicos de SoraCare-FPUNE.">
     <title>Médicos | SoraCare-FPUNE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css"
           rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
     <style>
         body { min-height: 100vh; background: #f4f7fb; color: #14213d; }
         .barra-publica { background: #fff; border-bottom: 1px solid #e5ebf3; }
@@ -433,7 +433,7 @@
         <span>Sistema de gestión hospitalaria</span>
     </div>
 </footer>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js"></script>
 <script>
     const buscador = document.getElementById('buscadorMedicos');
     const filtro = document.getElementById('filtroEspecialidad');

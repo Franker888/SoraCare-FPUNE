@@ -17,7 +17,10 @@ import java.io.IOException;
         filterName = "FiltroAutenticacion",
         urlPatterns = {
                 "/dashboard",
-                "/comprobantes/*"
+                "/comprobantes/*",
+                "/cuenta/*",
+                "/perfil",
+                "/perfil/*"
         }
 )
 public class FiltroAutenticacion implements Filter {

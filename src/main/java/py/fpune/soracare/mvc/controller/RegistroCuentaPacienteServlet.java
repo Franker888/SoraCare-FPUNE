@@ -7,7 +7,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import py.fpune.soracare.dto.RegistroCuentaPacienteDTO;
+import py.fpune.soracare.mvc.util.UrlPublicaRequest;
 import py.fpune.soracare.service.RegistroCuentaPacienteService;
+import py.fpune.soracare.service.ConfiguracionGoogleService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -16,10 +18,12 @@ import java.sql.SQLException;
 public class RegistroCuentaPacienteServlet extends HttpServlet {
 
     private RegistroCuentaPacienteService registroService;
+    private ConfiguracionGoogleService configuracionGoogleService;
 
     @Override
     public void init() {
         registroService = new RegistroCuentaPacienteService();
+        configuracionGoogleService = new ConfiguracionGoogleService();
     }
 
     @Override
@@ -30,6 +34,11 @@ public class RegistroCuentaPacienteServlet extends HttpServlet {
             return;
         }
         response.setHeader("Cache-Control", "no-store, max-age=0");
+        response.setHeader(
+                "Referrer-Policy",
+                "no-referrer-when-downgrade"
+        );
+        prepararAccesoGoogle(request);
         request.getRequestDispatcher("/WEB-INF/views/autenticacion/registro-paciente.jsp")
                 .forward(request, response);
     }
@@ -57,12 +66,14 @@ public class RegistroCuentaPacienteServlet extends HttpServlet {
         } catch (IllegalArgumentException error) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             request.setAttribute("error", error.getMessage());
+            prepararAccesoGoogle(request);
             request.getRequestDispatcher("/WEB-INF/views/autenticacion/registro-paciente.jsp")
                     .forward(request, response);
         } catch (SQLException error) {
             log("Error al crear una cuenta de paciente.", error);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             request.setAttribute("error", "No fue posible crear la cuenta. Revisá los datos e intentá nuevamente.");
+            prepararAccesoGoogle(request);
             request.getRequestDispatcher("/WEB-INF/views/autenticacion/registro-paciente.jsp")
                     .forward(request, response);
         }
@@ -71,5 +82,17 @@ public class RegistroCuentaPacienteServlet extends HttpServlet {
     private static boolean estaAutenticado(HttpServletRequest request) {
         HttpSession sesion = request.getSession(false);
         return sesion != null && sesion.getAttribute("usuarioAutenticado") != null;
+    }
+
+    private void prepararAccesoGoogle(HttpServletRequest request) {
+        String clientId = configuracionGoogleService.obtenerClientId();
+        if (clientId == null) {
+            return;
+        }
+        request.setAttribute("googleClientId", clientId);
+        request.setAttribute(
+                "googleLoginUri",
+                UrlPublicaRequest.construir(request, "/auth/google")
+        );
     }
 }

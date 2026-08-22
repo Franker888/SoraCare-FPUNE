@@ -131,7 +131,7 @@
     </title>
 
     <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css"
             rel="stylesheet">
 
     <style>
@@ -196,37 +196,12 @@
     </style>
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815c">
 </head>
 
 <body class="app-shell app-admin">
 
-<nav class="navbar barra-superior shadow-sm">
-
-    <div class="container">
-
-        <a
-                class="navbar-brand marca-soracare"
-                href="${pageContext.request.contextPath}/dashboard">
-
-            SoraCare-FPUNE
-
-        </a>
-
-        <div class="d-flex gap-2">
-            <a class="btn btn-light btn-sm"
-               href="${pageContext.request.contextPath}/admin/excepciones-horarios">
-                Gestionar excepciones
-            </a>
-            <a class="btn btn-outline-light btn-sm"
-               href="${pageContext.request.contextPath}/admin/inicio">
-                Volver a administración
-            </a>
-        </div>
-
-    </div>
-
-</nav>
+<%@ include file="_navbar.jspf" %>
 
 <main class="container py-4 py-md-5">
 
@@ -271,6 +246,17 @@
         </div>
 
     </section>
+
+    <div class="admin-section-heading">
+        <div>
+            <h2 class="h4">Gestión de agenda médica</h2>
+            <p class="text-secondary mb-0">Organizá horarios recurrentes y excepciones desde un mismo lugar.</p>
+        </div>
+        <a class="btn btn-outline-primary"
+           href="${pageContext.request.contextPath}/admin/excepciones-horarios">
+            Gestionar excepciones
+        </a>
+    </div>
 
     <% if (mensajeExito != null
             && !mensajeExito.isBlank()) { %>
@@ -752,7 +738,7 @@
 </main>
 
 <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+        src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js">
 </script>
 
 </body>

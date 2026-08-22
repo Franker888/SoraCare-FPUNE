@@ -7,8 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
+import py.fpune.soracare.service.EstadoSistemaService;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 @WebServlet("/admin/inicio")
 public class PanelAdministracionServlet extends HttpServlet {
@@ -18,6 +20,13 @@ public class PanelAdministracionServlet extends HttpServlet {
 
     private static final String ATRIBUTO_USUARIO_AUTENTICADO =
             "usuarioAutenticado";
+
+    private EstadoSistemaService estadoSistemaService;
+
+    @Override
+    public void init() {
+        estadoSistemaService = new EstadoSistemaService();
+    }
 
     @Override
     protected void doGet(
@@ -63,6 +72,16 @@ public class PanelAdministracionServlet extends HttpServlet {
                 ATRIBUTO_USUARIO_AUTENTICADO,
                 usuarioAutenticado
         );
+
+        try {
+            request.setAttribute(
+                    "resumenAdministracion",
+                    estadoSistemaService.consultarResumenPanel()
+            );
+        } catch (SQLException error) {
+            log("No fue posible resumir el panel administrativo.", error);
+            request.setAttribute("errorResumen", true);
+        }
 
         request.getRequestDispatcher(
                 VISTA_PANEL_ADMINISTRACION

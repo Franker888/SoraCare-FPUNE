@@ -10,10 +10,10 @@
 
     <title>Paciente registrado | SoraCare-FPUNE</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css"
           rel="stylesheet">
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
 </head>
 
 <body class="app-shell app-reception">

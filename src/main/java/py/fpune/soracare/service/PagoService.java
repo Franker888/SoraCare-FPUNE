@@ -15,6 +15,7 @@ import py.fpune.soracare.mvc.model.MetodoPago;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -22,6 +23,9 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 public class PagoService {
+
+    private static final System.Logger LOGGER =
+            System.getLogger(PagoService.class.getName());
 
     private static final Set<String> METODOS =
             Set.of("EFECTIVO", "QR", "TRANSFERENCIA", "TARJETA");
@@ -35,6 +39,7 @@ public class PagoService {
     private final PagoDAO pagoDAO = new PagoDAO();
     private final NotificacionDAO notificacionDAO = new NotificacionDAO();
     private final ComprobantePdfService comprobantePdfService = new ComprobantePdfService();
+    private final CorreoResendService correoResendService = new CorreoResendService();
 
     public List<MetodoPago> listarMetodosActivos() throws SQLException {
         return pagoDAO.listarMetodosActivos();
@@ -164,6 +169,11 @@ public class PagoService {
         String detalleNormalizado = normalizarTexto(detalle, 120,
                 "Ingresa el dato solicitado para completar la simulacion.");
 
+        PagoResumenDTO resultado;
+        DatosFacturacionDTO facturacion;
+        String numero;
+        ComprobantePdfService.DocumentoPdf documento;
+
         try (Connection conexion = ConexionBD.obtenerConexion()) {
             try {
                 conexion.setAutoCommit(false);
@@ -197,14 +207,13 @@ public class PagoService {
 
                 PagoResumenDTO confirmado = pagoDAO.buscarPorId(conexion, idPago)
                         .orElseThrow(() -> new SQLException("No fue posible recuperar el pago confirmado."));
-                DatosFacturacionDTO facturacion = pagoDAO.buscarDatosFacturacion(conexion, idPago);
-                String numero = String.format("SC-%08d", idPago);
-                ComprobantePdfService.DocumentoPdf documento =
+                facturacion = pagoDAO.buscarDatosFacturacion(conexion, idPago);
+                numero = String.format("SC-%08d", idPago);
+                documento =
                         comprobantePdfService.generar(confirmado, facturacion, numero);
                 pagoDAO.crearComprobante(
                         conexion, idPago, idUsuario, numero, documento.nombreArchivo(),
                         documento.contenido(), documento.sha256(), facturacion.correo());
-                pagoDAO.registrarCorreoSimulado(conexion, confirmado, numero);
                 notificacionDAO.registrarPagoConfirmado(
                         conexion,
                         confirmado.idCita(),
@@ -215,10 +224,9 @@ public class PagoService {
                                 + " ya está disponible desde Mis citas."
                 );
 
-                PagoResumenDTO resultado = pagoDAO.buscarPorId(conexion, idPago)
+                resultado = pagoDAO.buscarPorId(conexion, idPago)
                         .orElseThrow(() -> new SQLException("No fue posible recuperar el comprobante."));
                 conexion.commit();
-                return resultado;
             } catch (Exception error) {
                 rollback(conexion, error);
                 if (error instanceof IllegalArgumentException validacion) throw validacion;
@@ -226,6 +234,150 @@ public class PagoService {
                 throw new SQLException("No fue posible confirmar el pago.", error);
             }
         }
+
+        programarEnvioComprobante(resultado, facturacion, numero, documento);
+        return resultado;
+    }
+
+    private void programarEnvioComprobante(
+            PagoResumenDTO pago,
+            DatosFacturacionDTO facturacion,
+            String numero,
+            ComprobantePdfService.DocumentoPdf documento
+    ) {
+        if (!correoResendService.estaConfigurado()) {
+            guardarEstadoCorreo(
+                    pago.idPago(),
+                    "NO_CONFIGURADO",
+                    false,
+                    null,
+                    null,
+                    "El comprobante esta disponible, pero Resend no esta configurado."
+            );
+            return;
+        }
+
+        DespachadorCorreoService.ejecutar(() -> {
+            try {
+                CorreoResendService.ResultadoEnvio envio = correoResendService.enviar(
+                        facturacion.correo(),
+                        "Comprobante " + numero + " - SoraCare-FPUNE",
+                        contenidoCorreoComprobante(pago, numero),
+                        List.of(new CorreoResendService.AdjuntoCorreo(
+                                documento.nombreArchivo(),
+                                documento.contenido()
+                        )),
+                        "pago-" + pago.idPago() + "-comprobante-v1"
+                );
+                guardarEstadoCorreo(
+                        pago.idPago(),
+                        "ENVIADO",
+                        true,
+                        "RESEND",
+                        envio.referenciaProveedor(),
+                        "Resend acepto el comprobante " + numero
+                                + " para " + envio.destinatario() + "."
+                );
+            } catch (Exception error) {
+                LOGGER.log(
+                        System.Logger.Level.ERROR,
+                        "No fue posible enviar el comprobante {0} por Resend.",
+                        numero
+                );
+                guardarEstadoCorreo(
+                        pago.idPago(),
+                        "FALLIDO",
+                        false,
+                        "RESEND",
+                        null,
+                        "El comprobante " + numero
+                                + " no pudo enviarse: " + limitarDetalle(error.getMessage())
+                );
+            }
+        });
+    }
+
+    private void guardarEstadoCorreo(
+            long idPago,
+            String estado,
+            boolean enviado,
+            String proveedor,
+            String referencia,
+            String detalle
+    ) {
+        try {
+            pagoDAO.registrarResultadoCorreo(
+                    idPago,
+                    estado,
+                    enviado,
+                    proveedor,
+                    referencia,
+                    detalle
+            );
+        } catch (SQLException error) {
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "No fue posible guardar el estado del correo del pago {0}.",
+                    idPago
+            );
+        }
+    }
+
+    private static String contenidoCorreoComprobante(
+            PagoResumenDTO pago,
+            String numero
+    ) {
+        String fechaCita = pago.fechaCita()
+                .atZoneSameInstant(DisponibilidadService.ZONA_HORARIA)
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        return """
+                <!doctype html>
+                <html lang="es">
+                <body style="margin:0;background:#f4f7fb;font-family:Arial,sans-serif;color:#10213a">
+                  <div style="max-width:640px;margin:32px auto;background:#fff;border:1px solid #dbe5f1;border-radius:18px;overflow:hidden">
+                    <div style="padding:28px 32px;background:linear-gradient(135deg,#2452c7,#159fc0);color:#fff">
+                      <p style="margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.08em">SORACARE-FPUNE</p>
+                      <h1 style="margin:0;font-size:28px">Tu pago fue confirmado</h1>
+                    </div>
+                    <div style="padding:30px 32px">
+                      <p>Hola, <strong>%s</strong>.</p>
+                      <p>Adjuntamos el comprobante académico <strong>%s</strong> correspondiente a tu consulta.</p>
+                      <div style="margin:24px 0;padding:18px;background:#eef5ff;border-radius:12px;line-height:1.7">
+                        <strong>Especialidad:</strong> %s<br>
+                        <strong>Profesional:</strong> %s<br>
+                        <strong>Fecha:</strong> %s<br>
+                        <strong>Importe:</strong> Gs. %s
+                      </div>
+                      <p style="color:#5b6b82;font-size:13px">Documento académico generado por SoraCare-FPUNE; no posee validez fiscal.</p>
+                    </div>
+                  </div>
+                </body>
+                </html>
+                """.formatted(
+                escaparHtml(pago.nombrePaciente()),
+                escaparHtml(numero),
+                escaparHtml(pago.nombreEspecialidad()),
+                escaparHtml(pago.nombreMedico()),
+                escaparHtml(fechaCita),
+                pago.monto().setScale(0).toPlainString()
+        );
+    }
+
+    private static String escaparHtml(String valor) {
+        if (valor == null) return "";
+        return valor.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+
+    private static String limitarDetalle(String valor) {
+        if (valor == null || valor.isBlank()) return "sin detalle del proveedor";
+        String normalizado = valor.replace('\r', ' ').replace('\n', ' ').strip();
+        return normalizado.length() <= 300
+                ? normalizado
+                : normalizado.substring(0, 300) + "...";
     }
 
     public ComprobantePagoDTO obtenerComprobante(

@@ -49,7 +49,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Mi agenda médica | SoraCare-FPUNE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css"
           rel="stylesheet">
     <style>
         body { background: #f3f7fb; color: #172033; }
@@ -76,17 +76,17 @@
         .fecha-legible { text-transform: capitalize; }
     </style>
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
 </head>
 <body class="app-shell app-doctor">
 <nav class="navbar barra-superior border-bottom">
     <div class="container py-2">
-        <a class="navbar-brand marca" href="${pageContext.request.contextPath}/dashboard">
+        <a class="navbar-brand marca" href="${pageContext.request.contextPath}/medico/inicio">
             SoraCare-FPUNE
         </a>
         <div class="d-flex align-items-center gap-2">
             <a class="btn btn-outline-primary btn-sm"
-               href="${pageContext.request.contextPath}/dashboard">Panel</a>
+               href="${pageContext.request.contextPath}/medico/inicio">Panel</a>
             <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
                 <button type="submit" class="btn btn-outline-secondary btn-sm">Cerrar sesión</button>
             </form>
@@ -278,6 +278,6 @@
     </section>
     <% } %>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js"></script>
 </body>
 </html>

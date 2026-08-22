@@ -28,6 +28,18 @@ public class CambioContrasenaServlet extends HttpServlet {
     private static final String RUTA_DASHBOARD =
             "/dashboard";
 
+    private static final String RUTA_ADMINISTRACION =
+            "/admin/inicio";
+
+    private static final String RUTA_RECEPCION =
+            "/recepcion/inicio";
+
+    private static final String RUTA_MEDICO =
+            "/medico/inicio";
+
+    private static final String RUTA_PACIENTE =
+            "/paciente/inicio";
+
     private CambioContrasenaService cambioContrasenaService;
 
     @Override
@@ -60,16 +72,10 @@ public class CambioContrasenaServlet extends HttpServlet {
             return;
         }
 
-        if (!usuarioAutenticado
-                .isDebeCambiarContrasena()) {
-
-            redirigirAlDashboard(
-                    request,
-                    response
-            );
-
-            return;
-        }
+        prepararVista(
+                request,
+                usuarioAutenticado
+        );
 
         request.getRequestDispatcher(
                 VISTA_CAMBIO_CONTRASENA
@@ -107,16 +113,10 @@ public class CambioContrasenaServlet extends HttpServlet {
             return;
         }
 
-        if (!usuarioAutenticado
-                .isDebeCambiarContrasena()) {
-
-            redirigirAlDashboard(
-                    request,
-                    response
-            );
-
-            return;
-        }
+        prepararVista(
+                request,
+                usuarioAutenticado
+        );
 
         String contrasenaActual =
                 request.getParameter(
@@ -240,6 +240,12 @@ public class CambioContrasenaServlet extends HttpServlet {
                 mensaje
         );
 
+        UsuarioAutenticadoDTO usuarioAutenticado =
+                obtenerUsuarioAutenticado(request);
+        if (usuarioAutenticado != null) {
+            prepararVista(request, usuarioAutenticado);
+        }
+
         response.setStatus(
                 estadoHttp
         );
@@ -268,10 +274,52 @@ public class CambioContrasenaServlet extends HttpServlet {
             HttpServletResponse response
     ) throws IOException {
 
+        UsuarioAutenticadoDTO usuario = obtenerUsuarioAutenticado(request);
+        String ruta = RUTA_DASHBOARD;
+        if (usuario != null && usuario.tieneRol("ADMINISTRADOR")) {
+            ruta = RUTA_ADMINISTRACION;
+        } else if (usuario != null && usuario.tieneRol("RECEPCIONISTA")) {
+            ruta = RUTA_RECEPCION;
+        } else if (usuario != null && usuario.tieneRol("MEDICO")) {
+            ruta = RUTA_MEDICO;
+        } else if (usuario != null && usuario.tieneRol("PACIENTE")) {
+            ruta = RUTA_PACIENTE;
+        }
+
         response.sendRedirect(
                 request.getContextPath()
-                        + RUTA_DASHBOARD
+                        + ruta
         );
+    }
+
+    private static void prepararVista(
+            HttpServletRequest request,
+            UsuarioAutenticadoDTO usuario
+    ) {
+        request.setAttribute(
+                "cambioObligatorio",
+                usuario.isDebeCambiarContrasena()
+        );
+        request.setAttribute(
+                "rutaVolver",
+                rutaPanel(usuario)
+        );
+    }
+
+    private static String rutaPanel(UsuarioAutenticadoDTO usuario) {
+        if (usuario.tieneRol("ADMINISTRADOR")) {
+            return RUTA_ADMINISTRACION;
+        }
+        if (usuario.tieneRol("RECEPCIONISTA")) {
+            return RUTA_RECEPCION;
+        }
+        if (usuario.tieneRol("MEDICO")) {
+            return RUTA_MEDICO;
+        }
+        if (usuario.tieneRol("PACIENTE")) {
+            return RUTA_PACIENTE;
+        }
+        return RUTA_DASHBOARD;
     }
 
     private static void configurarRespuestaSinCache(

@@ -31,17 +31,32 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Excepciones de agenda | SoraCare-FPUNE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
     <style>body{background:#f4f7f6}.cabecera{background:linear-gradient(135deg,#073f32,#0c7658);color:white}.card{border:0}</style>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815c">
 </head>
 <body class="app-shell app-admin">
-<nav class="navbar bg-white border-bottom"><div class="container py-2">
-    <a class="navbar-brand fw-bold text-success" href="${pageContext.request.contextPath}/dashboard">SoraCare-FPUNE</a>
-    <div class="d-flex gap-2"><a class="btn btn-outline-success btn-sm" href="${pageContext.request.contextPath}/admin/horarios">Horarios</a><a class="btn btn-outline-secondary btn-sm" href="${pageContext.request.contextPath}/admin/inicio">Administración</a></div>
-</div></nav>
-<header class="cabecera py-4"><div class="container"><p class="small text-uppercase mb-1">Agenda médica</p><h1 class="h2">Excepciones de horarios</h1><p class="mb-0">Registrá vacaciones, bloqueos parciales o disponibilidad extraordinaria.</p></div></header>
-<main class="container py-4">
+<%@ include file="_navbar.jspf" %>
+<main class="container py-4 py-lg-5">
+    <section class="admin-hero mb-4">
+        <div class="row align-items-center">
+            <div class="col-lg-9">
+                <div class="admin-eyebrow">Agenda médica · Disponibilidad excepcional</div>
+                <h1>Excepciones de horarios</h1>
+                <p>Registrá vacaciones, bloqueos parciales o disponibilidad extraordinaria sin alterar el horario recurrente.</p>
+            </div>
+            <div class="col-lg-3 text-lg-end">
+                <span class="admin-hero-icon"><i class="bi bi-calendar2-x"></i></span>
+            </div>
+        </div>
+    </section>
+    <div class="admin-section-heading">
+        <div>
+            <h2 class="h4">Ajustes especiales de agenda</h2>
+            <p class="text-secondary mb-0">Aplicá cambios puntuales manteniendo intacta la programación semanal.</p>
+        </div>
+        <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/horarios">Volver a horarios</a>
+    </div>
     <% if (request.getAttribute("mensajeExito") != null) { %><div class="alert alert-success"><%= h((String) request.getAttribute("mensajeExito")) %></div><% } %>
     <% if (request.getAttribute("error") != null) { %><div class="alert alert-danger"><%= h((String) request.getAttribute("error")) %></div><% } %>
     <section class="card shadow-sm mb-4"><div class="card-body p-4"><h2 class="h4">Nueva excepción</h2>
@@ -58,7 +73,7 @@
             <div class="col-md-2"><label class="form-label" for="horaInicio">Desde</label><input class="form-control" type="time" id="horaInicio" name="horaInicio"></div>
             <div class="col-md-2"><label class="form-label" for="horaFin">Hasta</label><input class="form-control" type="time" id="horaFin" name="horaFin"></div>
             <div class="col-md-4"><label class="form-label" for="motivo">Motivo</label><input class="form-control" id="motivo" name="motivo" maxlength="255" required placeholder="Vacaciones, licencia, reunión..."></div>
-            <div class="col-12"><small class="text-secondary d-block mb-2">Para bloqueo total dejá las horas vacías. La disponibilidad extra exige especialidad, consultorio y horas.</small><button class="btn btn-success">Registrar excepción</button></div>
+            <div class="col-12"><small class="text-secondary d-block mb-2">Para bloqueo total dejá las horas vacías. La disponibilidad extra exige especialidad, consultorio y horas.</small><button class="btn btn-primary">Registrar excepción</button></div>
         </form>
     </div></section>
     <section class="card shadow-sm"><div class="card-body p-4"><div class="d-flex justify-content-between"><h2 class="h4">Excepciones registradas</h2><span class="badge text-bg-success"><%= excepciones.size() %></span></div>

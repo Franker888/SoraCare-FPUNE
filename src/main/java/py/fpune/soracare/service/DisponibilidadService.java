@@ -3,6 +3,7 @@ package py.fpune.soracare.service;
 import py.fpune.soracare.dao.CitaDAO;
 import py.fpune.soracare.dao.ExcepcionHorarioMedicoDAO;
 import py.fpune.soracare.dao.HorarioMedicoDAO;
+import py.fpune.soracare.dto.DisponibilidadDiaDTO;
 import py.fpune.soracare.dto.SlotDisponibleDTO;
 import py.fpune.soracare.mvc.model.Cita;
 import py.fpune.soracare.mvc.model.Especialidad;
@@ -55,10 +56,25 @@ public class DisponibilidadService {
             Long idMedico,
             Integer idEspecialidad
     ) throws SQLException {
+        return listarAgendaDisponible(
+                desde, cantidadDias, limite, idMedico, idEspecialidad
+        ).stream().map(DisponibilidadDiaDTO::fecha).toList();
+    }
+
+    public List<DisponibilidadDiaDTO> listarAgendaDisponible(
+            LocalDate desde,
+            int cantidadDias,
+            int limiteDias,
+            Long idMedico,
+            Integer idEspecialidad
+    ) throws SQLException {
         LocalDate hoy = LocalDate.now(ZONA_HORARIA);
         LocalDate inicio = desde == null || desde.isBefore(hoy) ? hoy : desde;
-        if (cantidadDias < 1 || cantidadDias > 365 || limite < 1 || limite > 100) {
-            throw new IllegalArgumentException("El rango de disponibilidad solicitado no es valido.");
+        if (cantidadDias < 1 || cantidadDias > 365
+                || limiteDias < 1 || limiteDias > 100) {
+            throw new IllegalArgumentException(
+                    "El rango de disponibilidad solicitado no es válido."
+            );
         }
 
         LocalDate finExclusivo = inicio.plusDays(cantidadDias);
@@ -66,17 +82,22 @@ public class DisponibilidadService {
         List<ExcepcionHorarioMedico> excepciones = excepcionDAO.listarTodas();
         List<Cita> citas = citaDAO.listarEntre(
                 inicio.atStartOfDay(ZONA_HORARIA).toOffsetDateTime(),
-                finExclusivo.atStartOfDay(ZONA_HORARIA).toOffsetDateTime());
-        List<LocalDate> fechas = new ArrayList<>();
+                finExclusivo.atStartOfDay(ZONA_HORARIA).toOffsetDateTime()
+        );
+        List<DisponibilidadDiaDTO> agenda = new ArrayList<>();
 
         for (LocalDate fecha = inicio;
-             fecha.isBefore(finExclusivo) && fechas.size() < limite;
+             fecha.isBefore(finExclusivo) && agenda.size() < limiteDias;
              fecha = fecha.plusDays(1)) {
-            if (!listar(fecha, idMedico, idEspecialidad, horarios, excepciones, citas).isEmpty()) {
-                fechas.add(fecha);
+            List<SlotDisponibleDTO> turnos = listar(
+                    fecha, idMedico, idEspecialidad,
+                    horarios, excepciones, citas
+            );
+            if (!turnos.isEmpty()) {
+                agenda.add(new DisponibilidadDiaDTO(fecha, turnos));
             }
         }
-        return List.copyOf(fechas);
+        return List.copyOf(agenda);
     }
 
     private List<SlotDisponibleDTO> listar(

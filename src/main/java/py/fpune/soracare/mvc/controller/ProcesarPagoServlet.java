@@ -39,7 +39,8 @@ public class ProcesarPagoServlet extends HttpServlet {
             request.setAttribute("pago", pago);
             if ("confirmado".equals(request.getParameter("resultado"))) {
                 request.setAttribute("mensajeExito",
-                        "Pago simulado confirmado. Tu cita y el comprobante ya estan disponibles.");
+                        "Pago simulado confirmado. Tu cita y el comprobante ya están disponibles; "
+                                + "el envío al correo se está procesando.");
             }
             request.getRequestDispatcher("/WEB-INF/views/pagos/procesar.jsp")
                     .forward(request, response);

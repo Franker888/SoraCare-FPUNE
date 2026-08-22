@@ -33,6 +33,29 @@ public class RegistroCuentaPacienteService {
 
     public CuentaPacienteCreadaDTO registrar(RegistroCuentaPacienteDTO datos)
             throws SQLException {
+        try (Connection conexion = ConexionBD.obtenerConexion()) {
+            try {
+                conexion.setAutoCommit(false);
+                CuentaPacienteCreadaDTO cuenta = registrar(
+                        conexion,
+                        datos
+                );
+                conexion.commit();
+                return cuenta;
+            } catch (SQLException | RuntimeException error) {
+                ejecutarRollback(conexion, error);
+                throw error;
+            }
+        }
+    }
+
+    public CuentaPacienteCreadaDTO registrar(
+            Connection conexion,
+            RegistroCuentaPacienteDTO datos
+    ) throws SQLException {
+        if (conexion == null) {
+            throw new SQLException("La conexión no puede ser nula.");
+        }
         if (datos == null) {
             throw new IllegalArgumentException("Los datos del registro son obligatorios.");
         }
@@ -42,44 +65,36 @@ public class RegistroCuentaPacienteService {
         validarContrasenas(datos.contrasena(), datos.confirmacionContrasena());
         String hash = CodificadorContrasenaBCrypt.codificar(datos.contrasena());
 
-        try (Connection conexion = ConexionBD.obtenerConexion()) {
-            try {
-                conexion.setAutoCommit(false);
-                long cedula = Long.parseLong(paciente.getCedula());
-                if (personaDAO.existeCedula(conexion, cedula)) {
-                    throw new IllegalArgumentException("La cédula ya está registrada.");
-                }
-                if (personaDAO.existeCorreo(conexion, paciente.getCorreo())) {
-                    throw new IllegalArgumentException("El correo electrónico ya está registrado.");
-                }
-                if (usuarioDAO.existePorNombreUsuario(conexion, nombreUsuario)) {
-                    throw new IllegalArgumentException("El nombre de usuario ya está registrado.");
-                }
-                Rol rolPaciente = rolDAO.buscarActivoPorNombre(conexion, "PACIENTE")
-                        .orElseThrow(() -> new SQLException(
-                                "El rol PACIENTE no existe o está inactivo."));
-
-                personaDAO.registrar(conexion, paciente);
-                pacienteDAO.registrar(conexion, paciente);
-
-                Usuario usuario = new Usuario();
-                usuario.setIdPersona(paciente.getId());
-                usuario.setNombreUsuario(nombreUsuario);
-                usuario.setContrasenaHash(hash);
-                usuario.setEstado(EstadoUsuario.ACTIVO);
-                usuario.setIntentosFallidos((short) 0);
-                usuario.setDebeCambiarContrasena(false);
-                long idUsuario = usuarioDAO.registrar(conexion, usuario);
-                usuarioDAO.asignarRol(conexion, idUsuario, rolPaciente.getIdRol(), null);
-
-                conexion.commit();
-                return new CuentaPacienteCreadaDTO(
-                        paciente.getIdPaciente(), idUsuario, nombreUsuario);
-            } catch (SQLException | RuntimeException error) {
-                ejecutarRollback(conexion, error);
-                throw error;
-            }
+        long cedula = Long.parseLong(paciente.getCedula());
+        if (personaDAO.existeCedula(conexion, cedula)) {
+            throw new IllegalArgumentException("La cédula ya está registrada.");
         }
+        if (personaDAO.existeCorreo(conexion, paciente.getCorreo())) {
+            throw new IllegalArgumentException("El correo electrónico ya está registrado.");
+        }
+        if (usuarioDAO.existePorNombreUsuario(conexion, nombreUsuario)) {
+            throw new IllegalArgumentException("El nombre de usuario ya está registrado.");
+        }
+
+        Rol rolPaciente = rolDAO.buscarActivoPorNombre(conexion, "PACIENTE")
+                .orElseThrow(() -> new SQLException(
+                        "El rol PACIENTE no existe o está inactivo."));
+
+        personaDAO.registrar(conexion, paciente);
+        pacienteDAO.registrar(conexion, paciente);
+
+        Usuario usuario = new Usuario();
+        usuario.setIdPersona(paciente.getId());
+        usuario.setNombreUsuario(nombreUsuario);
+        usuario.setContrasenaHash(hash);
+        usuario.setEstado(EstadoUsuario.ACTIVO);
+        usuario.setIntentosFallidos((short) 0);
+        usuario.setDebeCambiarContrasena(false);
+        long idUsuario = usuarioDAO.registrar(conexion, usuario);
+        usuarioDAO.asignarRol(conexion, idUsuario, rolPaciente.getIdRol(), null);
+
+        return new CuentaPacienteCreadaDTO(
+                paciente.getIdPaciente(), idUsuario, nombreUsuario);
     }
 
     private static Paciente prepararPaciente(RegistroCuentaPacienteDTO datos) {

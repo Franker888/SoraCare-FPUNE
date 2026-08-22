@@ -24,6 +24,23 @@
                 + "&metodo=" + u(filtro.metodo())
                 + "&pagina=" + pagina;
     }
+
+    private String textoCorreo(String estado) {
+        if (estado == null) return "Sin envío";
+        if ("ENVIADO".equals(estado)) return "Enviado por Resend";
+        if ("PENDIENTE".equals(estado)) return "Envío en proceso";
+        if ("FALLIDO".equals(estado)) return "Error de envío";
+        if ("NO_CONFIGURADO".equals(estado)) return "Correo no configurado";
+        if ("SIMULADO_ENVIADO".equals(estado)) return "Correo simulado anterior";
+        return "Sin envío";
+    }
+
+    private String claseCorreo(String estado) {
+        if ("ENVIADO".equals(estado)) return "text-success";
+        if ("FALLIDO".equals(estado)) return "text-danger";
+        if ("PENDIENTE".equals(estado)) return "text-warning";
+        return "text-secondary";
+    }
 %>
 <%
     FiltroAgendaPagosDTO filtro = request.getAttribute("filtro") instanceof FiltroAgendaPagosDTO
@@ -43,7 +60,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Gestión de pagos | SoraCare-FPUNE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f4f7f6; }
         .cabecera { background: linear-gradient(135deg, #073f32, #0c7658); color: white; }
@@ -55,7 +72,7 @@
         .tabla-pagos th { white-space: nowrap; }
         .accion-pago { min-width: 170px; }
     </style>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
 </head>
 <body class="app-shell app-reception">
 <nav class="navbar bg-white border-bottom">
@@ -180,7 +197,7 @@
                         <td><span class="badge <%= pago.estaConfirmado() ? "text-bg-success" : (pago.estaPendiente() ? "text-bg-warning" : "text-bg-secondary") %>"><%= h(pago.nombreEstado()) %></span></td>
                         <td>
                             <% if (pago.idComprobante() != null) { %>
-                            <a target="_blank" href="${pageContext.request.contextPath}/comprobantes/pago?id=<%= pago.idComprobante() %>"><%= h(pago.numeroComprobante()) %></a><br><small class="text-secondary">Correo simulado</small>
+                            <a target="_blank" href="${pageContext.request.contextPath}/comprobantes/pago?id=<%= pago.idComprobante() %>"><%= h(pago.numeroComprobante()) %></a><br><small class="<%= claseCorreo(pago.estadoEnvioEmail()) %>"><%= textoCorreo(pago.estadoEnvioEmail()) %></small>
                             <% } else { %><span class="text-secondary">Pendiente</span><% } %>
                         </td>
                         <td class="accion-pago">

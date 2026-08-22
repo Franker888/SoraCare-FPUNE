@@ -127,7 +127,7 @@
     </title>
 
     <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css"
             rel="stylesheet">
 
     <style>
@@ -219,51 +219,12 @@
     </style>
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815c">
 </head>
 
 <body class="app-shell app-admin">
 
-<nav class="navbar barra-superior shadow-sm">
-
-    <div class="container">
-
-        <a
-                class="navbar-brand marca-soracare"
-                href="${pageContext.request.contextPath}/dashboard">
-
-            SoraCare-FPUNE
-
-        </a>
-
-        <div class="d-flex align-items-center gap-3">
-
-            <span class="navbar-text text-white d-none d-lg-inline">
-
-                Área administrativa
-
-            </span>
-
-            <form
-                    method="post"
-                    action="${pageContext.request.contextPath}/logout"
-                    class="m-0">
-
-                <button
-                        type="submit"
-                        class="btn btn-outline-light btn-sm boton-cerrar-sesion">
-
-                    Cerrar sesión
-
-                </button>
-
-            </form>
-
-        </div>
-
-    </div>
-
-</nav>
+<%@ include file="_navbar.jspf" %>
 
 <main class="container py-4 py-md-5">
 
@@ -838,7 +799,7 @@
 </main>
 
 <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+        src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js">
 </script>
 
 </body>

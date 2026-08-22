@@ -7,10 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
-import py.fpune.soracare.service.NotificacionService;
 
 import java.io.IOException;
-import java.sql.SQLException;
 
 @WebServlet("/dashboard")
 public class DashboardServlet extends HttpServlet {
@@ -20,13 +18,6 @@ public class DashboardServlet extends HttpServlet {
 
     private static final String ATRIBUTO_USUARIO_AUTENTICADO =
             "usuarioAutenticado";
-
-    private NotificacionService notificacionService;
-
-    @Override
-    public void init() {
-        notificacionService = new NotificacionService();
-    }
 
     @Override
     protected void doGet(
@@ -73,18 +64,24 @@ public class DashboardServlet extends HttpServlet {
                 usuarioAutenticado
         );
 
+        if (usuarioAutenticado.tieneRol("ADMINISTRADOR")) {
+            response.sendRedirect(request.getContextPath() + "/admin/inicio");
+            return;
+        }
+
+        if (usuarioAutenticado.tieneRol("RECEPCIONISTA")) {
+            response.sendRedirect(request.getContextPath() + "/recepcion/inicio");
+            return;
+        }
+
+        if (usuarioAutenticado.tieneRol("MEDICO")) {
+            response.sendRedirect(request.getContextPath() + "/medico/inicio");
+            return;
+        }
+
         if (usuarioAutenticado.tieneRol("PACIENTE")) {
-            try {
-                request.setAttribute(
-                        "cantidadNotificacionesNoLeidas",
-                        notificacionService.contarNoLeidasParaPaciente(
-                                usuarioAutenticado.getIdPersona()
-                        )
-                );
-            } catch (SQLException | IllegalArgumentException error) {
-                log("No fue posible contar las notificaciones del paciente.", error);
-                request.setAttribute("cantidadNotificacionesNoLeidas", 0L);
-            }
+            response.sendRedirect(request.getContextPath() + "/paciente/inicio");
+            return;
         }
 
         request.getRequestDispatcher(

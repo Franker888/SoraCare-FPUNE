@@ -6,19 +6,27 @@
                 .replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
     }
 %>
+<%
+    String googleClientId = (String) request.getAttribute("googleClientId");
+    String googleLoginUri = (String) request.getAttribute("googleLoginUri");
+    boolean googleHabilitado = googleClientId != null
+            && !googleClientId.isBlank()
+            && googleLoginUri != null
+            && !googleLoginUri.isBlank();
+%>
 <!doctype html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Crear cuenta de paciente | SoraCare-FPUNE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f2f7f5; }
         .cabecera { background: linear-gradient(135deg, #0b5f49, #15956e); color: white; }
         .card { border: 0; border-radius: 1rem; }
     </style>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
 </head>
 <body class="app-shell app-registration">
 <nav class="navbar bg-white border-bottom"><div class="container py-2">
@@ -35,6 +43,38 @@
         <% if (request.getAttribute("error") != null) { %>
         <div class="alert alert-danger"><%= h((String) request.getAttribute("error")) %></div>
         <% } %>
+
+        <% if (googleHabilitado) { %>
+        <section class="google-registration-entry shadow-sm" aria-label="Registro con Google">
+            <div>
+                <span class="google-registration-kicker">Acceso simplificado</span>
+                <h2>Crear la cuenta con Google</h2>
+                <p>
+                    Google verificará tu correo. Después completarás únicamente
+                    los datos necesarios para tu ficha de paciente.
+                </p>
+            </div>
+            <div class="google-registration-button">
+                <div id="g_id_onload"
+                     data-client_id="<%= h(googleClientId) %>"
+                     data-login_uri="<%= h(googleLoginUri) %>"
+                     data-auto_prompt="false"
+                     data-itp_support="true">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="signup_with"
+                     data-size="large"
+                     data-logo_alignment="left">
+                </div>
+            </div>
+        </section>
+
+        <div class="registration-divider"><span>o completá el registro tradicional</span></div>
+        <% } %>
+
         <form method="post" action="${pageContext.request.contextPath}/registro" class="card shadow-sm">
             <div class="card-body p-4 p-md-5">
                 <h2 class="h4">Datos personales</h2>
@@ -54,7 +94,7 @@
 
                 <hr class="my-4">
                 <h2 class="h4">Datos de acceso</h2>
-                <p class="text-secondary">Usarás estas credenciales para ingresar y gestionar tus citas.</p>
+                <p class="text-secondary">Usarás estas credenciales para ingresar y gestionar tus citas. La contraseña que elijas quedará activa y no tendrás que cambiarla al ingresar.</p>
                 <div class="row g-3">
                     <div class="col-md-6"><label class="form-label" for="nombreUsuario">Nombre de usuario</label><input class="form-control" id="nombreUsuario" name="nombreUsuario" minlength="4" maxlength="50" pattern="[A-Za-z0-9._-]+" required autocomplete="username" value="<%= h(request.getParameter("nombreUsuario")) %>"></div>
                     <div class="col-md-6"></div>
@@ -67,5 +107,8 @@
         </form>
     </div></div>
 </main>
+<% if (googleHabilitado) { %>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<% } %>
 </body>
 </html>

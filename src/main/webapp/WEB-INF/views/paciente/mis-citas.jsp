@@ -62,9 +62,16 @@
     Integer idEspecialidad = (Integer) request.getAttribute("idEspecialidadSeleccionada");
     boolean busquedaRealizada = Boolean.TRUE.equals(request.getAttribute("busquedaRealizada"));
     boolean agendandoNuevaCita = Boolean.TRUE.equals(request.getAttribute("agendandoNuevaCita"));
+    String googleCalendarClientId = (String) request.getAttribute("googleCalendarClientId");
+    boolean googleCalendarHabilitado = googleCalendarClientId != null
+            && !googleCalendarClientId.isBlank();
     DateTimeFormatter formatoFechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     DateTimeFormatter formatoFechaDisponible = DateTimeFormatter.ofPattern(
             "EEEE dd/MM/yyyy", new Locale("es", "PY"));
+    DateTimeFormatter formatoDiaSemana = DateTimeFormatter.ofPattern(
+            "EEE", new Locale("es", "PY"));
+    DateTimeFormatter formatoDiaMes = DateTimeFormatter.ofPattern(
+            "MMM yyyy", new Locale("es", "PY"));
 %>
 <!doctype html>
 <html lang="es">
@@ -73,21 +80,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Mis citas | SoraCare-FPUNE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         body { background: #f4f8f6; }
         .barra { background: #0f766e; }
         .tarjeta { border: 0; border-radius: 1rem; }
         .slot { border-left: .3rem solid #15956e; }
     </style>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260820b">
 </head>
-<body class="app-shell app-patient">
+<body class="app-shell app-patient app-booking">
 <nav class="navbar barra shadow-sm">
     <div class="container py-2">
-        <a class="navbar-brand fw-bold text-white" href="${pageContext.request.contextPath}/dashboard">SoraCare-FPUNE</a>
+        <a class="navbar-brand fw-bold text-white" href="${pageContext.request.contextPath}/paciente/inicio">SoraCare-FPUNE</a>
         <div class="d-flex gap-2">
-            <a class="btn btn-outline-light btn-sm" href="${pageContext.request.contextPath}/dashboard">Panel</a>
+            <a class="btn btn-outline-light btn-sm" href="${pageContext.request.contextPath}/paciente/inicio">Panel</a>
             <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
                 <button class="btn btn-light btn-sm">Cerrar sesión</button>
             </form>
@@ -125,51 +133,103 @@
     <% } %>
 
     <% if (agendandoNuevaCita) { %>
-    <section class="card tarjeta shadow-sm mb-4">
-        <div class="card-body p-4">
-            <h2 class="h5 mb-3">1. Buscar un turno</h2>
-            <form method="get" action="${pageContext.request.contextPath}/mis-citas" class="row g-3 align-items-end">
-                <input type="hidden" name="nueva" value="1">
-                <div class="col-md-4">
-                    <label for="idEspecialidad" class="form-label">Especialidad</label>
-                    <select id="idEspecialidad" name="idEspecialidad" class="form-select">
-                        <option value="">Todas</option>
-                        <% for (Especialidad especialidad : especialidadesLista) { %>
-                        <option value="<%= especialidad.getIdEspecialidad() %>" <%= especialidad.getIdEspecialidad().equals(idEspecialidad) ? "selected" : "" %>><%= h(especialidad.getNombre()) %></option>
-                        <% } %>
-                    </select>
+    <section class="card tarjeta shadow-sm mb-4 booking-card booking-search-card">
+        <div class="card-body p-4 p-lg-5">
+            <div class="booking-section-heading">
+                <span class="booking-step">1</span>
+                <div>
+                    <h2>Buscar un turno</h2>
+                    <p>Primero elegí el área médica, el profesional y una fecha con disponibilidad.</p>
                 </div>
-                <div class="col-md-3">
-                    <label for="idMedico" class="form-label">Médico</label>
-                    <select id="idMedico" name="idMedico" class="form-select">
-                        <option value="">Todos los médicos</option>
-                        <% for (Medico medico : medicosLista) { %>
-                        <option value="<%= medico.getIdMedico() %>"
-                                data-especialidades="<%= idsEspecialidades(especialidadesPorMedico.getOrDefault(medico.getIdMedico(), List.of())) %>"
-                                <%= medico.getIdMedico().equals(idMedico) ? "selected" : "" %>><%= h(medico.getNombres() + " " + medico.getApellidos()) %></option>
-                        <% } %>
-                    </select>
-                    <div id="sinMedicosEspecialidad" class="form-text text-danger d-none">
-                        No hay médicos activos para esta especialidad.
+            </div>
+            <form method="get" action="${pageContext.request.contextPath}/mis-citas" class="row g-4 booking-search-form">
+                <input type="hidden" name="nueva" value="1">
+                <div class="col-lg-6">
+                    <div class="booking-field">
+                        <label for="idEspecialidad" class="form-label">
+                            <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+                            Especialidad
+                        </label>
+                        <div class="booking-control">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <select id="idEspecialidad" name="idEspecialidad" class="form-select">
+                                <option value="">Todas las especialidades</option>
+                                <% for (Especialidad especialidad : especialidadesLista) { %>
+                                <option value="<%= especialidad.getIdEspecialidad() %>" <%= especialidad.getIdEspecialidad().equals(idEspecialidad) ? "selected" : "" %>><%= h(especialidad.getNombre()) %></option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <small>Seleccioná el tipo de atención que necesitás.</small>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <label for="fecha" class="form-label">Fecha disponible</label>
-                    <select id="fecha" name="fecha" class="form-select" required <%= fechasDisponibles.isEmpty() ? "disabled" : "" %>>
-                        <% if (fechasDisponibles.isEmpty()) { %>
-                        <option value="">Sin fechas disponibles</option>
-                        <% } else { %>
-                        <% for (LocalDate fechaDisponible : fechasDisponibles) { %>
-                        <option value="<%= fechaDisponible %>" <%= fechaDisponible.equals(fecha) ? "selected" : "" %>>
-                            <%= h(formatoFechaDisponible.format(fechaDisponible)) %>
-                        </option>
-                        <% } %>
-                        <% } %>
-                    </select>
+                <div class="col-lg-6">
+                    <div class="booking-field">
+                        <label for="idMedico" class="form-label">
+                            <i class="bi bi-person-badge" aria-hidden="true"></i>
+                            Profesional
+                        </label>
+                        <div class="booking-control">
+                            <i class="bi bi-person" aria-hidden="true"></i>
+                            <select id="idMedico" name="idMedico" class="form-select">
+                                <option value="">Todos los médicos</option>
+                                <% for (Medico medico : medicosLista) { %>
+                                <option value="<%= medico.getIdMedico() %>"
+                                        data-especialidades="<%= idsEspecialidades(especialidadesPorMedico.getOrDefault(medico.getIdMedico(), List.of())) %>"
+                                        <%= medico.getIdMedico().equals(idMedico) ? "selected" : "" %>><%= h(medico.getNombres() + " " + medico.getApellidos()) %></option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <small>Podés ver todos o elegir un profesional específico.</small>
+                        <div id="sinMedicosEspecialidad" class="form-text text-danger d-none">
+                            No hay médicos activos para esta especialidad.
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-2 d-grid">
-                    <button class="btn btn-success" name="busqueda" value="turnos"
-                            <%= fechasDisponibles.isEmpty() ? "disabled" : "" %>>Ver turnos</button>
+                <div class="col-12">
+                    <fieldset class="booking-calendar" <%= fechasDisponibles.isEmpty() ? "disabled" : "" %>>
+                        <legend>
+                            <span><i class="bi bi-calendar2-week" aria-hidden="true"></i> Fecha disponible</span>
+                            <small>Deslizá para explorar los próximos días habilitados.</small>
+                        </legend>
+                        <% if (fechasDisponibles.isEmpty()) { %>
+                        <div class="booking-calendar-empty">
+                            <i class="bi bi-calendar2-x" aria-hidden="true"></i>
+                            <span>Sin fechas disponibles</span>
+                        </div>
+                        <% } else { %>
+                        <div class="booking-date-strip" role="radiogroup" aria-label="Fechas disponibles">
+                            <% for (int indiceFecha = 0; indiceFecha < fechasDisponibles.size(); indiceFecha++) {
+                                LocalDate fechaDisponible = fechasDisponibles.get(indiceFecha);
+                                boolean fechaMarcada = fechaDisponible.equals(fecha)
+                                        || (fecha == null && indiceFecha == 0);
+                            %>
+                            <div class="booking-date-option">
+                                <input type="radio"
+                                       id="fecha-<%= fechaDisponible %>"
+                                       name="fecha"
+                                       value="<%= fechaDisponible %>"
+                                       <%= fechaMarcada ? "checked" : "" %>
+                                       required>
+                                <label for="fecha-<%= fechaDisponible %>"
+                                       title="<%= h(formatoFechaDisponible.format(fechaDisponible)) %>">
+                                    <span class="booking-date-weekday"><%= h(formatoDiaSemana.format(fechaDisponible)) %></span>
+                                    <strong><%= fechaDisponible.getDayOfMonth() %></strong>
+                                    <span class="booking-date-month"><%= h(formatoDiaMes.format(fechaDisponible)) %></span>
+                                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                                </label>
+                            </div>
+                            <% } %>
+                        </div>
+                        <% } %>
+                    </fieldset>
+                </div>
+                <div class="col-12 d-flex justify-content-end">
+                    <button class="btn btn-primary booking-search-button" name="busqueda" value="turnos"
+                            <%= fechasDisponibles.isEmpty() ? "disabled" : "" %>>
+                        <i class="bi bi-clock" aria-hidden="true"></i>
+                        Ver horarios disponibles
+                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                    </button>
                 </div>
             </form>
             <% if (fechasDisponibles.isEmpty()) { %>
@@ -181,79 +241,167 @@
     </section>
 
     <% if (!slots.isEmpty()) { %>
-    <section class="card tarjeta shadow-sm mb-4">
-        <div class="card-body p-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                <h2 class="h5 mb-0">2. Seleccionar y solicitar</h2>
-                <span class="badge text-bg-success"><%= slots.size() %> turnos disponibles</span>
+    <section class="card tarjeta shadow-sm mb-4 booking-card booking-request-card">
+        <div class="card-body p-4 p-lg-5">
+            <div class="booking-section-heading booking-section-heading-with-status">
+                <span class="booking-step">2</span>
+                <div>
+                    <h2>Elegí el horario y contanos el motivo</h2>
+                    <p>Seleccioná uno de los turnos libres para continuar con la reserva.</p>
+                </div>
+                <span class="booking-availability-badge">
+                    <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                    <%= slots.size() %> turnos disponibles
+                </span>
             </div>
-            <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="row g-3">
+            <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="row g-4">
                 <input type="hidden" name="fecha" value="<%= fecha %>">
                 <input type="hidden" name="nueva" value="1">
                 <input type="hidden" name="busqueda" value="turnos">
                 <input type="hidden" name="idMedico" value="<%= idMedico == null ? "" : idMedico %>">
                 <input type="hidden" name="idEspecialidad" value="<%= idEspecialidad == null ? "" : idEspecialidad %>">
                 <div class="col-12">
-                    <label for="slot" class="form-label">Turno</label>
-                    <select class="form-select" id="slot" name="slot" required>
-                        <option value="">Seleccionar turno disponible</option>
-                        <% for (SlotDisponibleDTO slot : slots) {
-                            Medico medico = medicos.get(slot.idMedico());
-                            Especialidad especialidad = especialidades.get(slot.idEspecialidad());
-                            Consultorio consultorio = consultorios.get(slot.idConsultorio());
-                            String valor = (slot.idHorario() == null ? 0 : slot.idHorario()) + "|"
-                                    + (slot.idExcepcion() == null ? 0 : slot.idExcepcion()) + "|"
-                                    + slot.idMedico() + "|" + slot.idEspecialidad() + "|"
-                                    + slot.idConsultorio() + "|" + slot.fecha() + "|" + slot.horaInicio();
-                        %>
-                        <option value="<%= valor %>"><%= slot.horaInicio() %>–<%= slot.horaFin() %> · <%= medico == null ? "Médico" : h(medico.getNombres() + " " + medico.getApellidos()) %> · <%= especialidad == null ? "Especialidad" : h(especialidad.getNombre()) %> · <%= consultorio == null ? "Consultorio" : h(consultorio.getNombre()) %></option>
-                        <% } %>
-                    </select>
+                    <div class="booking-field booking-field-highlight">
+                        <label for="slot" class="form-label">
+                            <i class="bi bi-clock-history" aria-hidden="true"></i>
+                            Horario disponible
+                        </label>
+                        <div class="booking-control">
+                            <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+                            <select class="form-select" id="slot" name="slot" required>
+                                <option value="">Seleccionar horario disponible</option>
+                                <% for (SlotDisponibleDTO slot : slots) {
+                                    Medico medico = medicos.get(slot.idMedico());
+                                    Especialidad especialidad = especialidades.get(slot.idEspecialidad());
+                                    Consultorio consultorio = consultorios.get(slot.idConsultorio());
+                                    String valor = (slot.idHorario() == null ? 0 : slot.idHorario()) + "|"
+                                            + (slot.idExcepcion() == null ? 0 : slot.idExcepcion()) + "|"
+                                            + slot.idMedico() + "|" + slot.idEspecialidad() + "|"
+                                            + slot.idConsultorio() + "|" + slot.fecha() + "|" + slot.horaInicio();
+                                %>
+                                <option value="<%= valor %>"><%= slot.horaInicio() %>–<%= slot.horaFin() %> · <%= medico == null ? "Médico" : h(medico.getNombres() + " " + medico.getApellidos()) %> · <%= especialidad == null ? "Especialidad" : h(especialidad.getNombre()) %> · <%= consultorio == null ? "Consultorio" : h(consultorio.getNombre()) %></option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <small>El horario elegido quedará reservado cuando completes esta solicitud.</small>
+                    </div>
                 </div>
                 <div class="col-md-7">
-                    <label for="motivoConsulta" class="form-label">Motivo de consulta</label>
-                    <input id="motivoConsulta" name="motivoConsulta" class="form-control" maxlength="500" required placeholder="Ej.: control cardiológico">
+                    <div class="booking-field">
+                        <label for="motivoConsulta" class="form-label">
+                            <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+                            Motivo de consulta
+                        </label>
+                        <div class="booking-control">
+                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                            <input id="motivoConsulta" name="motivoConsulta" class="form-control" maxlength="500" required placeholder="Ej.: control cardiológico">
+                        </div>
+                        <small>Describí brevemente la razón principal de tu consulta.</small>
+                    </div>
                 </div>
                 <div class="col-md-5">
-                    <label for="observaciones" class="form-label">Observaciones (opcional)</label>
-                    <input id="observaciones" name="observaciones" class="form-control" maxlength="1000">
-                </div>
-                <div class="col-12"><hr><h3 class="h6 mb-1">3. Pago y datos del comprobante</h3>
-                    <p class="small text-secondary mb-2">Los pagos son una simulación académica. No ingreses datos reales de tarjetas.</p></div>
-                <div class="col-md-4">
-                    <label for="metodoPago" class="form-label">Método de pago</label>
-                    <select id="metodoPago" name="metodoPago" class="form-select" required>
-                        <option value="">Seleccionar</option>
-                        <% for (MetodoPago metodo : metodosPago) { %>
-                        <option value="<%= h(metodo.getCodigo()) %>"><%= h(metodo.getNombre()) %></option>
-                        <% } %>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="tipoDocumentoFactura" class="form-label">Tipo de documento</label>
-                    <select id="tipoDocumentoFactura" name="tipoDocumentoFactura" class="form-select" required>
-                        <option value="CI">Cédula</option><option value="RUC">RUC</option><option value="PASAPORTE">Pasaporte</option>
-                    </select>
-                </div>
-                <div class="col-md-5">
-                    <label for="numeroDocumentoFactura" class="form-label">Número de documento</label>
-                    <input id="numeroDocumentoFactura" name="numeroDocumentoFactura" class="form-control" maxlength="30" required value="<%= paciente == null ? "" : h(paciente.getCedula()) %>">
-                </div>
-                <div class="col-md-6">
-                    <label for="nombreFactura" class="form-label">Nombre o razón social</label>
-                    <input id="nombreFactura" name="nombreFactura" class="form-control" maxlength="160" required value="<%= paciente == null ? "" : h(paciente.getNombres() + " " + paciente.getApellidos()) %>">
-                </div>
-                <div class="col-md-6">
-                    <label for="correoFactura" class="form-label">Correo para el comprobante</label>
-                    <input id="correoFactura" name="correoFactura" type="email" class="form-control" maxlength="255" required value="<%= paciente == null ? "" : h(paciente.getCorreo()) %>">
+                    <div class="booking-field">
+                        <label for="observaciones" class="form-label">
+                            <i class="bi bi-journal-text" aria-hidden="true"></i>
+                            Observaciones <span>(opcional)</span>
+                        </label>
+                        <div class="booking-control">
+                            <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                            <input id="observaciones" name="observaciones" class="form-control" maxlength="1000" placeholder="Agregá información útil para el médico">
+                        </div>
+                        <small>Podés mencionar síntomas, estudios previos u otra referencia.</small>
+                    </div>
                 </div>
                 <div class="col-12">
-                    <label for="direccionFactura" class="form-label">Dirección para facturación</label>
-                    <input id="direccionFactura" name="direccionFactura" class="form-control" maxlength="255" required value="<%= paciente == null ? "" : h(paciente.getDireccion()) %>">
+                    <section class="booking-payment-panel">
+                        <div class="booking-payment-heading">
+                            <span class="booking-step">3</span>
+                            <div>
+                                <h3>Pago y datos del comprobante</h3>
+                                <p>Elegí cómo abonar y revisá los datos que aparecerán en tu comprobante.</p>
+                            </div>
+                            <span class="booking-secure-pill">
+                                <i class="bi bi-shield-check" aria-hidden="true"></i>
+                                Entorno de prueba
+                            </span>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="booking-field">
+                                    <label for="metodoPago" class="form-label"><i class="bi bi-credit-card" aria-hidden="true"></i> Método de pago</label>
+                                    <div class="booking-control">
+                                        <i class="bi bi-wallet2" aria-hidden="true"></i>
+                                        <select id="metodoPago" name="metodoPago" class="form-select" required>
+                                            <option value="">Seleccionar método</option>
+                                            <% for (MetodoPago metodo : metodosPago) { %>
+                                            <option value="<%= h(metodo.getCodigo()) %>"><%= h(metodo.getNombre()) %></option>
+                                            <% } %>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="booking-field">
+                                    <label for="tipoDocumentoFactura" class="form-label"><i class="bi bi-file-earmark-person" aria-hidden="true"></i> Tipo de documento</label>
+                                    <div class="booking-control">
+                                        <i class="bi bi-card-text" aria-hidden="true"></i>
+                                        <select id="tipoDocumentoFactura" name="tipoDocumentoFactura" class="form-select" required>
+                                            <option value="CI">Cédula</option><option value="RUC">RUC</option><option value="PASAPORTE">Pasaporte</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="booking-field">
+                                    <label for="numeroDocumentoFactura" class="form-label"><i class="bi bi-person-vcard" aria-hidden="true"></i> Número de documento</label>
+                                    <div class="booking-control">
+                                        <i class="bi bi-123" aria-hidden="true"></i>
+                                        <input id="numeroDocumentoFactura" name="numeroDocumentoFactura" class="form-control" maxlength="30" required value="<%= paciente == null ? "" : h(paciente.getCedula()) %>">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="booking-field">
+                                    <label for="nombreFactura" class="form-label"><i class="bi bi-person-check" aria-hidden="true"></i> Nombre o razón social</label>
+                                    <div class="booking-control">
+                                        <i class="bi bi-person" aria-hidden="true"></i>
+                                        <input id="nombreFactura" name="nombreFactura" class="form-control" maxlength="160" required value="<%= paciente == null ? "" : h(paciente.getNombres() + " " + paciente.getApellidos()) %>">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="booking-field">
+                                    <label for="correoFactura" class="form-label"><i class="bi bi-envelope-check" aria-hidden="true"></i> Correo para el comprobante</label>
+                                    <div class="booking-control">
+                                        <i class="bi bi-envelope" aria-hidden="true"></i>
+                                        <input id="correoFactura" name="correoFactura" type="email" class="form-control" maxlength="255" required value="<%= paciente == null ? "" : h(paciente.getCorreo()) %>">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="booking-field">
+                                    <label for="direccionFactura" class="form-label"><i class="bi bi-geo-alt" aria-hidden="true"></i> Dirección para facturación</label>
+                                    <div class="booking-control">
+                                        <i class="bi bi-house-door" aria-hidden="true"></i>
+                                        <input id="direccionFactura" name="direccionFactura" class="form-control" maxlength="255" required value="<%= paciente == null ? "" : h(paciente.getDireccion()) %>">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
-                <div class="col-12 d-flex flex-wrap align-items-center gap-3">
-                    <button class="btn btn-success">Reservar y continuar al pago</button>
-                    <small class="text-secondary">El efectivo conserva el turno pendiente; los medios digitales continúan a la simulación.</small>
+                <div class="col-12">
+                    <div class="booking-submit-bar">
+                        <div>
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <span>En efectivo, el turno queda pendiente de pago. Los medios digitales continúan a la simulación.</span>
+                        </div>
+                        <button class="btn btn-primary">
+                            <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+                            Reservar y continuar al pago
+                            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -286,6 +434,19 @@
                         .contains(cita.getCodigoEstado())
                         && cita.getFechaHoraInicio().isAfter(
                                 OffsetDateTime.now(DisponibilidadService.ZONA_HORARIA));
+                boolean sincronizableConCalendar = googleCalendarHabilitado
+                        && "CONFIRMADA".equals(cita.getCodigoEstado())
+                        && cita.getFechaHoraInicio().isAfter(
+                                OffsetDateTime.now(DisponibilidadService.ZONA_HORARIA));
+                String nombreEspecialidad = especialidad == null
+                        ? "Consulta médica"
+                        : especialidad.getNombre();
+                String nombreProfesional = medico == null
+                        ? "Profesional de SoraCare"
+                        : medico.getNombres() + " " + medico.getApellidos();
+                String nombreConsultorio = consultorio == null
+                        ? "SoraCare-FPUNE"
+                        : "SoraCare-FPUNE · " + consultorio.getNombre();
             %>
             <div class="col-12">
                 <article class="card tarjeta slot shadow-sm">
@@ -315,6 +476,41 @@
                                 <% } %>
                             </div>
                             <div class="col-lg-5">
+                                <% if (sincronizableConCalendar) { %>
+                                <div class="calendar-appointment-actions mb-3"
+                                     data-google-calendar
+                                     data-client-id="<%= h(googleCalendarClientId) %>"
+                                     data-cita-id="<%= cita.getIdCita() %>"
+                                     data-summary="Cita médica · <%= h(nombreEspecialidad) %>"
+                                     data-professional="<%= h(nombreProfesional) %>"
+                                     data-location="<%= h(nombreConsultorio) %>"
+                                     data-start="<%= h(cita.getFechaHoraInicio().toString()) %>"
+                                     data-end="<%= h(cita.getFechaHoraFin().toString()) %>">
+                                    <div class="calendar-appointment-heading">
+                                        <span class="calendar-appointment-icon" aria-hidden="true">
+                                            <i class="bi bi-calendar2-check"></i>
+                                        </span>
+                                        <div>
+                                            <strong>Google Calendar</strong>
+                                            <small>Recordatorio personal, sin información clínica.</small>
+                                        </div>
+                                    </div>
+                                    <div class="calendar-appointment-buttons">
+                                        <button type="button" class="btn btn-primary btn-sm"
+                                                data-calendar-save>
+                                            <i class="bi bi-google" aria-hidden="true"></i>
+                                            <span>Guardar en Calendar</span>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                data-calendar-remove>
+                                            <i class="bi bi-calendar2-x" aria-hidden="true"></i>
+                                            Retirar
+                                        </button>
+                                    </div>
+                                    <small class="calendar-appointment-status" data-calendar-status
+                                           role="status" aria-live="polite"></small>
+                                </div>
+                                <% } %>
                                 <% if (reprogramable) { %>
                                 <div class="d-flex justify-content-lg-end mb-2">
                                     <a class="btn btn-outline-primary btn-sm"
@@ -344,7 +540,11 @@
         <% } %>
     </section>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/assets/app/js/filtro-medicos-especialidad.js"></script>
+<% if (googleCalendarHabilitado) { %>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="${pageContext.request.contextPath}/assets/app/js/google-calendar-citas.js?v=20260821b"></script>
+<% } %>
 </body>
 </html>

@@ -31,6 +31,25 @@ public record AtencionMedicaDTO(
         LocalDate fechaProximoControl,
         String estado,
         String medicoNombreCompleto,
-        String especialidad
+        String especialidad,
+        String emailIndicacionesDestino,
+        String estadoEnvioIndicacionesEmail,
+        OffsetDateTime fechaEnvioIndicacionesEmail
 ) {
+
+    public String textoEstadoEnvioIndicaciones() {
+        if ("ENVIADO".equals(estadoEnvioIndicacionesEmail)) {
+            return "Enviado por Resend";
+        }
+        if ("PENDIENTE".equals(estadoEnvioIndicacionesEmail)) {
+            return "Envío en proceso";
+        }
+        if ("FALLIDO".equals(estadoEnvioIndicacionesEmail)) {
+            return "No pudo enviarse";
+        }
+        if ("NO_CONFIGURADO".equals(estadoEnvioIndicacionesEmail)) {
+            return "Correo no configurado";
+        }
+        return "Aún no enviado";
+    }
 }

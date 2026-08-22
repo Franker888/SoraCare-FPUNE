@@ -13,8 +13,13 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class AtencionMedicaDAO {
+
+    private static final Set<String> ESTADOS_ENVIO_INDICACIONES = Set.of(
+            "PENDIENTE", "ENVIADO", "FALLIDO", "NO_CONFIGURADO"
+    );
 
     private static final String COLUMNAS = """
             ate.id_atencion,
@@ -42,6 +47,9 @@ public class AtencionMedicaDAO {
             ate.requiere_seguimiento,
             ate.fecha_proximo_control,
             ate.estado,
+            ate.email_indicaciones_destino,
+            ate.estado_envio_indicaciones_email,
+            ate.fecha_envio_indicaciones_email,
             CONCAT(
                 CASE med.tratamiento WHEN 'DRA' THEN 'Dra.' ELSE 'Dr.' END,
                 ' ', per.nombres, ' ', per.apellidos
@@ -229,6 +237,153 @@ public class AtencionMedicaDAO {
                         "No fue posible recuperar la atención actualizada."));
     }
 
+    public boolean prepararEnvioIndicaciones(
+            long idAtencion,
+            String correoDestino
+    ) throws SQLException {
+        String sql = """
+                UPDATE soracare.atenciones_medicas
+                   SET email_indicaciones_destino = ?,
+                       estado_envio_indicaciones_email = 'PENDIENTE',
+                       fecha_envio_indicaciones_email = NULL,
+                       proveedor_indicaciones_email = NULL,
+                       referencia_indicaciones_email = NULL,
+                       detalle_envio_indicaciones_email = NULL
+                 WHERE id_atencion = ?
+                   AND estado = 'FINALIZADA'
+                   AND estado_envio_indicaciones_email IN (
+                       'NO_SOLICITADO', 'FALLIDO', 'NO_CONFIGURADO'
+                   )
+                """;
+        try (Connection conexion =
+                     py.fpune.soracare.config.ConexionBD.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            establecerTexto(sentencia, 1, correoDestino);
+            sentencia.setLong(2, idAtencion);
+            return sentencia.executeUpdate() == 1;
+        }
+    }
+
+    public void registrarResultadoEnvioIndicaciones(
+            long idAtencion,
+            String estadoEnvio,
+            String proveedor,
+            String referenciaProveedor,
+            String detalle
+    ) throws SQLException {
+        if (!ESTADOS_ENVIO_INDICACIONES.contains(estadoEnvio)) {
+            throw new IllegalArgumentException(
+                    "El estado del correo de indicaciones no es válido."
+            );
+        }
+
+        try (Connection conexion =
+                     py.fpune.soracare.config.ConexionBD.obtenerConexion()) {
+            try {
+                conexion.setAutoCommit(false);
+                String sql = """
+                        UPDATE soracare.atenciones_medicas
+                           SET estado_envio_indicaciones_email = ?,
+                               fecha_envio_indicaciones_email = CASE
+                                   WHEN ? = 'ENVIADO' THEN CURRENT_TIMESTAMP
+                                   ELSE NULL
+                               END,
+                               proveedor_indicaciones_email = ?,
+                               referencia_indicaciones_email = ?,
+                               detalle_envio_indicaciones_email = ?
+                         WHERE id_atencion = ?
+                        """;
+                try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+                    sentencia.setString(1, estadoEnvio);
+                    sentencia.setString(2, estadoEnvio);
+                    establecerTexto(sentencia, 3, proveedor);
+                    establecerTexto(sentencia, 4, referenciaProveedor);
+                    establecerTexto(sentencia, 5, detalle);
+                    sentencia.setLong(6, idAtencion);
+                    if (sentencia.executeUpdate() != 1) {
+                        throw new SQLException(
+                                "No fue posible actualizar el correo de indicaciones."
+                        );
+                    }
+                }
+
+                if (!"NO_CONFIGURADO".equals(estadoEnvio)) {
+                    registrarNotificacionCorreoIndicaciones(
+                            conexion,
+                            idAtencion,
+                            estadoEnvio,
+                            proveedor,
+                            referenciaProveedor,
+                            detalle
+                    );
+                }
+                conexion.commit();
+            } catch (Exception error) {
+                conexion.rollback();
+                if (error instanceof SQLException sql) throw sql;
+                if (error instanceof IllegalArgumentException validacion) {
+                    throw validacion;
+                }
+                throw new SQLException(
+                        "No fue posible registrar el resultado del correo de indicaciones.",
+                        error
+                );
+            }
+        }
+    }
+
+    private static void registrarNotificacionCorreoIndicaciones(
+            Connection conexion,
+            long idAtencion,
+            String estadoEnvio,
+            String proveedor,
+            String referenciaProveedor,
+            String detalle
+    ) throws SQLException {
+        String sql = """
+                INSERT INTO soracare.notificaciones (
+                    id_persona, id_cita, id_plantilla_notificacion,
+                    id_canal_notificacion, id_estado_notificacion,
+                    destinatario, asunto, contenido, clave_idempotencia,
+                    fecha_envio, proveedor, referencia_proveedor
+                )
+                SELECT paciente.id_persona, atencion.id_cita,
+                       plantilla.id_plantilla_notificacion,
+                       canal.id_canal_notificacion, estado.id_estado_notificacion,
+                       COALESCE(NULLIF(atencion.email_indicaciones_destino, ''),
+                                'SIN_CORREO'),
+                       'Indicaciones médicas - SoraCare-FPUNE', ?, ?,
+                       CASE WHEN ? = 'ENVIADA' THEN CURRENT_TIMESTAMP ELSE NULL END,
+                       ?, ?
+                  FROM soracare.atenciones_medicas atencion
+                  INNER JOIN soracare.pacientes paciente
+                          ON paciente.id_paciente = atencion.id_paciente
+                  CROSS JOIN soracare.canales_notificacion canal
+                  CROSS JOIN soracare.estados_notificacion estado
+                  LEFT JOIN soracare.plantillas_notificacion plantilla
+                         ON plantilla.codigo = 'INDICACIONES_MEDICAS_EMAIL'
+                 WHERE atencion.id_atencion = ?
+                   AND canal.codigo = 'EMAIL'
+                   AND estado.codigo = ?
+                ON CONFLICT (clave_idempotencia) DO NOTHING
+                """;
+        String estadoNotificacion = "ENVIADO".equals(estadoEnvio)
+                ? "ENVIADA"
+                : "FALLIDA";
+        String clave = "ATENCION-" + idAtencion
+                + "-INDICACIONES-EMAIL-RESEND-" + estadoNotificacion;
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            establecerTexto(sentencia, 1, detalle);
+            sentencia.setString(2, clave);
+            sentencia.setString(3, estadoNotificacion);
+            establecerTexto(sentencia, 4, proveedor);
+            establecerTexto(sentencia, 5, referenciaProveedor);
+            sentencia.setLong(6, idAtencion);
+            sentencia.setString(7, estadoNotificacion);
+            sentencia.executeUpdate();
+        }
+    }
+
     private Optional<AtencionMedicaDTO> buscarPorId(
             Connection conexion,
             long idAtencion
@@ -284,7 +439,11 @@ public class AtencionMedicaDAO {
                 resultado.getObject("fecha_proximo_control", LocalDate.class),
                 resultado.getString("estado"),
                 resultado.getString("medico_nombre_completo"),
-                resultado.getString("especialidad")
+                resultado.getString("especialidad"),
+                resultado.getString("email_indicaciones_destino"),
+                resultado.getString("estado_envio_indicaciones_email"),
+                resultado.getObject(
+                        "fecha_envio_indicaciones_email", OffsetDateTime.class)
         );
     }
 

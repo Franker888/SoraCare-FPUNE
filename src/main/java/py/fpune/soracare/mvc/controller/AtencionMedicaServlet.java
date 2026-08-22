@@ -55,7 +55,8 @@ public class AtencionMedicaServlet extends HttpServlet {
         } else if ("finalizada".equals(resultado)) {
             request.setAttribute(
                     "mensajeExito",
-                    "La atención fue finalizada y la cita quedó registrada como atendida."
+                    "La atención fue finalizada y la cita quedó registrada como atendida. "
+                            + "El envío de las indicaciones al correo del paciente se está procesando."
             );
         } else if ("documento-cargado".equals(resultado)) {
             request.setAttribute(
@@ -74,7 +75,11 @@ public class AtencionMedicaServlet extends HttpServlet {
                     "error", "No fue posible registrar el documento clínico. Intentá nuevamente."
             );
         } else if ("receta-emitida".equals(resultado)) {
-            request.setAttribute("mensajeExito", "La indicación médica fue registrada y ya está disponible para el paciente.");
+            request.setAttribute(
+                    "mensajeExito",
+                    "La indicación médica fue registrada y ya está disponible para el paciente. "
+                            + "Se incluirá en el correo cuando finalices la atención."
+            );
         } else if ("receta-anulada".equals(resultado)) {
             request.setAttribute("mensajeExito", "La indicación médica fue anulada y permanece en el historial.");
         } else if ("receta-error".equals(resultado)) {

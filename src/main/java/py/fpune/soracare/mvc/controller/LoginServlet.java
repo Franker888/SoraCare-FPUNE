@@ -8,7 +8,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import py.fpune.soracare.dto.CredencialesAutenticacionDTO;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
+import py.fpune.soracare.mvc.util.UrlPublicaRequest;
 import py.fpune.soracare.service.AutenticacionService;
+import py.fpune.soracare.service.ConfiguracionGoogleService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -25,6 +27,18 @@ public class LoginServlet extends HttpServlet {
     private static final String RUTA_DASHBOARD =
             "/dashboard";
 
+    private static final String RUTA_ADMINISTRACION =
+            "/admin/inicio";
+
+    private static final String RUTA_RECEPCION =
+            "/recepcion/inicio";
+
+    private static final String RUTA_MEDICO =
+            "/medico/inicio";
+
+    private static final String RUTA_PACIENTE =
+            "/paciente/inicio";
+
     private static final String RUTA_CAMBIO_CONTRASENA =
             "/cambiar-contrasena";
 
@@ -32,11 +46,14 @@ public class LoginServlet extends HttpServlet {
             30 * 60;
 
     private AutenticacionService autenticacionService;
+    private ConfiguracionGoogleService configuracionGoogleService;
 
     @Override
     public void init() {
         autenticacionService =
                 new AutenticacionService();
+        configuracionGoogleService =
+                new ConfiguracionGoogleService();
     }
 
     @Override
@@ -71,6 +88,9 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
         }
+
+        prepararAccesoGoogle(request);
+        recuperarErrorGoogle(request);
 
         request.getRequestDispatcher(
                 VISTA_LOGIN
@@ -183,10 +203,20 @@ public class LoginServlet extends HttpServlet {
             UsuarioAutenticadoDTO usuarioAutenticado
     ) throws IOException {
 
-        String rutaDestino =
-                usuarioAutenticado.isDebeCambiarContrasena()
-                        ? RUTA_CAMBIO_CONTRASENA
-                        : RUTA_DASHBOARD;
+        String rutaDestino;
+        if (usuarioAutenticado.isDebeCambiarContrasena()) {
+            rutaDestino = RUTA_CAMBIO_CONTRASENA;
+        } else if (usuarioAutenticado.tieneRol("ADMINISTRADOR")) {
+            rutaDestino = RUTA_ADMINISTRACION;
+        } else if (usuarioAutenticado.tieneRol("RECEPCIONISTA")) {
+            rutaDestino = RUTA_RECEPCION;
+        } else if (usuarioAutenticado.tieneRol("MEDICO")) {
+            rutaDestino = RUTA_MEDICO;
+        } else if (usuarioAutenticado.tieneRol("PACIENTE")) {
+            rutaDestino = RUTA_PACIENTE;
+        } else {
+            rutaDestino = RUTA_DASHBOARD;
+        }
 
         response.sendRedirect(
                 request.getContextPath()
@@ -204,6 +234,8 @@ public class LoginServlet extends HttpServlet {
                 "error",
                 mensaje
         );
+
+        prepararAccesoGoogle(request);
 
         response.setStatus(
                 HttpServletResponse.SC_UNAUTHORIZED
@@ -246,6 +278,11 @@ public class LoginServlet extends HttpServlet {
             HttpServletResponse response
     ) {
         response.setHeader(
+                "Referrer-Policy",
+                "no-referrer-when-downgrade"
+        );
+
+        response.setHeader(
                 "Cache-Control",
                 "no-store, no-cache, "
                         + "must-revalidate, max-age=0"
@@ -260,5 +297,33 @@ public class LoginServlet extends HttpServlet {
                 "Expires",
                 0
         );
+    }
+
+    private void prepararAccesoGoogle(HttpServletRequest request) {
+        String clientId = configuracionGoogleService.obtenerClientId();
+        if (clientId == null) {
+            return;
+        }
+        request.setAttribute("googleClientId", clientId);
+        request.setAttribute(
+                "googleLoginUri",
+                UrlPublicaRequest.construir(request, "/auth/google")
+        );
+    }
+
+    private static void recuperarErrorGoogle(HttpServletRequest request) {
+        HttpSession sesion = request.getSession(false);
+        if (sesion == null) {
+            return;
+        }
+        Object error = sesion.getAttribute(
+                AutenticacionGoogleServlet.ATRIBUTO_ERROR_GOOGLE
+        );
+        if (error instanceof String mensaje && !mensaje.isBlank()) {
+            request.setAttribute("error", mensaje);
+            sesion.removeAttribute(
+                    AutenticacionGoogleServlet.ATRIBUTO_ERROR_GOOGLE
+            );
+        }
     }
 }

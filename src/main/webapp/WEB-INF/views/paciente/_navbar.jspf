@@ -1,0 +1,21 @@
+<nav class="navbar patient-navbar">
+    <div class="container">
+        <a class="navbar-brand" href="${pageContext.request.contextPath}/paciente/inicio">
+            SoraCare-FPUNE
+        </a>
+        <div class="d-flex align-items-center gap-2 gap-md-3">
+            <span class="patient-context d-none d-md-inline-flex">
+                <i class="bi bi-person-heart"></i> Portal del paciente
+            </span>
+            <a class="btn btn-outline-primary btn-sm d-none d-sm-inline-flex"
+               href="${pageContext.request.contextPath}/">
+                P&aacute;gina principal
+            </a>
+            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                    Cerrar sesi&oacute;n
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>

@@ -20,6 +20,12 @@
 <%
     String mensajeError =
             (String) request.getAttribute("error");
+    boolean cambioObligatorio =
+            Boolean.TRUE.equals(request.getAttribute("cambioObligatorio"));
+    String rutaVolver = (String) request.getAttribute("rutaVolver");
+    if (rutaVolver == null || rutaVolver.isBlank()) {
+        rutaVolver = "/dashboard";
+    }
 %>
 
 <!DOCTYPE html>
@@ -37,7 +43,7 @@
     <title>Cambiar contraseña | SoraCare-FPUNE</title>
 
     <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css"
             rel="stylesheet">
 
     <style>
@@ -98,7 +104,7 @@
         }
     </style>
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
 </head>
 
 <body class="soracare-auth soracare-auth-simple">
@@ -138,14 +144,17 @@
                         Cambiar contraseña
                     </h2>
 
-                    <div class="alert alert-warning"
-                         role="alert">
-
-                        Por seguridad, debés establecer una
-                        nueva contraseña antes de continuar
-                        utilizando el sistema.
-
-                    </div>
+                    <% if (cambioObligatorio) { %>
+                        <div class="alert alert-warning" role="alert">
+                            Esta cuenta recibió una contraseña temporal.
+                            Por seguridad, debés reemplazarla antes de continuar.
+                        </div>
+                    <% } else { %>
+                        <div class="alert alert-info" role="alert">
+                            El cambio es opcional. Tu contraseña actual seguirá
+                            funcionando mientras no la reemplaces.
+                        </div>
+                    <% } %>
 
                     <% if (mensajeError != null
                             && !mensajeError.isBlank()) { %>
@@ -263,6 +272,13 @@
 
                     <div class="text-center mt-4">
 
+                        <% if (!cambioObligatorio) { %>
+                            <a class="btn btn-link text-decoration-none"
+                               href="${pageContext.request.contextPath}<%= escaparHtml(rutaVolver) %>">
+                                Volver sin cambiarla
+                            </a>
+                        <% } else { %>
+
                         <form
                                 method="post"
                                 action="${pageContext.request.contextPath}/logout">
@@ -276,6 +292,8 @@
                             </button>
 
                         </form>
+
+                        <% } %>
 
                     </div>
 
@@ -294,7 +312,7 @@
 </main>
 
 <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+        src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js">
 </script>
 
 </body>

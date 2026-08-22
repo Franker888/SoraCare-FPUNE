@@ -23,6 +23,9 @@ public class RecetaMedicaDAO {
                    rec.codigo, rec.fecha_emision, rec.fecha_vencimiento,
                    rec.indicaciones_generales, rec.estado,
                    rec.fecha_anulacion, rec.motivo_anulacion,
+                   ate.email_indicaciones_destino,
+                   ate.estado_envio_indicaciones_email,
+                   ate.fecha_envio_indicaciones_email,
                    CONCAT_WS(' ', pper.nombres, pper.apellidos) AS nombre_paciente,
                    CONCAT(
                        CASE med.tratamiento WHEN 'DRA' THEN 'Dra.' ELSE 'Dr.' END,
@@ -176,6 +179,11 @@ public class RecetaMedicaDAO {
                             resultado.getString("nombre_paciente"),
                             resultado.getString("nombre_medico"),
                             resultado.getString("especialidad"),
+                            resultado.getString("email_indicaciones_destino"),
+                            resultado.getString("estado_envio_indicaciones_email"),
+                            resultado.getObject(
+                                    "fecha_envio_indicaciones_email",
+                                    OffsetDateTime.class),
                             listarDetalles(conexion, idReceta)
                     ));
                 }

@@ -24,8 +24,22 @@
     String identificador =
             (String) request.getAttribute("identificador");
 
+    String googleClientId =
+            (String) request.getAttribute("googleClientId");
+
+    String googleLoginUri =
+            (String) request.getAttribute("googleLoginUri");
+
+    boolean googleHabilitado = googleClientId != null
+            && !googleClientId.isBlank()
+            && googleLoginUri != null
+            && !googleLoginUri.isBlank();
+
     boolean registroExitoso =
             "exitoso".equals(request.getParameter("registro"));
+
+    boolean cuentaEliminada =
+            "eliminada".equals(request.getParameter("cuenta"));
 
     if (identificador == null) {
         identificador = "";
@@ -47,7 +61,7 @@
     <title>Iniciar sesión | SoraCare-FPUNE</title>
 
     <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css"
             rel="stylesheet">
 
     <link rel="icon"
@@ -55,7 +69,7 @@
           href="${pageContext.request.contextPath}/assets/home/img/logo/SoraCare1.png">
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
 </head>
 
 <body class="soracare-auth">
@@ -126,11 +140,52 @@
 
             <% } %>
 
+            <% if (cuentaEliminada) { %>
+
+            <div class="alert alert-success" role="alert">
+                Tu cuenta fue eliminada y la sesión se cerró correctamente.
+            </div>
+
+            <% } %>
+
             <% if (mensajeError != null
                     && !mensajeError.isBlank()) { %>
 
             <div class="alert alert-danger" role="alert">
                 <%= escaparHtml(mensajeError) %>
+            </div>
+
+            <% } %>
+
+            <% if (googleHabilitado) { %>
+
+            <div class="auth-google-provider">
+                <p class="auth-google-title">Acceso rápido para pacientes</p>
+
+                <div id="g_id_onload"
+                     data-client_id="<%= escaparHtml(googleClientId) %>"
+                     data-login_uri="<%= escaparHtml(googleLoginUri) %>"
+                     data-auto_prompt="false"
+                     data-itp_support="true">
+                </div>
+
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="continue_with"
+                     data-size="large"
+                     data-logo_alignment="left"
+                     data-width="300">
+                </div>
+
+                <p class="auth-google-help">
+                    Ingresá o creá tu perfil de paciente con Google.
+                </p>
+            </div>
+
+            <div class="auth-provider-divider" role="separator">
+                <span>o ingresá con tu cuenta de SoraCare</span>
             </div>
 
             <% } %>
@@ -209,8 +264,15 @@
 </main>
 
 <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+        src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js">
 </script>
+
+<% if (googleHabilitado) { %>
+<script src="https://accounts.google.com/gsi/client"
+        async
+        defer>
+</script>
+<% } %>
 
 </body>
 </html>

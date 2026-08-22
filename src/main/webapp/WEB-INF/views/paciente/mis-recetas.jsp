@@ -31,9 +31,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Mis indicaciones médicas | SoraCare-FPUNE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
     <style>
         body { background: #f4f7fb; color: #172033; }
         .hero-recetas { border: 0; border-radius: 1.3rem; color: #fff;
@@ -50,9 +50,9 @@
 <body class="app-shell app-patient">
 <nav class="navbar bg-white border-bottom">
     <div class="container py-2">
-        <a class="navbar-brand fw-bold text-primary" href="${pageContext.request.contextPath}/dashboard">SoraCare-FPUNE</a>
+        <a class="navbar-brand fw-bold text-primary" href="${pageContext.request.contextPath}/paciente/inicio">SoraCare-FPUNE</a>
         <div class="d-flex gap-2">
-            <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/dashboard">Panel</a>
+            <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/paciente/inicio">Panel</a>
             <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
                 <button class="btn btn-outline-secondary btn-sm">Cerrar sesión</button>
             </form>
@@ -129,6 +129,15 @@
                             <br>Válida hasta: <%= receta.fechaVencimiento() %>
                             <% } %>
                         </div>
+                        <% if (!"NO_SOLICITADO".equals(receta.estadoEnvioIndicacionesEmail())) { %>
+                        <span class="badge mt-2 <%= "ENVIADO".equals(receta.estadoEnvioIndicacionesEmail())
+                                ? "text-bg-primary"
+                                : ("FALLIDO".equals(receta.estadoEnvioIndicacionesEmail())
+                                ? "text-bg-danger" : "text-bg-warning") %>">
+                            <i class="bi bi-envelope-check me-1"></i>
+                            <%= h(receta.textoEstadoEnvioIndicaciones()) %>
+                        </span>
+                        <% } %>
                     </div>
                 </div>
 

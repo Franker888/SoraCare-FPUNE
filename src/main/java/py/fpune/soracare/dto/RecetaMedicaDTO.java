@@ -19,6 +19,9 @@ public record RecetaMedicaDTO(
         String nombrePaciente,
         String nombreMedico,
         String especialidad,
+        String emailIndicacionesDestino,
+        String estadoEnvioIndicacionesEmail,
+        OffsetDateTime fechaEnvioIndicacionesEmail,
         List<DetalleRecetaDTO> detalles
 ) {
     public RecetaMedicaDTO {
@@ -27,5 +30,21 @@ public record RecetaMedicaDTO(
 
     public boolean estaEmitida() {
         return "EMITIDA".equals(estado);
+    }
+
+    public String textoEstadoEnvioIndicaciones() {
+        if ("ENVIADO".equals(estadoEnvioIndicacionesEmail)) {
+            return "Enviado por Resend";
+        }
+        if ("PENDIENTE".equals(estadoEnvioIndicacionesEmail)) {
+            return "Envío en proceso";
+        }
+        if ("FALLIDO".equals(estadoEnvioIndicacionesEmail)) {
+            return "No pudo enviarse";
+        }
+        if ("NO_CONFIGURADO".equals(estadoEnvioIndicacionesEmail)) {
+            return "Correo no configurado";
+        }
+        return "Aún no enviado";
     }
 }

@@ -62,7 +62,15 @@ public class AgendaCitasServlet extends HttpServlet {
         String resultado = request.getParameter("resultado");
         if ("reservada".equals(resultado)) request.setAttribute("mensajeExito", "La cita fue solicitada correctamente.");
         if ("cancelada".equals(resultado)) request.setAttribute("mensajeExito", "La cita fue cancelada correctamente.");
-        mostrarVista(request, response, convertirFecha(request.getParameter("fecha")));
+        Long idMedico = null;
+        try {
+            idMedico = convertirLongOpcional(request.getParameter("idMedico"));
+        } catch (IllegalArgumentException error) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            request.setAttribute("error", error.getMessage());
+        }
+        mostrarVista(request, response,
+                convertirFecha(request.getParameter("fecha")), idMedico);
     }
 
     @Override
@@ -71,7 +79,9 @@ public class AgendaCitasServlet extends HttpServlet {
         configurarSinCache(response);
         request.setCharacterEncoding("UTF-8");
         LocalDate fecha = convertirFecha(request.getParameter("fecha"));
+        Long idMedico = null;
         try {
+            idMedico = convertirLongOpcional(request.getParameter("idMedico"));
             UsuarioAutenticadoDTO usuario = usuarioAutenticado(request);
             if ("cancelar".equals(request.getParameter("accion"))) {
                 citaService.cancelar(convertirLong(request.getParameter("idCita")),
@@ -91,16 +101,21 @@ public class AgendaCitasServlet extends HttpServlet {
         } catch (IllegalArgumentException error) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             request.setAttribute("error", error.getMessage());
-            mostrarVista(request, response, fecha);
+            mostrarVista(request, response, fecha, idMedico);
         } catch (SQLException error) {
             log("Error al gestionar una cita.", error);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             request.setAttribute("error", "No fue posible gestionar la cita. Intentá nuevamente.");
-            mostrarVista(request, response, fecha);
+            mostrarVista(request, response, fecha, idMedico);
         }
     }
 
-    private void mostrarVista(HttpServletRequest request, HttpServletResponse response, LocalDate fecha)
+    private void mostrarVista(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            LocalDate fecha,
+            Long idMedico
+    )
             throws ServletException, IOException {
         try {
             List<Medico> medicos = medicoService.listarActivos();
@@ -117,7 +132,12 @@ public class AgendaCitasServlet extends HttpServlet {
             for (Paciente paciente : pacientes) pacientesPorId.put(paciente.getIdPaciente(), paciente);
 
             request.setAttribute("fecha", fecha);
-            request.setAttribute("slots", disponibilidadService.listar(fecha, null, null));
+            request.setAttribute("idMedico", idMedico);
+            request.setAttribute("medicos", medicos);
+            request.setAttribute(
+                    "slots",
+                    disponibilidadService.listar(fecha, idMedico, null)
+            );
             request.setAttribute("citas", citaService.listarPorFecha(fecha));
             request.setAttribute("pacientes", pacientes);
             request.setAttribute("metodosPago", pagoService.listarMetodosActivos());
@@ -130,6 +150,8 @@ public class AgendaCitasServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             if (request.getAttribute("error") == null) request.setAttribute("error", "No fue posible cargar la agenda.");
             request.setAttribute("fecha", fecha);
+            request.setAttribute("idMedico", idMedico);
+            request.setAttribute("medicos", List.of());
             request.setAttribute("slots", List.of());
             request.setAttribute("citas", List.of());
             request.setAttribute("pacientes", List.of());
@@ -175,6 +197,23 @@ public class AgendaCitasServlet extends HttpServlet {
             return numero;
         } catch (NumberFormatException error) {
             throw new IllegalArgumentException("La cita seleccionada no es válida.", error);
+        }
+    }
+
+    private static Long convertirLongOpcional(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return null;
+        }
+        try {
+            long numero = Long.parseLong(valor.strip());
+            if (numero <= 0) {
+                throw new NumberFormatException();
+            }
+            return numero;
+        } catch (NumberFormatException error) {
+            throw new IllegalArgumentException(
+                    "El médico seleccionado no es válido.", error
+            );
         }
     }
 

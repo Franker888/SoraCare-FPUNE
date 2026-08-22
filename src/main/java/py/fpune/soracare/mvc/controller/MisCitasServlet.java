@@ -11,6 +11,7 @@ import py.fpune.soracare.dto.DatosFacturacionDTO;
 import py.fpune.soracare.dto.PagoResumenDTO;
 import py.fpune.soracare.dto.ResultadoReservaDTO;
 import py.fpune.soracare.dto.SolicitudPagoDTO;
+import py.fpune.soracare.dto.SlotDisponibleDTO;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 import py.fpune.soracare.mvc.model.Consultorio;
 import py.fpune.soracare.mvc.model.Especialidad;
@@ -18,9 +19,11 @@ import py.fpune.soracare.mvc.model.Medico;
 import py.fpune.soracare.mvc.model.MedicoEspecialidad;
 import py.fpune.soracare.mvc.model.Paciente;
 import py.fpune.soracare.service.CitaService;
+import py.fpune.soracare.service.ConfiguracionGoogleService;
 import py.fpune.soracare.service.ConsultorioService;
 import py.fpune.soracare.service.DisponibilidadService;
 import py.fpune.soracare.service.EspecialidadService;
+import py.fpune.soracare.service.InformeAdministrativoService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
 import py.fpune.soracare.service.PacienteService;
@@ -47,6 +50,8 @@ public class MisCitasServlet extends HttpServlet {
     private ConsultorioService consultorioService;
     private PagoService pagoService;
     private ReservaPagoService reservaPagoService;
+    private InformeAdministrativoService informeAdministrativoService;
+    private ConfiguracionGoogleService configuracionGoogleService;
 
     @Override
     public void init() {
@@ -59,6 +64,8 @@ public class MisCitasServlet extends HttpServlet {
         consultorioService = new ConsultorioService();
         pagoService = new PagoService();
         reservaPagoService = new ReservaPagoService();
+        informeAdministrativoService = new InformeAdministrativoService();
+        configuracionGoogleService = new ConfiguracionGoogleService();
     }
 
     @Override
@@ -126,6 +133,10 @@ public class MisCitasServlet extends HttpServlet {
 
     private void mostrarVista(HttpServletRequest request, HttpServletResponse response, LocalDate fecha)
             throws ServletException, IOException {
+        request.setAttribute(
+                "googleCalendarClientId",
+                configuracionGoogleService.obtenerClientId()
+        );
         try {
             UsuarioAutenticadoDTO usuario = usuarioAutenticado(request);
             Paciente paciente = pacienteService.buscarPorIdPersona(usuario.getIdPersona())
@@ -175,9 +186,15 @@ public class MisCitasServlet extends HttpServlet {
             request.setAttribute("agendandoNuevaCita", agendandoNuevaCita);
             request.setAttribute("idMedicoSeleccionado", idMedico);
             request.setAttribute("idEspecialidadSeleccionada", idEspecialidad);
-            request.setAttribute("slots", !busquedaRealizada || fechaSeleccionada == null
+            List<SlotDisponibleDTO> slots = !busquedaRealizada || fechaSeleccionada == null
                     ? List.of()
-                    : disponibilidadService.listar(fechaSeleccionada, idMedico, idEspecialidad));
+                    : disponibilidadService.listar(fechaSeleccionada, idMedico, idEspecialidad);
+            request.setAttribute("slots", slots);
+            if ("GET".equalsIgnoreCase(request.getMethod())
+                    && busquedaRealizada && fechaSeleccionada != null) {
+                registrarBusquedaSegura(idMedico, idEspecialidad, fechaSeleccionada,
+                        slots.size(), "PACIENTE");
+            }
             request.setAttribute("citas", citaService.listarPorPaciente(paciente.getIdPaciente()).stream()
                     .filter(cita -> !"CANCELADA".equals(cita.getCodigoEstado()))
                     .toList());
@@ -227,6 +244,22 @@ public class MisCitasServlet extends HttpServlet {
         if (idMedico == null || idEspecialidad == null) return true;
         return especialidadesPorMedico.getOrDefault(idMedico, List.of()).stream()
                 .anyMatch(relacion -> idEspecialidad.equals(relacion.getIdEspecialidad()));
+    }
+
+    private void registrarBusquedaSegura(
+            Long idMedico,
+            Integer idEspecialidad,
+            LocalDate fecha,
+            int cantidadTurnos,
+            String origen
+    ) {
+        try {
+            informeAdministrativoService.registrarBusqueda(
+                    idMedico, idEspecialidad, fecha, cantidadTurnos, origen
+            );
+        } catch (SQLException | IllegalArgumentException error) {
+            log("No fue posible registrar la analítica anónima de disponibilidad.", error);
+        }
     }
 
     private static UsuarioAutenticadoDTO usuarioAutenticado(HttpServletRequest request) {

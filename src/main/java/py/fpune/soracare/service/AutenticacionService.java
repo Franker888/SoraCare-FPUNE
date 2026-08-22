@@ -139,6 +139,57 @@ public class AutenticacionService {
         }
     }
 
+    public UsuarioAutenticadoDTO autenticarExterno(
+            long idUsuario
+    ) throws SQLException {
+        if (idUsuario <= 0) {
+            throw new IllegalArgumentException(
+                    "El usuario externo no es válido."
+            );
+        }
+
+        try (Connection conexion = ConexionBD.obtenerConexion()) {
+            conexion.setAutoCommit(false);
+            boolean transaccionFinalizada = false;
+
+            try {
+                Usuario usuario = usuarioDAO.buscarPorId(
+                                conexion,
+                                idUsuario
+                        )
+                        .orElseThrow(() -> new SecurityException(
+                                MENSAJE_CREDENCIALES_INVALIDAS
+                        ));
+
+                if (usuario.getEstado() == EstadoUsuario.BLOQUEADO
+                        && usuarioDAO.desbloquearSiBloqueoExpiro(
+                        conexion,
+                        idUsuario
+                )) {
+                    usuario = usuarioDAO.buscarPorId(conexion, idUsuario)
+                            .orElseThrow(() -> new SecurityException(
+                                    MENSAJE_CREDENCIALES_INVALIDAS
+                            ));
+                }
+
+                validarEstadoCuenta(usuario);
+                validarRolesActivos(usuario);
+                usuarioDAO.registrarAccesoExitoso(conexion, idUsuario);
+
+                UsuarioAutenticadoDTO autenticado =
+                        convertirAUsuarioAutenticado(usuario);
+                conexion.commit();
+                transaccionFinalizada = true;
+                return autenticado;
+            } catch (SQLException | RuntimeException error) {
+                if (!transaccionFinalizada) {
+                    ejecutarRollback(conexion, error);
+                }
+                throw error;
+            }
+        }
+    }
+
     private Usuario buscarUsuario(
             Connection conexion,
             String identificador

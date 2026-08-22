@@ -1,0 +1,17 @@
+<nav class="navbar admin-navbar">
+    <div class="container">
+        <a class="navbar-brand" href="${pageContext.request.contextPath}/admin/inicio">
+            SoraCare-FPUNE
+        </a>
+        <div class="d-flex align-items-center gap-2 gap-md-3">
+            <span class="admin-context d-none d-md-inline-flex">
+                <i class="bi bi-grid"></i> Centro administrativo
+            </span>
+            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                    Cerrar sesi&oacute;n
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>

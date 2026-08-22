@@ -53,14 +53,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Disponibilidad médica | SoraCare-FPUNE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f4f8f6; }
         .hero { background: linear-gradient(135deg, #0b6b4f, #15956e); color: white; }
         .slot { border-left: .3rem solid #15956e; }
     </style>
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
 </head>
 <body class="app-public">
 <nav class="navbar bg-white border-bottom">
@@ -127,7 +127,7 @@
                         <% } %>
                     </select>
                 </div>
-                <div class="col-md-2 d-grid"><button class="btn btn-success" <%= fechasDisponibles.isEmpty() ? "disabled" : "" %>>Ver turnos</button></div>
+                <div class="col-md-2 d-grid"><button class="btn btn-success" name="busqueda" value="turnos" <%= fechasDisponibles.isEmpty() ? "disabled" : "" %>>Ver turnos</button></div>
             </form>
             <% if (fechasDisponibles.isEmpty()) { %>
             <div class="alert alert-warning mt-3 mb-0">

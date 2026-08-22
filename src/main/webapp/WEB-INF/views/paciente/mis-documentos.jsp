@@ -34,8 +34,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Mis documentos clínicos | SoraCare-FPUNE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
     <style>
         .document-hero { border-radius: 1.25rem; }
         .upload-card, .document-card { border-radius: 1.1rem; }
@@ -52,9 +52,9 @@
 <body class="app-shell app-patient">
 <nav class="navbar">
     <div class="container py-2">
-        <a class="navbar-brand" href="${pageContext.request.contextPath}/dashboard">SoraCare-FPUNE</a>
+        <a class="navbar-brand" href="${pageContext.request.contextPath}/paciente/inicio">SoraCare-FPUNE</a>
         <div class="d-flex gap-2">
-            <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/dashboard">Mi panel</a>
+            <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/paciente/inicio">Mi panel</a>
             <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/mis-citas">Mis citas</a>
         </div>
     </div>

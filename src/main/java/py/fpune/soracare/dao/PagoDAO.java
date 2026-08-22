@@ -18,10 +18,14 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class PagoDAO {
 
     private static final ZoneId ZONA_HORARIA = ZoneId.of("America/Asuncion");
+    private static final Set<String> ESTADOS_CORREO = Set.of(
+            "PENDIENTE", "ENVIADO", "FALLIDO", "NO_CONFIGURADO"
+    );
 
     private static final String RESUMEN_FROM = """
               FROM soracare.pagos p
@@ -477,8 +481,8 @@ public class PagoDAO {
                     tipo_comprobante, nombre_archivo, hash_sha256,
                     contenido_pdf, email_destino, enviado_email,
                     estado_envio_email, fecha_envio_email
-                ) VALUES (?, ?, ?, 'RECIBO', ?, ?, ?, ?, TRUE,
-                          'SIMULADO_ENVIADO', CURRENT_TIMESTAMP)
+                ) VALUES (?, ?, ?, 'RECIBO', ?, ?, ?, ?, FALSE,
+                          'PENDIENTE', NULL)
                 RETURNING id_comprobante
                 """;
         try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
@@ -496,10 +500,72 @@ public class PagoDAO {
         }
     }
 
-    public void registrarCorreoSimulado(
+    public void registrarResultadoCorreo(
+            long idPago,
+            String estadoCorreo,
+            boolean enviado,
+            String proveedor,
+            String referenciaProveedor,
+            String detalle
+    ) throws SQLException {
+        if (!ESTADOS_CORREO.contains(estadoCorreo)) {
+            throw new IllegalArgumentException("El estado del correo no es valido.");
+        }
+
+        try (Connection conexion = ConexionBD.obtenerConexion()) {
+            try {
+                conexion.setAutoCommit(false);
+                String actualizar = """
+                        UPDATE soracare.comprobantes_pago
+                           SET enviado_email = ?,
+                               estado_envio_email = ?,
+                               fecha_envio_email = CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE NULL END
+                         WHERE id_pago = ?
+                        """;
+                try (PreparedStatement sentencia = conexion.prepareStatement(actualizar)) {
+                    sentencia.setBoolean(1, enviado);
+                    sentencia.setString(2, estadoCorreo);
+                    sentencia.setBoolean(3, enviado);
+                    sentencia.setLong(4, idPago);
+                    if (sentencia.executeUpdate() != 1) {
+                        throw new SQLException(
+                                "No fue posible actualizar el estado del correo."
+                        );
+                    }
+                }
+
+                if (!"NO_CONFIGURADO".equals(estadoCorreo)) {
+                    registrarNotificacionCorreo(
+                            conexion,
+                            idPago,
+                            enviado,
+                            proveedor,
+                            referenciaProveedor,
+                            detalle
+                    );
+                }
+                conexion.commit();
+            } catch (Exception error) {
+                conexion.rollback();
+                if (error instanceof SQLException sql) throw sql;
+                if (error instanceof IllegalArgumentException validacion) {
+                    throw validacion;
+                }
+                throw new SQLException(
+                        "No fue posible registrar el resultado del correo.",
+                        error
+                );
+            }
+        }
+    }
+
+    private void registrarNotificacionCorreo(
             Connection conexion,
-            PagoResumenDTO pago,
-            String numeroComprobante
+            long idPago,
+            boolean enviado,
+            String proveedor,
+            String referenciaProveedor,
+            String detalle
     ) throws SQLException {
         String sql = """
                 INSERT INTO soracare.notificaciones (
@@ -508,34 +574,36 @@ public class PagoDAO {
                     destinatario, asunto, contenido, clave_idempotencia,
                     fecha_envio, proveedor, referencia_proveedor
                 )
-                SELECT paciente.id_persona, ?, ?, plantilla.id_plantilla_notificacion,
+                SELECT paciente.id_persona, pago.id_cita, pago.id_pago,
+                       plantilla.id_plantilla_notificacion,
                        canal.id_canal_notificacion, estado.id_estado_notificacion,
-                       ?, 'Comprobante de pago - SoraCare-FPUNE', ?, ?,
-                       CURRENT_TIMESTAMP, 'SIMULADOR_LOCAL', ?
-                  FROM soracare.citas cita
+                       comprobante.email_destino,
+                       'Comprobante de pago - SoraCare-FPUNE', ?, ?,
+                       CURRENT_TIMESTAMP, ?, ?
+                  FROM soracare.pagos pago
+                  INNER JOIN soracare.citas cita ON cita.id_cita = pago.id_cita
                   INNER JOIN soracare.pacientes paciente
                           ON paciente.id_paciente = cita.id_paciente
+                  INNER JOIN soracare.comprobantes_pago comprobante
+                          ON comprobante.id_pago = pago.id_pago
                   CROSS JOIN soracare.canales_notificacion canal
                   CROSS JOIN soracare.estados_notificacion estado
                   LEFT JOIN soracare.plantillas_notificacion plantilla
                          ON plantilla.codigo = 'PAGO_CONFIRMADO_EMAIL'
-                 WHERE cita.id_cita = ?
+                 WHERE pago.id_pago = ?
                    AND canal.codigo = 'EMAIL'
-                   AND estado.codigo = 'ENVIADA'
+                   AND estado.codigo = ?
                 ON CONFLICT (clave_idempotencia) DO NOTHING
                 """;
-        String contenido = "Pago simulado confirmado por " + pago.monto().toPlainString()
-                + " PYG. Comprobante " + numeroComprobante
-                + ". Documento academico sin validez fiscal.";
-        String clave = "PAGO-" + pago.idPago() + "-EMAIL-1";
+        String estadoNotificacion = enviado ? "ENVIADA" : "FALLIDA";
+        String clave = "PAGO-" + idPago + "-EMAIL-RESEND-" + estadoNotificacion;
         try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
-            sentencia.setLong(1, pago.idCita());
-            sentencia.setLong(2, pago.idPago());
-            sentencia.setString(3, pago.correoFacturacion());
-            sentencia.setString(4, contenido);
-            sentencia.setString(5, clave);
-            sentencia.setString(6, numeroComprobante);
-            sentencia.setLong(7, pago.idCita());
+            sentencia.setString(1, detalle);
+            sentencia.setString(2, clave);
+            sentencia.setString(3, proveedor);
+            sentencia.setString(4, referenciaProveedor);
+            sentencia.setLong(5, idPago);
+            sentencia.setString(6, estadoNotificacion);
             sentencia.executeUpdate();
         }
     }

@@ -1,7 +1,9 @@
 package py.fpune.soracare.service;
 
 import py.fpune.soracare.dto.DetalleRecetaDTO;
+import py.fpune.soracare.dto.AtencionMedicaDTO;
 import py.fpune.soracare.dto.RecetaMedicaDTO;
+import py.fpune.soracare.mvc.model.Paciente;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -70,6 +72,104 @@ public class RecetaPdfService {
 
         byte[] contenido = crearPdf(paginar(lineas));
         return new DocumentoPdf("indicacion-medica-" + receta.codigo() + ".pdf", contenido);
+    }
+
+    public DocumentoPdf generarResumenAtencion(
+            AtencionMedicaDTO atencion,
+            Paciente paciente,
+            List<RecetaMedicaDTO> recetas
+    ) {
+        if (atencion == null || paciente == null) {
+            throw new IllegalArgumentException(
+                    "La atención y el paciente son obligatorios."
+            );
+        }
+        List<RecetaMedicaDTO> recetasValidas = recetas == null
+                ? List.of()
+                : recetas.stream().filter(RecetaMedicaDTO::estaEmitida).toList();
+        List<String> lineas = new ArrayList<>();
+        agregar(lineas, "SORACARE-FPUNE");
+        agregar(lineas, "INDICACIONES MEDICAS DE LA ATENCION");
+        agregar(lineas, "Sistema academico universitario");
+        agregar(lineas, "");
+        agregar(lineas, "Paciente: " + paciente.getNombres()
+                + " " + paciente.getApellidos());
+        agregar(lineas, "Historia clinica: " + paciente.getNumeroHistoriaClinica());
+        agregar(lineas, "Medico: " + atencion.medicoNombreCompleto());
+        agregar(lineas, "Especialidad: " + atencion.especialidad());
+        agregar(lineas, "Atencion finalizada: "
+                + (atencion.fechaHoraFin() == null
+                ? "Fecha no informada"
+                : atencion.fechaHoraFin().atZoneSameInstant(ZONA).format(FECHA_HORA)));
+        agregar(lineas, "");
+        agregarSeccion(lineas, "EVALUACION O DIAGNOSTICO CLINICO",
+                atencion.evaluacionClinica());
+        agregarSeccion(lineas, "PLAN DE TRATAMIENTO",
+                atencion.planTratamiento());
+        agregarSeccion(lineas, "ESTUDIOS CLINICOS SOLICITADOS",
+                atencion.estudiosClinicosSolicitados());
+        agregarSeccion(lineas, "INDICACIONES GENERALES",
+                atencion.indicaciones());
+
+        if (atencion.requiereSeguimiento()) {
+            agregar(lineas, "PROXIMO CONTROL");
+            agregar(lineas, atencion.fechaProximoControl() == null
+                    ? "Requiere control; fecha pendiente de coordinación."
+                    : atencion.fechaProximoControl().format(
+                            DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            agregar(lineas, "");
+        }
+
+        if (!recetasValidas.isEmpty()) {
+            agregar(lineas, "MEDICAMENTOS INDICADOS");
+            int numero = 1;
+            for (RecetaMedicaDTO receta : recetasValidas) {
+                agregar(lineas, "Indicacion " + receta.codigo());
+                for (DetalleRecetaDTO detalle : receta.detalles()) {
+                    agregar(lineas, numero++ + ". " + detalle.nombreComercial()
+                            + valorConEspacio(detalle.concentracion())
+                            + " - " + detalle.dosis()
+                            + " - " + detalle.frecuencia());
+                    String complemento = "   Cantidad: "
+                            + detalle.cantidad().stripTrailingZeros().toPlainString()
+                            + " " + detalle.unidad();
+                    if (detalle.duracionDias() != null) {
+                        complemento += " | Duracion: "
+                                + detalle.duracionDias() + " dias";
+                    }
+                    agregar(lineas, complemento);
+                    if (detalle.instrucciones() != null) {
+                        agregar(lineas, "   Cuidados: " + detalle.instrucciones());
+                    }
+                }
+                if (receta.indicacionesGenerales() != null) {
+                    agregar(lineas, "   Indicaciones: "
+                            + receta.indicacionesGenerales());
+                }
+                agregar(lineas, "");
+            }
+        }
+
+        agregar(lineas,
+                "Documento generado por SoraCare-FPUNE. No reemplaza una nueva evaluación médica.");
+        byte[] contenido = crearPdf(paginar(lineas));
+        return new DocumentoPdf(
+                "indicaciones-atencion-AT-"
+                        + String.format("%08d", atencion.idAtencion()) + ".pdf",
+                contenido
+        );
+    }
+
+    private static void agregarSeccion(
+            List<String> lineas,
+            String titulo,
+            String contenido
+    ) {
+        agregar(lineas, titulo);
+        agregar(lineas, contenido == null || contenido.isBlank()
+                ? "No informado."
+                : contenido);
+        agregar(lineas, "");
     }
 
     private static void agregar(List<String> destino, String texto) {

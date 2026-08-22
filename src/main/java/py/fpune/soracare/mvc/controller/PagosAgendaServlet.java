@@ -36,7 +36,8 @@ public class PagosAgendaServlet extends HttpServlet {
         configurarSinCache(response);
         if ("confirmado".equals(request.getParameter("resultado"))) {
             request.setAttribute("mensajeExito",
-                    "El cobro en efectivo fue confirmado y el comprobante quedo generado.");
+                    "El cobro en efectivo fue confirmado y el comprobante quedó generado; "
+                            + "el envío al correo se está procesando.");
         }
         mostrar(request, response);
     }

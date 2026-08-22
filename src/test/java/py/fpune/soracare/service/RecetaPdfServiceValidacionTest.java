@@ -1,7 +1,9 @@
 package py.fpune.soracare.service;
 
 import py.fpune.soracare.dto.DetalleRecetaDTO;
+import py.fpune.soracare.dto.AtencionMedicaDTO;
 import py.fpune.soracare.dto.RecetaMedicaDTO;
+import py.fpune.soracare.mvc.model.Paciente;
 import py.fpune.soracare.mvc.model.ViaAdministracion;
 
 import java.math.BigDecimal;
@@ -26,7 +28,8 @@ public final class RecetaPdfServiceValidacionTest {
                 1, 2, 3, 4, "RX-0000000001", OffsetDateTime.now(),
                 LocalDate.now().plusDays(10), "Mantener hidratación.",
                 "EMITIDA", null, null, "Paciente Prueba",
-                "Dr. Médico Prueba", "Clínica médica", List.of(detalle)
+                "Dr. Médico Prueba", "Clínica médica", "paciente@ejemplo.com",
+                "ENVIADO", OffsetDateTime.now(), List.of(detalle)
         );
 
         RecetaPdfService.DocumentoPdf documento = new RecetaPdfService().generar(receta);
@@ -39,7 +42,39 @@ public final class RecetaPdfServiceValidacionTest {
         verificar(documento.nombreArchivo().equals("indicacion-medica-RX-0000000001.pdf"),
                 "El nombre del archivo no es el esperado.");
 
-        System.out.println("OK: indicación médica PDF, identificación y contenido verificados.");
+        Paciente paciente = new Paciente();
+        paciente.setNombres("Paciente");
+        paciente.setApellidos("Prueba");
+        paciente.setNumeroHistoriaClinica("HC-00000001");
+
+        AtencionMedicaDTO atencion = new AtencionMedicaDTO(
+                8, 2, 3, 4,
+                OffsetDateTime.now().minusMinutes(30), OffsetDateTime.now(),
+                "Control clínico", "Dolor leve", "Sin antecedentes relevantes",
+                new BigDecimal("36.5"), 72, 16, 120, 80, 98,
+                "Sin signos de alarma", "Examen físico estable",
+                "Cuadro clínico controlado", "Tratamiento ambulatorio",
+                "Hemograma y radiografía", "Reposo e hidratación",
+                "Controlar evolución", true, LocalDate.now().plusDays(15),
+                "FINALIZADA", "Dr. Médico Prueba", "Clínica médica",
+                "paciente@ejemplo.com", "PENDIENTE", null
+        );
+        RecetaPdfService.DocumentoPdf resumen = new RecetaPdfService()
+                .generarResumenAtencion(atencion, paciente, List.of(receta));
+        String contenidoResumen = new String(
+                resumen.contenido(), StandardCharsets.ISO_8859_1);
+
+        verificar(contenidoResumen.startsWith("%PDF-1.4"),
+                "Falta la cabecera del resumen PDF.");
+        verificar(contenidoResumen.contains("ESTUDIOS CLINICOS SOLICITADOS"),
+                "Faltan los estudios solicitados.");
+        verificar(contenidoResumen.contains("Paracetamol"),
+                "Falta el medicamento en el resumen.");
+        verificar(resumen.nombreArchivo().equals(
+                        "indicaciones-atencion-AT-00000008.pdf"),
+                "El nombre del resumen no es el esperado.");
+
+        System.out.println("OK: PDFs individual y consolidado de indicaciones verificados.");
     }
 
     private static void verificar(boolean condicion, String mensaje) {

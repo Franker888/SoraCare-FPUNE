@@ -8,6 +8,7 @@ node_modules/
 vendor/
 dist/
 build/
+outputs/
 
 # Entorno y credenciales
 .env

@@ -3,6 +3,7 @@
          language="java" %>
 
 <%@ page import="py.fpune.soracare.dto.UsuarioAutenticadoDTO" %>
+<%@ page import="py.fpune.soracare.dto.PerfilVisualDTO" %>
 <%@ page import="jakarta.servlet.http.HttpServletResponse" %>
 <%@ page import="java.util.Set" %>
 
@@ -74,6 +75,18 @@
                     ? ((Number) cantidadNotificacionesAtributo).longValue()
                     : 0L;
 
+    PerfilVisualDTO perfilVisual =
+            request.getAttribute("perfilVisual") instanceof PerfilVisualDTO
+                    ? (PerfilVisualDTO) request.getAttribute("perfilVisual")
+                    : new PerfilVisualDTO("AZUL", false);
+
+    String avatarClase = "azul";
+    if ("TURQUESA".equals(perfilVisual.avatarCodigo())) avatarClase = "turquesa";
+    else if ("VIOLETA".equals(perfilVisual.avatarCodigo())) avatarClase = "violeta";
+    else if ("CORAL".equals(perfilVisual.avatarCodigo())) avatarClase = "coral";
+    else if ("VERDE".equals(perfilVisual.avatarCodigo())) avatarClase = "verde";
+    else if ("DORADO".equals(perfilVisual.avatarCodigo())) avatarClase = "dorado";
+
     String nombrePanel = esAdministrador
             ? "Panel de administración"
             : puedeGestionarAgenda
@@ -110,7 +123,7 @@
     <title>Panel principal | SoraCare-FPUNE</title>
 
     <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css"
             rel="stylesheet">
 
     <style>
@@ -201,7 +214,7 @@
     </style>
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815e">
 </head>
 
 <body class="app-shell app-dashboard">
@@ -277,10 +290,20 @@
                         align-items-md-center
                         gap-3">
 
-                <div class="icono-usuario">
-
-                    <%= escaparHtml(inicialUsuario) %>
-
+                <div class="dashboard-profile-wrap">
+                    <% if (perfilVisual.fotoPersonalizada()) { %>
+                        <img class="profile-avatar profile-avatar-sm profile-photo"
+                             src="${pageContext.request.contextPath}/perfil/foto"
+                             alt="Fotografía de perfil">
+                    <% } else { %>
+                        <div class="profile-avatar profile-avatar-sm avatar-<%= avatarClase %>">
+                            <%= escaparHtml(inicialUsuario) %>
+                        </div>
+                    <% } %>
+                    <% if (esPaciente || esMedico) { %>
+                        <a class="dashboard-profile-edit" href="${pageContext.request.contextPath}/perfil"
+                           aria-label="Cambiar foto de perfil"><i class="bi bi-camera"></i></a>
+                    <% } %>
                 </div>
 
                 <div class="flex-grow-1">
@@ -687,7 +710,7 @@
 </main>
 
 <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+        src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js">
 </script>
 
 </body>

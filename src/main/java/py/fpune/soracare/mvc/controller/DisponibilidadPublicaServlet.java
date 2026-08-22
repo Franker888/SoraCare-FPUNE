@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import py.fpune.soracare.service.DisponibilidadService;
 import py.fpune.soracare.service.EspecialidadService;
+import py.fpune.soracare.service.InformeAdministrativoService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
 
@@ -20,6 +21,7 @@ import java.util.Map;
 import py.fpune.soracare.mvc.model.Especialidad;
 import py.fpune.soracare.mvc.model.Medico;
 import py.fpune.soracare.mvc.model.MedicoEspecialidad;
+import py.fpune.soracare.dto.SlotDisponibleDTO;
 
 @WebServlet("/disponibilidad")
 public class DisponibilidadPublicaServlet extends HttpServlet {
@@ -28,6 +30,7 @@ public class DisponibilidadPublicaServlet extends HttpServlet {
     private MedicoService medicoService;
     private MedicoEspecialidadService medicoEspecialidadService;
     private EspecialidadService especialidadService;
+    private InformeAdministrativoService informeAdministrativoService;
 
     @Override
     public void init() {
@@ -35,6 +38,7 @@ public class DisponibilidadPublicaServlet extends HttpServlet {
         medicoService = new MedicoService();
         medicoEspecialidadService = new MedicoEspecialidadService();
         especialidadService = new EspecialidadService();
+        informeAdministrativoService = new InformeAdministrativoService();
     }
 
     @Override
@@ -80,9 +84,15 @@ public class DisponibilidadPublicaServlet extends HttpServlet {
             request.setAttribute("especialidades", especialidades);
             request.setAttribute("medicosPorId", medicosPorId);
             request.setAttribute("especialidadesPorId", especialidadesPorId);
-            request.setAttribute("slots", fechaSeleccionada == null
+            List<SlotDisponibleDTO> slots = fechaSeleccionada == null
                     ? List.of()
-                    : disponibilidadService.listar(fechaSeleccionada, idMedico, idEspecialidad));
+                    : disponibilidadService.listar(fechaSeleccionada, idMedico, idEspecialidad);
+            request.setAttribute("slots", slots);
+            if ("turnos".equals(request.getParameter("busqueda"))
+                    && fechaSeleccionada != null) {
+                registrarBusquedaSegura(idMedico, idEspecialidad, fechaSeleccionada,
+                        slots.size());
+            }
         } catch (SQLException error) {
             log("Error al consultar disponibilidad pública.", error);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -100,6 +110,21 @@ public class DisponibilidadPublicaServlet extends HttpServlet {
         if (idMedico == null || idEspecialidad == null) return true;
         return especialidadesPorMedico.getOrDefault(idMedico, List.of()).stream()
                 .anyMatch(relacion -> idEspecialidad.equals(relacion.getIdEspecialidad()));
+    }
+
+    private void registrarBusquedaSegura(
+            Long idMedico,
+            Integer idEspecialidad,
+            LocalDate fecha,
+            int cantidadTurnos
+    ) {
+        try {
+            informeAdministrativoService.registrarBusqueda(
+                    idMedico, idEspecialidad, fecha, cantidadTurnos, "PUBLICO"
+            );
+        } catch (SQLException | IllegalArgumentException error) {
+            log("No fue posible registrar la analítica anónima de disponibilidad.", error);
+        }
     }
 
     private static LocalDate convertirFecha(String valor) {

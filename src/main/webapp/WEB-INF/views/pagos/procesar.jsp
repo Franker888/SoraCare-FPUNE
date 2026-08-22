@@ -23,7 +23,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Pago simulado | SoraCare-FPUNE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f3f8f6; }
         .barra { background: #0f766e; }
@@ -34,7 +34,7 @@
         .qr-demo span { width: 13px; height: 13px; background: #d5e2dc; }
         .qr-demo span:nth-child(2n), .qr-demo span:nth-child(5n), .qr-demo span:nth-child(11n) { background: #123d34; }
     </style>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
 </head>
 <body class="app-shell app-patient">
 <nav class="navbar barra shadow-sm"><div class="container py-2">

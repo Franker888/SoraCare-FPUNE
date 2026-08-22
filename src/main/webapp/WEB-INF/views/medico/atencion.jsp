@@ -169,10 +169,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Panel clínico | SoraCare-FPUNE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css"
           rel="stylesheet">
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
     <style>
         :root {
             --clinico-azul: #2457d6;
@@ -345,7 +345,7 @@
 <body class="app-shell app-doctor">
 <nav class="navbar barra-superior border-bottom">
     <div class="container py-2">
-        <a class="navbar-brand marca" href="${pageContext.request.contextPath}/dashboard">
+        <a class="navbar-brand marca" href="${pageContext.request.contextPath}/medico/inicio">
             SoraCare-FPUNE
         </a>
         <div class="d-flex align-items-center gap-2">
@@ -971,6 +971,14 @@
                             <%= h(receta.estado()) %>
                         </span>
                     </div>
+                    <% if (!"NO_SOLICITADO".equals(receta.estadoEnvioIndicacionesEmail())) { %>
+                    <div class="small mb-3 <%= "ENVIADO".equals(receta.estadoEnvioIndicacionesEmail())
+                            ? "text-success" : ("FALLIDO".equals(receta.estadoEnvioIndicacionesEmail())
+                            ? "text-danger" : "text-warning") %>">
+                        <i class="bi bi-envelope-check me-1"></i>
+                        Correo al paciente: <%= h(receta.textoEstadoEnvioIndicaciones()) %>
+                    </div>
+                    <% } %>
                     <div class="d-grid gap-2">
                         <% for (DetalleRecetaDTO detalle : receta.detalles()) { %>
                         <div class="p-3 bg-light rounded-3">
@@ -1224,6 +1232,6 @@
         agregarFilaReceta();
     }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js"></script>
 </body>
 </html>

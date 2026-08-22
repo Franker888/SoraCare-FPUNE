@@ -1,720 +1,84 @@
-<%@ page contentType="text/html;charset=UTF-8"
-         pageEncoding="UTF-8"
-         language="java" %>
-
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ page import="py.fpune.soracare.dto.UsuarioAutenticadoDTO" %>
+<%@ page import="py.fpune.soracare.dto.ResumenPanelAdministracionDTO" %>
 <%@ page import="java.util.Set" %>
-
 <%!
-    private String escaparHtml(String texto) {
-        if (texto == null) {
-            return "";
-        }
-
-        return texto
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
+    private String h(String valor) {
+        if (valor == null) return "";
+        return valor.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
     }
 %>
-
 <%
-    UsuarioAutenticadoDTO usuarioAutenticado =
-            (UsuarioAutenticadoDTO) request.getAttribute(
-                    "usuarioAutenticado"
-            );
-
-    if (usuarioAutenticado == null) {
-        response.sendError(
-                HttpServletResponse.SC_UNAUTHORIZED,
-                "No existe un usuario autenticado."
-        );
-
+    UsuarioAutenticadoDTO usuario = (UsuarioAutenticadoDTO) request.getAttribute("usuarioAutenticado");
+    if (usuario == null) {
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No existe un usuario autenticado.");
         return;
     }
-
-    Set<String> roles =
-            usuarioAutenticado.getRoles();
+    ResumenPanelAdministracionDTO resumen =
+            (ResumenPanelAdministracionDTO) request.getAttribute("resumenAdministracion");
+    Set<String> roles = usuario.getRoles();
 %>
-
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
-
-    <meta name="robots"
-          content="noindex, nofollow">
-
-    <title>
-        Administración | SoraCare-FPUNE
-    </title>
-
-    <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-            rel="stylesheet">
-
-    <style>
-        body {
-            min-height: 100vh;
-            background-color: #f1f5f9;
-        }
-
-        .barra-superior {
-            background-color: #0f766e;
-        }
-
-        .marca-soracare {
-            color: #ffffff;
-            font-weight: 700;
-        }
-
-        .marca-soracare:hover,
-        .marca-soracare:focus {
-            color: #ffffff;
-        }
-
-        .encabezado-panel {
-            border: none;
-            border-radius: 1rem;
-            background:
-                    linear-gradient(
-                            135deg,
-                            #0f766e,
-                            #0e7490
-                    );
-            color: #ffffff;
-        }
-
-        .tarjeta-opcion {
-            border: none;
-            border-radius: 1rem;
-            transition:
-                    transform 0.2s ease,
-                    box-shadow 0.2s ease;
-        }
-
-        .tarjeta-opcion:hover {
-            transform: translateY(-3px);
-            box-shadow:
-                    0 0.75rem 1.5rem
-                    rgba(15, 23, 42, 0.10);
-        }
-
-        .etiqueta-rol {
-            background-color: #ccfbf1;
-            color: #115e59;
-        }
-
-        .icono-modulo {
-            width: 48px;
-            height: 48px;
-            border-radius: 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #ccfbf1;
-            color: #0f766e;
-            font-size: 1.25rem;
-            font-weight: 700;
-        }
-
-        .boton-cerrar-sesion {
-            min-width: 120px;
-        }
-    </style>
-
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Centro administrativo | SoraCare-FPUNE</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815b">
 </head>
-
 <body class="app-shell app-admin">
-
-<nav class="navbar barra-superior shadow-sm">
-
-    <div class="container">
-
-        <a
-                class="navbar-brand marca-soracare"
-                href="${pageContext.request.contextPath}/dashboard">
-
-            SoraCare
-
-        </a>
-
-        <div class="d-flex align-items-center gap-3">
-
-            <span class="navbar-text text-white d-none d-lg-inline">
-
-                Área administrativa
-
-            </span>
-
-            <form
-                    method="post"
-                    action="${pageContext.request.contextPath}/logout"
-                    class="m-0">
-
-                <button
-                        type="submit"
-                        class="btn btn-outline-light btn-sm boton-cerrar-sesion">
-
-                    Cerrar sesión
-
-                </button>
-
-            </form>
-
-        </div>
-
-    </div>
-
-</nav>
-
-<main class="container py-4 py-md-5">
-
-    <section class="card encabezado-panel shadow-sm mb-4">
-
-        <div class="card-body p-4 p-md-5">
-
-            <div class="row align-items-center">
-
-                <div class="col-12 col-lg-8">
-
-                    <p class="mb-2 opacity-75">
-                        Panel protegido por rol
-                    </p>
-
-                    <h1 class="display-6 fw-bold mb-3">
-
-                        Administración de SoraCare
-
-                    </h1>
-
-                    <p class="mb-0">
-
-                        Desde esta sección se gestionarán
-                        especialidades, médicos, sedes,
-                        consultorios, usuarios,
-                        configuraciones, reportes
-                        y registros de auditoría del sistema.
-
-                    </p>
-
-                </div>
-
-                <div class="col-12 col-lg-4 mt-4 mt-lg-0 text-lg-end">
-
-                    <p class="mb-1 opacity-75">
-                        Usuario autenticado
-                    </p>
-
-                    <strong class="fs-5">
-
-                        <%= escaparHtml(
-                                usuarioAutenticado
-                                        .getNombreUsuario()
-                        ) %>
-
-                    </strong>
-
-                    <div class="d-flex flex-wrap
-                                justify-content-lg-end
-                                gap-2 mt-2">
-
-                        <% for (String rol : roles) { %>
-
-                        <span class="badge etiqueta-rol">
-
-                            <%= escaparHtml(rol) %>
-
-                        </span>
-
-                        <% } %>
-
-                    </div>
-
-                </div>
-
+<%@ include file="_navbar.jspf" %>
+<main class="container py-4 py-lg-5">
+    <section class="admin-hero mb-4">
+        <div class="row align-items-center">
+            <div class="col-lg-9">
+                <div class="admin-eyebrow">Centro de control · Etapa 8</div>
+                <h1>Administración de SoraCare</h1>
+                <p>Gestioná la operación médica, la seguridad, las configuraciones y los informes desde un único lugar.</p>
+                <div class="d-flex flex-wrap gap-2 mt-4"><span class="badge bg-white text-primary px-3 py-2">@<%= h(usuario.getNombreUsuario()) %></span><% for (String rol : roles) { %><span class="badge bg-white bg-opacity-10 border border-white border-opacity-25 px-3 py-2"><%= h(rol) %></span><% } %></div>
             </div>
-
+            <div class="col-lg-3 text-lg-end"><span class="admin-hero-icon"><i class="bi bi-grid-1x2"></i></span></div>
         </div>
-
     </section>
 
-    <div class="d-flex flex-column
-                flex-md-row
-                justify-content-between
-                align-items-md-center
-                gap-3 mb-4">
+    <% if (resumen != null) { %>
+    <section class="row g-3 mb-5">
+        <div class="col-6 col-lg-3"><div class="card admin-stat-card"><i class="bi bi-people admin-stat-icon"></i><div class="admin-stat-value"><%= resumen.usuarios() %></div><div class="admin-stat-label">Usuarios registrados<% if (resumen.usuariosBloqueados() > 0) { %> · <span class="text-warning"><%= resumen.usuariosBloqueados() %> bloqueados</span><% } %></div></div></div>
+        <div class="col-6 col-lg-3"><div class="card admin-stat-card"><i class="bi bi-person-hearts admin-stat-icon"></i><div class="admin-stat-value"><%= resumen.pacientes() %></div><div class="admin-stat-label">Pacientes con historia clínica</div></div></div>
+        <div class="col-6 col-lg-3"><div class="card admin-stat-card"><i class="bi bi-calendar2-check admin-stat-icon"></i><div class="admin-stat-value"><%= resumen.citasFuturas() %></div><div class="admin-stat-label">Citas futuras activas</div></div></div>
+        <div class="col-6 col-lg-3"><div class="card admin-stat-card"><i class="bi bi-shield-check admin-stat-icon"></i><div class="admin-stat-value"><%= resumen.eventosHoy() %></div><div class="admin-stat-label">Operaciones auditadas hoy</div></div></div>
+    </section>
+    <% } %>
 
-        <div>
-
-            <h2 class="h4 mb-1">
-                Funciones administrativas
-            </h2>
-
-            <p class="text-secondary mb-0">
-                Accesos exclusivos para administradores autorizados
-            </p>
-
+    <section class="mb-5">
+        <div class="admin-section-heading"><div><h2 class="h4">Operación hospitalaria</h2><p class="text-secondary mb-0">Catálogos, profesionales, espacios y agenda médica.</p></div><span class="badge text-bg-success">Módulos operativos</span></div>
+        <div class="row g-4">
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card module-clinical d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-heart-pulse"></i></span><h3>Especialidades médicas</h3><p>Organizá los servicios médicos y la duración sugerida de sus consultas.</p><a class="btn btn-outline-primary align-self-start" href="${pageContext.request.contextPath}/admin/especialidades">Abrir especialidades</a></article></div>
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card module-clinical d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-person-badge"></i></span><h3>Médicos</h3><p>Registrá profesionales, datos públicos y especialidades habilitadas.</p><a class="btn btn-outline-primary align-self-start" href="${pageContext.request.contextPath}/admin/medicos">Abrir médicos</a></article></div>
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card module-clinical d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-clock-history"></i></span><h3>Horarios y excepciones</h3><p>Configurá agendas semanales, consultorios y bloqueos extraordinarios.</p><div class="d-flex flex-wrap gap-2"><a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/horarios">Horarios</a><a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/excepciones-horarios">Excepciones</a></div></article></div>
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-hospital"></i></span><h3>Sedes hospitalarias</h3><p>Gestioná las ubicaciones físicas donde opera la institución.</p><a class="btn btn-outline-primary align-self-start" href="${pageContext.request.contextPath}/admin/sedes">Abrir sedes</a></article></div>
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-door-open"></i></span><h3>Consultorios</h3><p>Administrá los espacios de atención disponibles en cada sede.</p><a class="btn btn-outline-primary align-self-start" href="${pageContext.request.contextPath}/admin/consultorios">Abrir consultorios</a></article></div>
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card module-clinical d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-capsule-pill"></i></span><h3>Medicamentos</h3><p>Mantené el catálogo farmacológico usado en las indicaciones médicas.</p><a class="btn btn-outline-primary align-self-start" href="${pageContext.request.contextPath}/admin/medicamentos">Abrir medicamentos</a></article></div>
         </div>
-
-        <a
-                href="${pageContext.request.contextPath}/dashboard"
-                class="btn btn-outline-secondary">
-
-            Volver al panel principal
-
-        </a>
-
-    </div>
-
-    <section class="row g-4">
-
-        <div class="col-12 col-md-6 col-xl-4">
-
-            <div class="card tarjeta-opcion shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="icono-modulo mb-3">
-                        <i class="bi bi-heart-pulse"></i>
-                    </div>
-
-                    <h3 class="h5">
-                        Especialidades médicas
-                    </h3>
-
-                    <p class="text-secondary">
-
-                        Registrar y consultar las especialidades
-                        disponibles para médicos y futuras agendas.
-
-                    </p>
-
-                    <a
-                            href="${pageContext.request.contextPath}/admin/especialidades"
-                            class="btn btn-outline-success">
-
-                        Administrar especialidades
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-
-            <div class="card tarjeta-opcion shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="icono-modulo mb-3">
-                        <i class="bi bi-clock-history"></i>
-                    </div>
-
-                    <h3 class="h5">
-                        Horarios médicos
-                    </h3>
-
-                    <p class="text-secondary">
-
-                        Definir la agenda semanal de cada médico,
-                        la duración de sus turnos y el consultorio
-                        donde realizará la atención.
-
-                    </p>
-
-                    <a
-                            href="${pageContext.request.contextPath}/admin/horarios"
-                            class="btn btn-outline-success">
-
-                        Administrar horarios
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-
-            <div class="card tarjeta-opcion shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="icono-modulo mb-3">
-                        <i class="bi bi-capsule-pill"></i>
-                    </div>
-
-                    <h3 class="h5">
-                        Medicamentos
-                    </h3>
-
-                    <p class="text-secondary">
-
-                        Administrar el catálogo utilizado por
-                        los médicos para registrar indicaciones claras
-                        y consistentes.
-
-                    </p>
-
-                    <a
-                            href="${pageContext.request.contextPath}/admin/medicamentos"
-                            class="btn btn-outline-success">
-
-                        Administrar medicamentos
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-
-            <div class="card tarjeta-opcion shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="icono-modulo mb-3">
-                        <i class="bi bi-person-badge"></i>
-                    </div>
-
-                    <h3 class="h5">
-                        Médicos
-                    </h3>
-
-                    <p class="text-secondary">
-
-                        Registrar profesionales médicos,
-                        consultar sus datos y administrar
-                        las especialidades que tienen asignadas.
-
-                    </p>
-
-                    <a
-                            href="${pageContext.request.contextPath}/admin/medicos"
-                            class="btn btn-outline-success">
-
-                        Administrar médicos
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-
-            <div class="card tarjeta-opcion shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="icono-modulo mb-3">
-                        <i class="bi bi-hospital"></i>
-                    </div>
-
-                    <h3 class="h5">
-                        Sedes hospitalarias
-                    </h3>
-
-                    <p class="text-secondary">
-
-                        Registrar y consultar las ubicaciones
-                        físicas donde funcionarán los consultorios
-                        y servicios hospitalarios.
-
-                    </p>
-
-                    <a
-                            href="${pageContext.request.contextPath}/admin/sedes"
-                            class="btn btn-outline-success">
-
-                        Administrar sedes
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-
-            <div class="card tarjeta-opcion shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="icono-modulo mb-3">
-                        <i class="bi bi-door-open"></i>
-                    </div>
-
-                    <h3 class="h5">
-                        Consultorios
-                    </h3>
-
-                    <p class="text-secondary">
-
-                        Registrar y consultar los espacios físicos
-                        de cada sede donde se realizarán consultas,
-                        procedimientos y otros servicios médicos.
-
-                    </p>
-
-                    <a
-                            href="${pageContext.request.contextPath}/admin/consultorios"
-                            class="btn btn-outline-success">
-
-                        Administrar consultorios
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-
-            <div class="card tarjeta-opcion shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="icono-modulo mb-3">
-                        <i class="bi bi-people"></i>
-                    </div>
-
-                    <h3 class="h5">
-                        Usuarios
-                    </h3>
-
-                    <p class="text-secondary">
-
-                        Crear cuentas, consultar usuarios,
-                        activar, bloquear o inactivar accesos.
-
-                    </p>
-
-                    <button
-                            type="button"
-                            class="btn btn-outline-secondary"
-                            disabled>
-
-                        Próximamente
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-
-            <div class="card tarjeta-opcion shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="icono-modulo mb-3">
-                        <i class="bi bi-shield-lock"></i>
-                    </div>
-
-                    <h3 class="h5">
-                        Roles y permisos
-                    </h3>
-
-                    <p class="text-secondary">
-
-                        Administrar roles y controlar
-                        qué funciones puede utilizar cada cuenta.
-
-                    </p>
-
-                    <button
-                            type="button"
-                            class="btn btn-outline-secondary"
-                            disabled>
-
-                        Próximamente
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-
-            <div class="card tarjeta-opcion shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="icono-modulo mb-3">
-                        <i class="bi bi-activity"></i>
-                    </div>
-
-                    <h3 class="h5">
-                        Auditoría
-                    </h3>
-
-                    <p class="text-secondary">
-
-                        Consultar las acciones realizadas
-                        por los usuarios dentro del sistema.
-
-                    </p>
-
-                    <button
-                            type="button"
-                            class="btn btn-outline-secondary"
-                            disabled>
-
-                        Próximamente
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-
-            <div class="card tarjeta-opcion shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="icono-modulo mb-3">
-                        <i class="bi bi-gear"></i>
-                    </div>
-
-                    <h3 class="h5">
-                        Configuración
-                    </h3>
-
-                    <p class="text-secondary">
-
-                        Ajustar parámetros generales,
-                        políticas y datos institucionales.
-
-                    </p>
-
-                    <button
-                            type="button"
-                            class="btn btn-outline-secondary"
-                            disabled>
-
-                        Próximamente
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-
-            <div class="card tarjeta-opcion shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="icono-modulo mb-3">
-                        <i class="bi bi-bar-chart"></i>
-                    </div>
-
-                    <h3 class="h5">
-                        Informes
-                    </h3>
-
-                    <p class="text-secondary">
-
-                        Consultar estadísticas, actividad
-                        y reportes administrativos.
-
-                    </p>
-
-                    <button
-                            type="button"
-                            class="btn btn-outline-secondary"
-                            disabled>
-
-                        Próximamente
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-
-            <div class="card tarjeta-opcion shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="icono-modulo mb-3">
-                        <i class="bi bi-heart-pulse-fill"></i>
-                    </div>
-
-                    <h3 class="h5">
-                        Estado del sistema
-                    </h3>
-
-                    <p class="text-secondary">
-
-                        Revisar el funcionamiento de servicios,
-                        base de datos y componentes internos.
-
-                    </p>
-
-                    <button
-                            type="button"
-                            class="btn btn-outline-secondary"
-                            disabled>
-
-                        Próximamente
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
     </section>
 
+    <section>
+        <div class="admin-section-heading"><div><h2 class="h4">Seguridad, control y análisis</h2><p class="text-secondary mb-0">Módulos finales de administración y preparación del sistema.</p></div><span class="badge text-bg-primary">Etapa 8</span></div>
+        <div class="row g-4">
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card module-security d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-people"></i></span><h3>Usuarios</h3><p>Consultá cuentas, bloqueos, accesos y estados de seguridad.</p><a class="btn btn-primary align-self-start" href="${pageContext.request.contextPath}/admin/usuarios">Gestionar usuarios</a></article></div>
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card module-security d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-person-lock"></i></span><h3>Roles y accesos</h3><p>Revisá los perfiles habilitados y su matriz de permisos.</p><a class="btn btn-primary align-self-start" href="${pageContext.request.contextPath}/admin/roles">Ver roles</a></article></div>
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card module-security d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-shield-check"></i></span><h3>Auditoría</h3><p>Investigá operaciones, responsables, rutas y resultados.</p><a class="btn btn-primary align-self-start" href="${pageContext.request.contextPath}/admin/auditoria">Abrir auditoría</a></article></div>
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-sliders2"></i></span><h3>Configuración</h3><p>Ajustá parámetros con historial y motivo obligatorio.</p><a class="btn btn-primary align-self-start" href="${pageContext.request.contextPath}/admin/configuracion">Abrir configuración</a></article></div>
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card module-analysis d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-graph-up-arrow"></i></span><h3>Informes y demanda</h3><p>Analizá citas, horarios de concentración, pagos y crecimiento.</p><a class="btn btn-primary align-self-start" href="${pageContext.request.contextPath}/admin/informes">Abrir informes</a></article></div>
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card module-analysis d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-activity"></i></span><h3>Estado del sistema</h3><p>Verificá PostgreSQL, conexiones, memoria y actividad técnica.</p><a class="btn btn-primary align-self-start" href="${pageContext.request.contextPath}/admin/estado-sistema">Comprobar estado</a></article></div>
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card module-analysis d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-envelope-check"></i></span><h3>Correo electrónico</h3><p>Verificá Resend antes de enviar comprobantes e indicaciones médicas.</p><a class="btn btn-primary align-self-start" href="${pageContext.request.contextPath}/admin/integraciones/correo">Configurar correo</a></article></div>
+            <div class="col-12 col-md-6 col-xl-4"><article class="card admin-module-card module-analysis d-flex flex-column"><span class="admin-module-icon"><i class="bi bi-chat-square-text"></i></span><h3>Mensajes SMS</h3><p>Conectá Twilio para probar recordatorios y confirmaciones de asistencia.</p><a class="btn btn-primary align-self-start" href="${pageContext.request.contextPath}/admin/integraciones/sms">Configurar SMS</a></article></div>
+        </div>
+    </section>
 </main>
-
-<script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
-</script>
-
+<script src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -50,7 +50,7 @@ html {
 
 body {
 
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Segoe UI', Arial, sans-serif;
 
     background: var(--background);
 
@@ -573,6 +573,12 @@ body {
 
     padding: 35px 25px;
 
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
 }
 
 
@@ -634,6 +640,8 @@ body {
     color: var(--text-light);
 
     line-height: 1.7;
+
+    flex: 1;
 
 }
 
@@ -919,6 +927,10 @@ body {
 
     height: 100%;
 
+    display: flex;
+
+    flex-direction: column;
+
     padding: 30px 25px;
 
     border: 1px solid #E5E7EB;
@@ -987,6 +999,8 @@ body {
 
     margin-bottom: 18px;
 
+    flex: 1;
+
 }
 
 
@@ -1017,6 +1031,87 @@ body {
 
     margin-left: 8px;
 
+}
+
+/* ==================================================
+   PORTADA RESPONSIVE
+   ================================================== */
+
+.specialties .row > div,
+.patient-services .row > div {
+    display: flex;
+}
+
+.specialty-card,
+.patient-service {
+    width: 100%;
+}
+
+@media (max-width: 767.98px) {
+    .specialties,
+    .doctors,
+    .patient-services,
+    .how-it-works {
+        padding-block: 3.75rem;
+    }
+
+    .specialties h2,
+    .doctors h2,
+    .patient-services h2,
+    .how-it-works h2 {
+        font-size: clamp(1.8rem, 8vw, 2.25rem);
+        line-height: 1.18;
+    }
+
+    .specialty-card .card-body,
+    .patient-service,
+    .step-card {
+        padding: 1.5rem 1.15rem;
+    }
+
+    .specialty-card:hover,
+    .patient-service:hover,
+    .step-card:hover {
+        transform: none;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .navbar-brand img {
+        height: 64px;
+    }
+
+    .navbar-brand span {
+        font-size: 1rem;
+    }
+
+    .navbar .container {
+        padding-inline: 0.85rem;
+    }
+
+    .hero-slide-image {
+        min-height: 560px;
+        height: min(650px, 88dvh);
+    }
+
+    .hero-content h1 {
+        font-size: clamp(2rem, 11vw, 3rem);
+        overflow-wrap: anywhere;
+    }
+
+    .hero-content p {
+        font-size: 1rem;
+    }
+
+    .specialties-link,
+    .doctors-link {
+        width: 100%;
+        white-space: normal;
+    }
+
+    .patient-service {
+        min-height: 0;
+    }
 }
 
 

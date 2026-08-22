@@ -1,0 +1,21 @@
+<nav class="navbar reception-navbar">
+    <div class="container">
+        <a class="navbar-brand" href="${pageContext.request.contextPath}/recepcion/inicio">
+            SoraCare-FPUNE
+        </a>
+        <div class="d-flex align-items-center gap-2 gap-md-3">
+            <a class="btn btn-outline-primary btn-sm d-none d-lg-inline-flex align-items-center gap-1"
+               href="${pageContext.request.contextPath}/recepcion/disponibilidad">
+                <i class="bi bi-calendar2-range"></i> Disponibilidad
+            </a>
+            <span class="reception-context d-none d-md-inline-flex">
+                <i class="bi bi-headset"></i> Centro de recepci&oacute;n
+            </span>
+            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                    Cerrar sesi&oacute;n
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>

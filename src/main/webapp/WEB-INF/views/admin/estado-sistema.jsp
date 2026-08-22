@@ -1,0 +1,25 @@
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
+<%@ page import="py.fpune.soracare.dto.EstadoSistemaDTO" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
+<%!
+    private String duracion(long segundos) {
+        long horas = segundos / 3600;
+        long minutos = (segundos % 3600) / 60;
+        return horas + " h " + minutos + " min";
+    }
+%>
+<%
+    EstadoSistemaDTO estado = (EstadoSistemaDTO) request.getAttribute("estado");
+    String error = (String) request.getAttribute("error");
+    DateTimeFormatter fechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+%>
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Estado del sistema | SoraCare-FPUNE</title><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css"><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815b"></head>
+<body class="app-shell app-admin"><%@ include file="_navbar.jspf" %><main class="container py-4 py-lg-5">
+<section class="admin-hero mb-4"><div class="row align-items-center"><div class="col-lg-9"><div class="admin-eyebrow">Etapa 8 · Supervisión técnica</div><h1>Estado del sistema</h1><p>Comprobá la disponibilidad de PostgreSQL, los recursos de la aplicación y la actividad operativa sin exponer credenciales ni datos sensibles.</p></div><div class="col-lg-3 text-lg-end"><span class="admin-hero-icon"><i class="bi bi-activity"></i></span></div></div></section>
+<% if (error != null) { %><div class="alert alert-danger"><i class="bi bi-exclamation-octagon me-2"></i><%= error %></div><% } %>
+<div class="admin-section-heading"><div><h2 class="h4">Resumen en tiempo real</h2><p class="text-secondary mb-0">Lectura obtenida al abrir esta pantalla.</p></div><div class="d-flex gap-2"><a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/estado-sistema"><i class="bi bi-arrow-clockwise me-1"></i>Actualizar</a><a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/inicio">Volver</a></div></div>
+<% if (estado != null) { %>
+<section class="row g-3 mb-4"><div class="col-6 col-lg-3"><div class="card admin-stat-card"><i class="bi bi-database-check admin-stat-icon"></i><div class="admin-stat-value fs-4"><span class="admin-status-dot me-2"></span>Operativa</div><div class="admin-stat-label">Base de datos PostgreSQL <%= estado.versionPostgreSql() %></div></div></div><div class="col-6 col-lg-3"><div class="card admin-stat-card"><i class="bi bi-people admin-stat-icon"></i><div class="admin-stat-value"><%= estado.usuariosActivos() %></div><div class="admin-stat-label">Usuarios activos</div></div></div><div class="col-6 col-lg-3"><div class="card admin-stat-card"><i class="bi bi-calendar-check admin-stat-icon"></i><div class="admin-stat-value"><%= estado.citasFuturas() %></div><div class="admin-stat-label">Citas futuras activas</div></div></div><div class="col-6 col-lg-3"><div class="card admin-stat-card"><i class="bi bi-shield-check admin-stat-icon"></i><div class="admin-stat-value"><%= estado.eventosUltimas24Horas() %></div><div class="admin-stat-label">Eventos auditados en 24 h</div></div></div></section>
+<section class="row g-4"><div class="col-lg-6"><article class="card admin-content-card h-100"><h2 class="h5 mb-4"><i class="bi bi-hdd-network text-primary me-2"></i>Aplicación y conexiones</h2><dl class="row mb-0"><dt class="col-7">Conexiones creadas</dt><dd class="col-5 text-end"><%= estado.conexionesCreadas() %> / <%= estado.maximoConexiones() %></dd><dt class="col-7">Conexiones disponibles</dt><dd class="col-5 text-end"><%= estado.conexionesDisponibles() %></dd><dt class="col-7">Tiempo activo de Tomcat</dt><dd class="col-5 text-end"><%= duracion(estado.tiempoActivoSegundos()) %></dd><dt class="col-7">Procesadores disponibles</dt><dd class="col-5 text-end"><%= estado.procesadores() %></dd><dt class="col-7">Versión de Java</dt><dd class="col-5 text-end"><%= estado.versionJava() %></dd></dl></article></div><div class="col-lg-6"><article class="card admin-content-card h-100"><h2 class="h5 mb-4"><i class="bi bi-speedometer2 text-primary me-2"></i>Recursos</h2><p class="text-secondary">Memoria utilizada por la máquina virtual</p><div class="progress mb-3" style="height: 12px"><div class="progress-bar" style="width: <%= Math.min(100, estado.memoriaMaximaMb() == 0 ? 0 : estado.memoriaUsadaMb() * 100 / estado.memoriaMaximaMb()) %>%"></div></div><div class="d-flex justify-content-between"><strong><%= estado.memoriaUsadaMb() %> MB usados</strong><span class="text-secondary"><%= estado.memoriaMaximaMb() %> MB máximo</span></div><hr><p class="mb-1 text-secondary">Hora confirmada por PostgreSQL</p><strong><%= estado.horaBaseDatos() == null ? "—" : estado.horaBaseDatos().format(fechaHora) %></strong></article></div></section>
+<% } %>
+</main><script src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js"></script></body></html>

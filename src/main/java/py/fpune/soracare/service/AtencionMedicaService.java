@@ -7,9 +7,11 @@ import py.fpune.soracare.dao.CitaDAO;
 import py.fpune.soracare.dao.EstadoCitaDAO;
 import py.fpune.soracare.dao.MedicoDAO;
 import py.fpune.soracare.dao.PacienteDAO;
+import py.fpune.soracare.dao.RecetaMedicaDAO;
 import py.fpune.soracare.dto.AtencionMedicaDTO;
 import py.fpune.soracare.dto.CitaAgendaMedicoDTO;
 import py.fpune.soracare.dto.PanelClinicoPacienteDTO;
+import py.fpune.soracare.dto.RecetaMedicaDTO;
 import py.fpune.soracare.dto.RegistroAtencionMedicaDTO;
 import py.fpune.soracare.mvc.model.Cita;
 import py.fpune.soracare.mvc.model.EstadoCita;
@@ -21,11 +23,15 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
 
 public class AtencionMedicaService {
+
+    private static final System.Logger LOGGER =
+            System.getLogger(AtencionMedicaService.class.getName());
 
     private static final String ESTADO_CONFIRMADA = "CONFIRMADA";
     private static final String ESTADO_EN_ATENCION = "EN_ATENCION";
@@ -38,6 +44,9 @@ public class AtencionMedicaService {
     private final EstadoCitaDAO estadoCitaDAO = new EstadoCitaDAO();
     private final AgendaMedicoDAO agendaMedicoDAO = new AgendaMedicoDAO();
     private final AtencionMedicaDAO atencionMedicaDAO = new AtencionMedicaDAO();
+    private final RecetaMedicaDAO recetaMedicaDAO = new RecetaMedicaDAO();
+    private final RecetaPdfService recetaPdfService = new RecetaPdfService();
+    private final CorreoResendService correoResendService = new CorreoResendService();
 
     public PanelClinicoPacienteDTO cargarPanel(
             long idPersonaMedico,
@@ -167,6 +176,8 @@ public class AtencionMedicaService {
     ) throws SQLException {
         validarIdentificadores(idPersonaMedico, idCita, idUsuario);
         DatosClinicosNormalizados normalizados = normalizar(datos, finalizar);
+        AtencionMedicaDTO resultado;
+        Paciente pacienteParaCorreo = null;
 
         try (Connection conexion = ConexionBD.obtenerConexion()) {
             try {
@@ -187,7 +198,7 @@ public class AtencionMedicaService {
                 }
 
                 String estadoAtencion = finalizar ? "FINALIZADA" : "EN_CURSO";
-                AtencionMedicaDTO actualizada = atencionMedicaDAO.actualizar(
+                resultado = atencionMedicaDAO.actualizar(
                         conexion,
                         actual.idAtencion(),
                         medico.getIdMedico(),
@@ -227,10 +238,13 @@ public class AtencionMedicaService {
                             atendida.getIdEstadoCita(),
                             idUsuario
                     );
+                    pacienteParaCorreo = pacienteDAO.buscarPorId(
+                                    conexion, cita.getIdPaciente())
+                            .orElseThrow(() -> new SQLException(
+                                    "No fue posible recuperar el correo del paciente."));
                 }
 
                 conexion.commit();
-                return actualizada;
             } catch (Exception error) {
                 rollback(conexion, error);
                 propagar(
@@ -242,6 +256,170 @@ public class AtencionMedicaService {
                 throw new SQLException("No fue posible actualizar la atención médica.");
             }
         }
+
+        if (finalizar && pacienteParaCorreo != null) {
+            programarEnvioIndicaciones(resultado, pacienteParaCorreo);
+        }
+        return resultado;
+    }
+
+    private void programarEnvioIndicaciones(
+            AtencionMedicaDTO atencion,
+            Paciente paciente
+    ) {
+        try {
+            if (!atencionMedicaDAO.prepararEnvioIndicaciones(
+                    atencion.idAtencion(), paciente.getCorreo())) {
+                return;
+            }
+        } catch (SQLException error) {
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "La atención {0} finalizó, pero no pudo prepararse el correo de indicaciones.",
+                    atencion.idAtencion()
+            );
+            return;
+        }
+
+        if (!correoResendService.estaConfigurado()) {
+            guardarEstadoEnvioIndicaciones(
+                    atencion.idAtencion(),
+                    "NO_CONFIGURADO",
+                    null,
+                    null,
+                    "Las indicaciones están disponibles en el portal, pero Resend no está configurado."
+            );
+            return;
+        }
+        if (paciente.getCorreo() == null || paciente.getCorreo().isBlank()) {
+            guardarEstadoEnvioIndicaciones(
+                    atencion.idAtencion(),
+                    "FALLIDO",
+                    null,
+                    null,
+                    "El paciente no posee un correo electrónico registrado."
+            );
+            return;
+        }
+
+        DespachadorCorreoService.ejecutar(() -> {
+            try {
+                List<RecetaMedicaDTO> recetas = recetaMedicaDAO
+                        .listarPorAtencion(atencion.idAtencion());
+                RecetaPdfService.DocumentoPdf documento = recetaPdfService
+                        .generarResumenAtencion(atencion, paciente, recetas);
+                CorreoResendService.ResultadoEnvio envio = correoResendService.enviar(
+                        paciente.getCorreo(),
+                        "Indicaciones médicas de tu consulta - SoraCare-FPUNE",
+                        contenidoCorreoIndicaciones(atencion, paciente),
+                        List.of(new CorreoResendService.AdjuntoCorreo(
+                                documento.nombreArchivo(), documento.contenido())),
+                        "atencion-" + atencion.idAtencion() + "-indicaciones-v1"
+                );
+                guardarEstadoEnvioIndicaciones(
+                        atencion.idAtencion(),
+                        "ENVIADO",
+                        "RESEND",
+                        envio.referenciaProveedor(),
+                        "Resend aceptó las indicaciones de la atención "
+                                + atencion.idAtencion() + " para "
+                                + envio.destinatario() + "."
+                );
+            } catch (Exception error) {
+                LOGGER.log(
+                        System.Logger.Level.ERROR,
+                        "No fue posible enviar las indicaciones de la atención {0} por Resend.",
+                        atencion.idAtencion()
+                );
+                guardarEstadoEnvioIndicaciones(
+                        atencion.idAtencion(),
+                        "FALLIDO",
+                        "RESEND",
+                        null,
+                        "Las indicaciones no pudieron enviarse: "
+                                + limitarDetalle(error.getMessage())
+                );
+            }
+        });
+    }
+
+    private void guardarEstadoEnvioIndicaciones(
+            long idAtencion,
+            String estado,
+            String proveedor,
+            String referencia,
+            String detalle
+    ) {
+        try {
+            atencionMedicaDAO.registrarResultadoEnvioIndicaciones(
+                    idAtencion, estado, proveedor, referencia, detalle);
+        } catch (SQLException error) {
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "No fue posible guardar el estado del correo de la atención {0}.",
+                    idAtencion
+            );
+        }
+    }
+
+    private static String contenidoCorreoIndicaciones(
+            AtencionMedicaDTO atencion,
+            Paciente paciente
+    ) {
+        String fecha = atencion.fechaHoraFin() == null
+                ? "Fecha no informada"
+                : atencion.fechaHoraFin()
+                .atZoneSameInstant(DisponibilidadService.ZONA_HORARIA)
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        return """
+                <!doctype html>
+                <html lang="es">
+                <body style="margin:0;background:#f4f7fb;font-family:Arial,sans-serif;color:#10213a">
+                  <div style="max-width:640px;margin:32px auto;background:#fff;border:1px solid #dbe5f1;border-radius:18px;overflow:hidden">
+                    <div style="padding:28px 32px;background:linear-gradient(135deg,#2452c7,#159fc0);color:#fff">
+                      <p style="margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.08em">SORACARE-FPUNE</p>
+                      <h1 style="margin:0;font-size:28px">Tus indicaciones médicas están disponibles</h1>
+                    </div>
+                    <div style="padding:30px 32px">
+                      <p>Hola, <strong>%s %s</strong>.</p>
+                      <p>Tu atención fue finalizada. Adjuntamos un PDF con el tratamiento, los estudios solicitados, los cuidados y los medicamentos indicados.</p>
+                      <div style="margin:24px 0;padding:18px;background:#eef5ff;border-radius:12px;line-height:1.7">
+                        <strong>Profesional:</strong> %s<br>
+                        <strong>Especialidad:</strong> %s<br>
+                        <strong>Fecha de atención:</strong> %s
+                      </div>
+                      <p>Conservá este documento y seguí únicamente las indicaciones del profesional que realizó tu consulta.</p>
+                      <p style="color:#5b6b82;font-size:13px">Documento académico generado por SoraCare-FPUNE. Si presentás una urgencia, acudí al servicio médico correspondiente.</p>
+                    </div>
+                  </div>
+                </body>
+                </html>
+                """.formatted(
+                escaparHtml(paciente.getNombres()),
+                escaparHtml(paciente.getApellidos()),
+                escaparHtml(atencion.medicoNombreCompleto()),
+                escaparHtml(atencion.especialidad()),
+                escaparHtml(fecha)
+        );
+    }
+
+    private static String escaparHtml(String valor) {
+        if (valor == null) return "";
+        return valor.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+
+    private static String limitarDetalle(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return "sin detalle del proveedor";
+        }
+        String limpio = valor.replace('\r', ' ').replace('\n', ' ').strip();
+        return limpio.length() <= 300
+                ? limpio
+                : limpio.substring(0, 300) + "...";
     }
 
     private Medico buscarMedicoActivo(long idPersona) throws SQLException {
