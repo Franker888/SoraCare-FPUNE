@@ -154,11 +154,11 @@
             <div class="col-12 col-md-6 col-lg-3">
                 <article class="card doctor-work-card h-100 d-flex flex-column">
                     <span class="doctor-work-icon availability-icon"><i class="bi bi-calendar2-range"></i></span>
-                    <h3>Mis horarios libres</h3>
-                    <p>Revis&aacute; los pr&oacute;ximos d&iacute;as y horas que todav&iacute;a no tienen pacientes agendados.</p>
+                    <h3>Mi disponibilidad</h3>
+                    <p>Bloque&aacute; un d&iacute;a o un intervalo cuando no puedas atender y revis&aacute; las citas afectadas.</p>
                     <a class="btn btn-outline-primary align-self-start mt-auto"
-                       href="${pageContext.request.contextPath}/medico/disponibilidad">
-                        Ver disponibilidad <i class="bi bi-arrow-right ms-1"></i>
+                       href="${pageContext.request.contextPath}/medico/mi-disponibilidad">
+                        Gestionar disponibilidad <i class="bi bi-arrow-right ms-1"></i>
                     </a>
                 </article>
             </div>

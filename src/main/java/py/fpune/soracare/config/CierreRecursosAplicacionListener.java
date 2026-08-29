@@ -27,9 +27,14 @@ public class CierreRecursosAplicacionListener implements ServletContextListener 
 
         try (Connection conexion = ConexionBD.obtenerConexion()) {
             evento.getServletContext().log("Pool de conexiones de SoraCare inicializado.");
-        } catch (SQLException excepcion) {
+            JpaContexto.inicializar();
             evento.getServletContext().log(
-                    "No fue posible preparar la conexión a PostgreSQL durante el arranque.",
+                    "Unidad de persistencia " + JpaContexto.UNIDAD_PERSISTENCIA
+                            + " inicializada."
+            );
+        } catch (SQLException | RuntimeException excepcion) {
+            evento.getServletContext().log(
+                    "No fue posible preparar PostgreSQL y JPA durante el arranque.",
                     excepcion
             );
         }
@@ -38,6 +43,7 @@ public class CierreRecursosAplicacionListener implements ServletContextListener 
     @Override
     public void contextDestroyed(ServletContextEvent evento) {
         DespachadorCorreoService.cerrar();
+        JpaContexto.cerrar();
         ConexionBD.cerrar();
         SentryMonitoreoService.cerrar();
     }

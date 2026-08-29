@@ -21,6 +21,7 @@ El sistema ya funciona como una plataforma integral para cuatro perfiles: **admi
 - Apache Tomcat 10.1.57 para el entorno local.
 - PostgreSQL como base de datos.
 - JDBC y una separación pedagógica en controladores, servicios, DAO, DTO y modelos.
+- Jakarta Persistence 3.1 con Hibernate ORM 6.6 para la migración incremental de los DAO; la primera unidad de persistencia administra las excepciones de horarios médicos.
 - BCrypt para las contraseñas locales.
 - HTML, CSS, JavaScript y Bootstrap 5.3.3 en la interfaz.
 - PDF generado desde Java para comprobantes e indicaciones.
@@ -39,6 +40,9 @@ src/main/java/py/fpune/soracare/
 
 src/main/resources/db/migration/
   V001 ... V032 migraciones SQL acumulativas
+
+src/main/resources/META-INF/
+  persistence.xml unidad de persistencia SoraCarePU
 
 src/main/webapp/
   WEB-INF/views/ vistas JSP privadas
@@ -76,6 +80,8 @@ src/main/webapp/
 - Panel profesional con resumen de agenda.
 - Agenda del día automática y consulta de otras fechas.
 - Consulta de horarios libres propios.
+- Gestión de bloqueos totales o parciales de su propia disponibilidad.
+- Revisión y cancelación explícita de citas afectadas antes de guardar un bloqueo, con notificación al paciente.
 - Acceso únicamente a pacientes vinculados con sus citas.
 - Inicio, guardado parcial y finalización de atención.
 - Historia clínica previa y documentos autorizados del paciente.
@@ -106,9 +112,9 @@ src/main/webapp/
 
 ## 4. Agenda y disponibilidad
 
-La agenda se construye a partir de horarios recurrentes por médico, especialidad y consultorio. Las excepciones permiten bloqueos totales, bloqueos parciales o disponibilidad extraordinaria. La lista de fechas que ve el paciente se limita a días atendidos por el profesional seleccionado.
+La agenda se construye a partir de horarios recurrentes por médico, especialidad y consultorio. Las excepciones permiten bloqueos totales, bloqueos parciales o disponibilidad extraordinaria. La lista de fechas que ve el paciente se limita a días atendidos por el profesional seleccionado. El médico administra sus propios bloqueos desde `/medico/mi-disponibilidad`; si el período contiene citas futuras, primero debe cancelarlas con un motivo o reprogramarlas y el sistema nunca las elimina silenciosamente.
 
-El sistema evita que dos pacientes reserven el mismo médico, fecha y turno. La recepcionista puede consultar disponibilidad interna y el médico puede consultar sus espacios libres. Las búsquedas de disponibilidad se registran de forma analítica y sin almacenar el texto clínico del paciente.
+El sistema evita que dos pacientes reserven el mismo médico, fecha y turno. La recepcionista puede consultar disponibilidad interna y el médico puede consultar sus espacios libres. Las búsquedas de disponibilidad se registran de forma analítica y sin almacenar el texto clínico del paciente. `SoraCarePU` usa transacciones locales de Jakarta Persistence y reutiliza el conjunto de conexiones seguro existente; Flyway continúa siendo la única fuente del esquema y JPA tiene deshabilitada la generación de tablas.
 
 ## 5. Pagos y comprobantes
 
@@ -318,7 +324,7 @@ Directorios externos usados en la notebook actual:
 - Informes, auditoría, configuración, usuarios y roles administrativos.
 - Google Calendar: agregar y retirar cita.
 - Validación aislada de Turnstile: modo local, configuración incompleta, token aceptado, token inválido y acción incorrecta.
-- Trece pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile y protección anti-CSRF del endpoint push.
+- Dieciséis pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF y reglas de disponibilidad del médico.
 - Rutas públicas y paneles en resoluciones móviles y de escritorio.
 
 El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar una cantidad mayor que cero; una compilación sin ese resumen no reemplaza la evidencia de pruebas. Las pruebas manuales, de integración con PostgreSQL y de servicios externos siguen documentándose por separado.
@@ -334,6 +340,8 @@ El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar 
 7. Política de privacidad, términos, copias de seguridad y estrategia de recuperación.
 8. Ampliar las pruebas JUnit de integración con PostgreSQL, agregar integración continua y probar con más dispositivos reales.
 9. Revisión final de accesibilidad y seguridad antes de exponer datos reales.
+10. Evaluar una API REST futura con Spring cuando la migración incremental a Jakarta Persistence esté estable.
+11. Dockerizar Tomcat, PostgreSQL y la configuración local después de cerrar las mejoras solicitadas por el profesor.
 
 ## 14. Instrucciones para continuar en otro chat
 

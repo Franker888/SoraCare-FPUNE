@@ -1,18 +1,17 @@
 package py.fpune.soracare.service;
 
-import py.fpune.soracare.config.ConexionBD;
 import py.fpune.soracare.dao.ExcepcionHorarioMedicoDAO;
 import py.fpune.soracare.dto.RegistroExcepcionHorarioDTO;
 import py.fpune.soracare.mvc.model.ExcepcionHorarioMedico;
 import py.fpune.soracare.mvc.model.MedicoEspecialidad;
 import py.fpune.soracare.mvc.model.TipoExcepcionHorario;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Optional;
 
 public class ExcepcionHorarioMedicoService {
 
@@ -66,9 +65,7 @@ public class ExcepcionHorarioMedicoService {
         excepcion.setTipo(tipo);
         excepcion.setMotivo(motivo);
 
-        try (Connection conexion = ConexionBD.obtenerConexion()) {
-            return excepcionDAO.crear(conexion, excepcion);
-        }
+        return excepcionDAO.crear(excepcion);
     }
 
     public List<ExcepcionHorarioMedico> listarTodas() throws SQLException {
@@ -80,14 +77,28 @@ public class ExcepcionHorarioMedicoService {
         return excepcionDAO.listarActivasEnFecha(fecha);
     }
 
+    public List<ExcepcionHorarioMedico> listarPorMedico(long idMedico)
+            throws SQLException {
+        if (idMedico <= 0) {
+            throw new IllegalArgumentException("El médico seleccionado no es válido.");
+        }
+        return excepcionDAO.listarPorMedico(idMedico);
+    }
+
+    public Optional<ExcepcionHorarioMedico> buscarPorId(long idExcepcion)
+            throws SQLException {
+        if (idExcepcion <= 0) {
+            throw new IllegalArgumentException("La excepción seleccionada no es válida.");
+        }
+        return excepcionDAO.buscarPorId(idExcepcion);
+    }
+
     public void actualizarEstado(long idExcepcion, boolean activo) throws SQLException {
         if (idExcepcion <= 0) throw new IllegalArgumentException("La excepción seleccionada no es válida.");
-        try (Connection conexion = ConexionBD.obtenerConexion()) {
-            if (excepcionDAO.buscarPorId(conexion, idExcepcion).isEmpty()) {
-                throw new IllegalArgumentException("La excepción seleccionada no existe.");
-            }
-            excepcionDAO.actualizarActivo(conexion, idExcepcion, activo);
+        if (excepcionDAO.buscarPorId(idExcepcion).isEmpty()) {
+            throw new IllegalArgumentException("La excepción seleccionada no existe.");
         }
+        excepcionDAO.actualizarActivo(idExcepcion, activo);
     }
 
     private static void validarDatosPorTipo(

@@ -198,34 +198,9 @@ public class CitaService {
     }
 
     public void cancelar(long idCita, long idUsuario, String motivo) throws SQLException {
-        if (idCita <= 0 || idUsuario <= 0) throw new IllegalArgumentException("La cita seleccionada no es válida.");
-        String motivoNormalizado = normalizarObligatorio(motivo, 500,
-                "El motivo de cancelación es obligatorio.",
-                "El motivo de cancelación no puede superar 500 caracteres.");
-        try (Connection conexion = ConexionBD.obtenerConexion()) {
-            try {
-                conexion.setAutoCommit(false);
-                Cita cita = citaDAO.buscarPorId(conexion, idCita)
-                        .orElseThrow(() -> new IllegalArgumentException("La cita seleccionada no existe."));
-                if (ESTADO_CANCELADA.equals(cita.getCodigoEstado())) {
-                    throw new IllegalArgumentException("La cita ya está cancelada.");
-                }
-                if ("ATENDIDA".equals(cita.getCodigoEstado())) {
-                    throw new IllegalArgumentException("Una cita atendida no puede cancelarse.");
-                }
-                EstadoCita cancelada = estadoDAO.buscarPorCodigo(conexion, ESTADO_CANCELADA)
-                        .orElseThrow(() -> new SQLException("No existe el estado de cancelación."));
-                citaDAO.cancelar(conexion, idCita, cancelada.getIdEstadoCita(), idUsuario, motivoNormalizado);
-                pagoDAO.resolverCancelacion(conexion, idCita, idUsuario);
-                registrarCancelacion(conexion, cita);
-                conexion.commit();
-            } catch (Exception error) {
-                rollback(conexion, error);
-                if (error instanceof IllegalArgumentException validacion) throw validacion;
-                if (error instanceof SQLException sql) throw sql;
-                throw new SQLException("No fue posible cancelar la cita.", error);
-            }
-        }
+        cancelarValidando(idCita, idUsuario, motivo, cita -> {
+            // El acceso administrativo ya fue validado por su filtro de rol.
+        });
     }
 
     public void cancelarPorPaciente(long idCita, long idPaciente, long idUsuario, String motivo)
@@ -233,36 +208,104 @@ public class CitaService {
         if (idCita <= 0 || idPaciente <= 0 || idUsuario <= 0) {
             throw new IllegalArgumentException("La cita seleccionada no es valida.");
         }
-        String motivoNormalizado = normalizarObligatorio(motivo, 500,
-                "El motivo de cancelacion es obligatorio.",
-                "El motivo de cancelacion no puede superar 500 caracteres.");
+        cancelarValidando(idCita, idUsuario, motivo, cita -> {
+            if (!Long.valueOf(idPaciente).equals(cita.getIdPaciente())) {
+                throw new IllegalArgumentException(
+                        "No podés cancelar una cita de otro paciente."
+                );
+            }
+        });
+    }
+
+    public void cancelarPorMedico(
+            long idCita,
+            long idMedico,
+            long idUsuario,
+            String motivo
+    ) throws SQLException {
+        if (idCita <= 0 || idMedico <= 0 || idUsuario <= 0) {
+            throw new IllegalArgumentException("La cita seleccionada no es válida.");
+        }
+        cancelarValidando(idCita, idUsuario, motivo, cita -> {
+            if (!Long.valueOf(idMedico).equals(cita.getIdMedico())) {
+                throw new IllegalArgumentException(
+                        "No podés cancelar una cita asignada a otro médico."
+                );
+            }
+            if (!cita.getFechaHoraInicio().isAfter(
+                    OffsetDateTime.now(DisponibilidadService.ZONA_HORARIA))) {
+                throw new IllegalArgumentException(
+                        "Una cita que ya comenzó no puede cancelarse desde disponibilidad."
+                );
+            }
+            if ("EN_ATENCION".equals(cita.getCodigoEstado())) {
+                throw new IllegalArgumentException(
+                        "Una cita en atención no puede cancelarse."
+                );
+            }
+        });
+    }
+
+    private void cancelarValidando(
+            long idCita,
+            long idUsuario,
+            String motivo,
+            ValidadorCancelacion validador
+    ) throws SQLException {
+        if (idCita <= 0 || idUsuario <= 0) {
+            throw new IllegalArgumentException("La cita seleccionada no es válida.");
+        }
+        String motivoNormalizado = normalizarObligatorio(
+                motivo,
+                500,
+                "El motivo de cancelación es obligatorio.",
+                "El motivo de cancelación no puede superar 500 caracteres."
+        );
         try (Connection conexion = ConexionBD.obtenerConexion()) {
             try {
                 conexion.setAutoCommit(false);
                 Cita cita = citaDAO.buscarPorId(conexion, idCita)
-                        .orElseThrow(() -> new IllegalArgumentException("La cita seleccionada no existe."));
-                if (!Long.valueOf(idPaciente).equals(cita.getIdPaciente())) {
-                    throw new IllegalArgumentException("No podes cancelar una cita de otro paciente.");
-                }
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "La cita seleccionada no existe."
+                        ));
+                validador.validar(cita);
                 if (ESTADO_CANCELADA.equals(cita.getCodigoEstado())) {
-                    throw new IllegalArgumentException("La cita ya esta cancelada.");
+                    throw new IllegalArgumentException("La cita ya está cancelada.");
                 }
                 if ("ATENDIDA".equals(cita.getCodigoEstado())) {
-                    throw new IllegalArgumentException("Una cita atendida no puede cancelarse.");
+                    throw new IllegalArgumentException(
+                            "Una cita atendida no puede cancelarse."
+                    );
                 }
-                EstadoCita cancelada = estadoDAO.buscarPorCodigo(conexion, ESTADO_CANCELADA)
-                        .orElseThrow(() -> new SQLException("No existe el estado de cancelacion."));
-                citaDAO.cancelar(conexion, idCita, cancelada.getIdEstadoCita(), idUsuario, motivoNormalizado);
+                EstadoCita cancelada = estadoDAO
+                        .buscarPorCodigo(conexion, ESTADO_CANCELADA)
+                        .orElseThrow(() -> new SQLException(
+                                "No existe el estado de cancelación."
+                        ));
+                citaDAO.cancelar(
+                        conexion,
+                        idCita,
+                        cancelada.getIdEstadoCita(),
+                        idUsuario,
+                        motivoNormalizado
+                );
                 pagoDAO.resolverCancelacion(conexion, idCita, idUsuario);
-                registrarCancelacion(conexion, cita);
+                registrarCancelacion(conexion, cita, motivoNormalizado);
                 conexion.commit();
             } catch (Exception error) {
                 rollback(conexion, error);
-                if (error instanceof IllegalArgumentException validacion) throw validacion;
+                if (error instanceof IllegalArgumentException validacion) {
+                    throw validacion;
+                }
                 if (error instanceof SQLException sql) throw sql;
                 throw new SQLException("No fue posible cancelar la cita.", error);
             }
         }
+    }
+
+    @FunctionalInterface
+    private interface ValidadorCancelacion {
+        void validar(Cita cita);
     }
 
     public Cita buscarParaReprogramarPorPaciente(long idCita, long idPaciente)
@@ -381,7 +424,11 @@ public class CitaService {
         return a == null ? b == null : a.equals(b);
     }
 
-    private void registrarCancelacion(Connection conexion, Cita cita) throws SQLException {
+    private void registrarCancelacion(
+            Connection conexion,
+            Cita cita,
+            String motivo
+    ) throws SQLException {
         notificacionDAO.registrarEventoCita(
                 conexion,
                 cita.getIdCita(),
@@ -389,7 +436,8 @@ public class CitaService {
                 "CANCELADA-1",
                 "Cita cancelada",
                 "Tu cita del " + formatearFechaAviso(cita.getFechaHoraInicio())
-                        + " fue cancelada. Podés revisar el estado resultante del pago desde Mis citas."
+                        + " fue cancelada. Motivo: " + motivo
+                        + ". Podés revisar el estado resultante del pago desde Mis citas."
         );
     }
 
