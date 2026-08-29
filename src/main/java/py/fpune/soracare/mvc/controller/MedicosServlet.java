@@ -18,6 +18,7 @@ import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
 import py.fpune.soracare.service.UsuarioService;
+import py.fpune.soracare.service.VerificacionContrasenaException;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -204,6 +205,18 @@ public class MedicosServlet extends HttpServlet {
                             + RUTA_MEDICOS
                             + "?resultado=cuenta-creada"
             );
+
+        } catch (VerificacionContrasenaException error) {
+            log(
+                    "No fue posible consultar Pwned Passwords al crear "
+                            + "la cuenta del médico.",
+                    error
+            );
+            response.setStatus(
+                    HttpServletResponse.SC_SERVICE_UNAVAILABLE
+            );
+            request.setAttribute("error", error.getMessage());
+            mostrarVista(request, response);
 
         } catch (SQLException error) {
             procesarErrorOperacion(

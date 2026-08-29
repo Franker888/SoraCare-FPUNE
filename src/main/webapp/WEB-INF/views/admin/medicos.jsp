@@ -979,7 +979,8 @@
                     <div class="col-12">
                         <div class="form-text">
                             La contraseña debe tener mayúscula, minúscula,
-                            número y al menos 10 caracteres. El médico deberá
+                            número y al menos 10 caracteres, y no debe aparecer
+                            en filtraciones conocidas. El médico deberá
                             reemplazarla al iniciar sesión por primera vez.
                         </div>
                     </div>

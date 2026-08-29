@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpSession;
 import py.fpune.soracare.dto.SolicitudCambioContrasenaDTO;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 import py.fpune.soracare.service.CambioContrasenaService;
+import py.fpune.soracare.service.VerificacionContrasenaException;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -165,6 +166,21 @@ public class CambioContrasenaServlet extends HttpServlet {
             redirigirAlDashboard(
                     request,
                     response
+            );
+
+        } catch (VerificacionContrasenaException error) {
+
+            log(
+                    "No fue posible consultar Pwned Passwords durante "
+                            + "el cambio de contraseña.",
+                    error
+            );
+
+            mostrarError(
+                    request,
+                    response,
+                    error.getMessage(),
+                    HttpServletResponse.SC_SERVICE_UNAVAILABLE
             );
 
         } catch (IllegalArgumentException error) {

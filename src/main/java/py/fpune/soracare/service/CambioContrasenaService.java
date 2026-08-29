@@ -22,9 +22,18 @@ public class CambioContrasenaService {
     private static final int LONGITUD_MAXIMA_CONTRASENA = 72;
 
     private final UsuarioDAO usuarioDAO;
+    private final PwnedPasswordsService pwnedPasswordsService;
 
     public CambioContrasenaService() {
-        this.usuarioDAO = new UsuarioDAO();
+        this(new UsuarioDAO(), new PwnedPasswordsService());
+    }
+
+    CambioContrasenaService(
+            UsuarioDAO usuarioDAO,
+            PwnedPasswordsService pwnedPasswordsService
+    ) {
+        this.usuarioDAO = usuarioDAO;
+        this.pwnedPasswordsService = pwnedPasswordsService;
     }
 
     public UsuarioAutenticadoDTO cambiarContrasena(
@@ -40,37 +49,32 @@ public class CambioContrasenaService {
                 solicitud
         );
 
-        try (
-                Connection conexion =
-                        ConexionBD.obtenerConexion()
-        ) {
+        Usuario usuario;
+        try (Connection conexion = ConexionBD.obtenerConexion()) {
+            usuario = buscarUsuario(conexion, idUsuario);
+            validarEstadoUsuario(usuario);
+            verificarContrasenaActual(
+                    solicitud.getContrasenaActual(),
+                    usuario.getContrasenaHash()
+            );
+            verificarContrasenaDiferente(
+                    solicitud.getNuevaContrasena(),
+                    usuario.getContrasenaHash()
+            );
+        }
+
+        pwnedPasswordsService.validar(
+                solicitud.getNuevaContrasena()
+        );
+
+        String nuevoHash = CodificadorContrasenaBCrypt.codificar(
+                solicitud.getNuevaContrasena()
+        );
+
+        try (Connection conexion = ConexionBD.obtenerConexion()) {
             conexion.setAutoCommit(false);
 
             try {
-                Usuario usuario =
-                        buscarUsuario(
-                                conexion,
-                                idUsuario
-                        );
-
-                validarEstadoUsuario(
-                        usuario
-                );
-
-                verificarContrasenaActual(
-                        solicitud.getContrasenaActual(),
-                        usuario.getContrasenaHash()
-                );
-
-                verificarContrasenaDiferente(
-                        solicitud.getNuevaContrasena(),
-                        usuario.getContrasenaHash()
-                );
-
-                String nuevoHash =
-                        CodificadorContrasenaBCrypt.codificar(
-                                solicitud.getNuevaContrasena()
-                        );
 
                 usuarioDAO.actualizarContrasena(
                         conexion,

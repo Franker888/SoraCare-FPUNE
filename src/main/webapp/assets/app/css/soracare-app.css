@@ -69,6 +69,35 @@
     font-size: .82rem;
 }
 
+/* Cloudflare Turnstile */
+.turnstile-security {
+    width: 100%;
+    padding: 0.85rem;
+    overflow: hidden;
+    border: 1px solid #dbe7f8;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #f8fbff 0%, #f0fdfa 100%);
+}
+
+.turnstile-security .cf-turnstile {
+    width: 100%;
+    min-width: 0;
+}
+
+.turnstile-security p {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0.65rem 0 0;
+    color: #64748b;
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.turnstile-security p i {
+    color: var(--sc-success);
+}
+
 .google-registration-entry {
     background: linear-gradient(135deg, #fff 0%, #f3f8ff 100%);
     border: 1px solid #d8e5fb;

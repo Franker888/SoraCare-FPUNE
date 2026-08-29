@@ -30,6 +30,16 @@ public class UsuarioService {
     private final UsuarioDAO usuarioDAO =
             new UsuarioDAO();
 
+    private final PwnedPasswordsService pwnedPasswordsService;
+
+    public UsuarioService() {
+        this(new PwnedPasswordsService());
+    }
+
+    UsuarioService(PwnedPasswordsService pwnedPasswordsService) {
+        this.pwnedPasswordsService = pwnedPasswordsService;
+    }
+
     public Usuario crearUsuario(
             SolicitudCreacionUsuarioDTO solicitud
     ) throws SQLException {
@@ -68,6 +78,10 @@ public class UsuarioService {
         validarContrasenas(
                 solicitud.getContrasena(),
                 solicitud.getConfirmacionContrasena()
+        );
+
+        pwnedPasswordsService.validar(
+                solicitud.getContrasena()
         );
 
         String nombreRol =

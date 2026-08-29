@@ -11,6 +11,7 @@ import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 import py.fpune.soracare.mvc.util.UrlPublicaRequest;
 import py.fpune.soracare.service.AutenticacionService;
 import py.fpune.soracare.service.ConfiguracionGoogleService;
+import py.fpune.soracare.service.TurnstileService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -47,6 +48,7 @@ public class LoginServlet extends HttpServlet {
 
     private AutenticacionService autenticacionService;
     private ConfiguracionGoogleService configuracionGoogleService;
+    private TurnstileService turnstileService;
 
     @Override
     public void init() {
@@ -54,6 +56,7 @@ public class LoginServlet extends HttpServlet {
                 new AutenticacionService();
         configuracionGoogleService =
                 new ConfiguracionGoogleService();
+        turnstileService = new TurnstileService();
     }
 
     @Override
@@ -89,7 +92,7 @@ public class LoginServlet extends HttpServlet {
             }
         }
 
-        prepararAccesoGoogle(request);
+        prepararIntegracionesPublicas(request);
         recuperarErrorGoogle(request);
 
         request.getRequestDispatcher(
@@ -131,6 +134,11 @@ public class LoginServlet extends HttpServlet {
         );
 
         try {
+            turnstileService.validar(
+                    request.getParameter("cf-turnstile-response"),
+                    "login"
+            );
+
             CredencialesAutenticacionDTO credenciales =
                     new CredencialesAutenticacionDTO(
                             identificador,
@@ -178,6 +186,21 @@ public class LoginServlet extends HttpServlet {
                     request,
                     response,
                     error.getMessage()
+            );
+
+        } catch (IOException error) {
+
+            log(
+                    "No fue posible validar Turnstile durante "
+                            + "el inicio de sesión.",
+                    error
+            );
+
+            mostrarError(
+                    request,
+                    response,
+                    "No pudimos completar la verificación de seguridad. "
+                            + "Intentá nuevamente en unos instantes."
             );
 
         } catch (SQLException error) {
@@ -235,7 +258,7 @@ public class LoginServlet extends HttpServlet {
                 mensaje
         );
 
-        prepararAccesoGoogle(request);
+        prepararIntegracionesPublicas(request);
 
         response.setStatus(
                 HttpServletResponse.SC_UNAUTHORIZED
@@ -309,6 +332,14 @@ public class LoginServlet extends HttpServlet {
                 "googleLoginUri",
                 UrlPublicaRequest.construir(request, "/auth/google")
         );
+    }
+
+    private void prepararIntegracionesPublicas(HttpServletRequest request) {
+        prepararAccesoGoogle(request);
+        String siteKey = turnstileService.obtenerSiteKey();
+        if (siteKey != null) {
+            request.setAttribute("turnstileSiteKey", siteKey);
+        }
     }
 
     private static void recuperarErrorGoogle(HttpServletRequest request) {

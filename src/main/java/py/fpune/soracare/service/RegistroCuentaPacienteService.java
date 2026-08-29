@@ -30,9 +30,31 @@ public class RegistroCuentaPacienteService {
     private final PacienteDAO pacienteDAO = new PacienteDAO();
     private final UsuarioDAO usuarioDAO = new UsuarioDAO();
     private final RolDAO rolDAO = new RolDAO();
+    private final PwnedPasswordsService pwnedPasswordsService;
+
+    public RegistroCuentaPacienteService() {
+        this(new PwnedPasswordsService());
+    }
+
+    RegistroCuentaPacienteService(
+            PwnedPasswordsService pwnedPasswordsService
+    ) {
+        this.pwnedPasswordsService = pwnedPasswordsService;
+    }
 
     public CuentaPacienteCreadaDTO registrar(RegistroCuentaPacienteDTO datos)
             throws SQLException {
+        if (datos == null) {
+            throw new IllegalArgumentException(
+                    "Los datos del registro son obligatorios."
+            );
+        }
+        validarContrasenas(
+                datos.contrasena(),
+                datos.confirmacionContrasena()
+        );
+        pwnedPasswordsService.validar(datos.contrasena());
+
         try (Connection conexion = ConexionBD.obtenerConexion()) {
             try {
                 conexion.setAutoCommit(false);

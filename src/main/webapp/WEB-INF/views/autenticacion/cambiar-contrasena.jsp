@@ -252,6 +252,7 @@
                                 <li>Un número.</li>
                                 <li>Un carácter especial.</li>
                                 <li>Debe ser diferente de la actual.</li>
+                                <li>No debe aparecer en filtraciones conocidas.</li>
                             </ul>
 
                         </div>

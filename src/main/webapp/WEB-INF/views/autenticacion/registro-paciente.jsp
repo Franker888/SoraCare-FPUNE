@@ -9,10 +9,13 @@
 <%
     String googleClientId = (String) request.getAttribute("googleClientId");
     String googleLoginUri = (String) request.getAttribute("googleLoginUri");
+    String turnstileSiteKey = (String) request.getAttribute("turnstileSiteKey");
     boolean googleHabilitado = googleClientId != null
             && !googleClientId.isBlank()
             && googleLoginUri != null
             && !googleLoginUri.isBlank();
+    boolean turnstileHabilitado = turnstileSiteKey != null
+            && !turnstileSiteKey.isBlank();
 %>
 <!doctype html>
 <html lang="es">
@@ -98,9 +101,25 @@
                 <div class="row g-3">
                     <div class="col-md-6"><label class="form-label" for="nombreUsuario">Nombre de usuario</label><input class="form-control" id="nombreUsuario" name="nombreUsuario" minlength="4" maxlength="50" pattern="[A-Za-z0-9._-]+" required autocomplete="username" value="<%= h(request.getParameter("nombreUsuario")) %>"></div>
                     <div class="col-md-6"></div>
-                    <div class="col-md-6"><label class="form-label" for="contrasena">Contraseña</label><input class="form-control" type="password" id="contrasena" name="contrasena" minlength="10" maxlength="72" required autocomplete="new-password"><div class="form-text">Mínimo 10 caracteres, con mayúscula, minúscula, número y símbolo.</div></div>
+                    <div class="col-md-6"><label class="form-label" for="contrasena">Contraseña</label><input class="form-control" type="password" id="contrasena" name="contrasena" minlength="10" maxlength="72" required autocomplete="new-password"><div class="form-text">Mínimo 10 caracteres, con mayúscula, minúscula, número y símbolo. También rechazamos contraseñas expuestas en filtraciones conocidas.</div></div>
                     <div class="col-md-6"><label class="form-label" for="confirmacionContrasena">Confirmar contraseña</label><input class="form-control" type="password" id="confirmacionContrasena" name="confirmacionContrasena" minlength="10" maxlength="72" required autocomplete="new-password"></div>
                 </div>
+
+                <% if (turnstileHabilitado) { %>
+                <div class="turnstile-security mt-4">
+                    <div class="cf-turnstile"
+                         data-sitekey="<%= h(turnstileSiteKey) %>"
+                         data-action="registro"
+                         data-size="flexible"
+                         data-theme="auto"
+                         data-language="es">
+                    </div>
+                    <p>
+                        <i class="bi bi-shield-check" aria-hidden="true"></i>
+                        Registro protegido contra cuentas automatizadas.
+                    </p>
+                </div>
+                <% } %>
 
                 <div class="d-flex flex-wrap gap-2 mt-4"><button class="btn btn-success px-4">Crear cuenta de paciente</button><a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/login">Cancelar</a></div>
             </div>
@@ -109,6 +128,9 @@
 </main>
 <% if (googleHabilitado) { %>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<% } %>
+<% if (turnstileHabilitado) { %>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <% } %>
 </body>
 </html>

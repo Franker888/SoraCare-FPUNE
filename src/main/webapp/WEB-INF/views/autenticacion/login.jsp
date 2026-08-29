@@ -30,10 +30,16 @@
     String googleLoginUri =
             (String) request.getAttribute("googleLoginUri");
 
+    String turnstileSiteKey =
+            (String) request.getAttribute("turnstileSiteKey");
+
     boolean googleHabilitado = googleClientId != null
             && !googleClientId.isBlank()
             && googleLoginUri != null
             && !googleLoginUri.isBlank();
+
+    boolean turnstileHabilitado = turnstileSiteKey != null
+            && !turnstileSiteKey.isBlank();
 
     boolean registroExitoso =
             "exitoso".equals(request.getParameter("registro"));
@@ -213,7 +219,7 @@
 
                 </div>
 
-                <div class="mb-4">
+                <div class="mb-3">
 
                     <label for="contrasena" class="form-label">
                         Contraseña
@@ -229,6 +235,24 @@
                            required>
 
                 </div>
+
+                <% if (turnstileHabilitado) { %>
+
+                <div class="turnstile-security mb-4">
+                    <div class="cf-turnstile"
+                         data-sitekey="<%= escaparHtml(turnstileSiteKey) %>"
+                         data-action="login"
+                         data-size="flexible"
+                         data-theme="auto"
+                         data-language="es">
+                    </div>
+                    <p>
+                        <i class="bi bi-shield-check" aria-hidden="true"></i>
+                        Acceso protegido contra intentos automatizados.
+                    </p>
+                </div>
+
+                <% } %>
 
                 <div class="d-grid">
 
@@ -269,6 +293,13 @@
 
 <% if (googleHabilitado) { %>
 <script src="https://accounts.google.com/gsi/client"
+        async
+        defer>
+</script>
+<% } %>
+
+<% if (turnstileHabilitado) { %>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js"
         async
         defer>
 </script>
