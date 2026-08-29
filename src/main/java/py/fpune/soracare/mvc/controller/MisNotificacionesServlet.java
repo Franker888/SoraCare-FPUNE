@@ -7,7 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
+import py.fpune.soracare.security.ProteccionCsrf;
+import py.fpune.soracare.service.FirebaseWebConfigService;
 import py.fpune.soracare.service.NotificacionService;
+import py.fpune.soracare.service.SuscripcionPushService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -18,10 +21,14 @@ public class MisNotificacionesServlet extends HttpServlet {
 
     private static final String VISTA = "/WEB-INF/views/paciente/mis-notificaciones.jsp";
     private NotificacionService notificacionService;
+    private FirebaseWebConfigService firebaseConfig;
+    private SuscripcionPushService suscripcionPushService;
 
     @Override
     public void init() {
         notificacionService = new NotificacionService();
+        firebaseConfig = new FirebaseWebConfigService();
+        suscripcionPushService = new SuscripcionPushService();
     }
 
     @Override
@@ -42,6 +49,12 @@ public class MisNotificacionesServlet extends HttpServlet {
         configurarSinCache(response);
         try {
             UsuarioAutenticadoDTO usuario = usuarioAutenticado(request);
+            if (!ProteccionCsrf.esValido(
+                    request.getSession(false), request.getParameter("tokenCsrf"))) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "La confirmación de seguridad no es válida.");
+                return;
+            }
             if ("todas".equals(request.getParameter("accion"))) {
                 notificacionService.marcarTodasLeidas(usuario.getIdPersona());
                 response.sendRedirect(request.getContextPath()
@@ -68,12 +81,17 @@ public class MisNotificacionesServlet extends HttpServlet {
             throws ServletException, IOException {
         try {
             UsuarioAutenticadoDTO usuario = usuarioAutenticado(request);
+            request.setAttribute("tokenCsrf",
+                    ProteccionCsrf.obtenerOCrear(request.getSession(false)));
             request.setAttribute("notificaciones",
                     notificacionService.listarParaPaciente(usuario.getIdPersona()));
+            configurarFirebase(request, usuario);
         } catch (IllegalArgumentException error) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             request.setAttribute("error", error.getMessage());
             request.setAttribute("notificaciones", List.of());
+            request.setAttribute("firebaseConfigurado", false);
+            request.setAttribute("suscripcionesPushActivas", 0);
         } catch (SQLException error) {
             log("Error al cargar notificaciones.", error);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -81,8 +99,37 @@ public class MisNotificacionesServlet extends HttpServlet {
                 request.setAttribute("error", "No fue posible cargar las notificaciones.");
             }
             request.setAttribute("notificaciones", List.of());
+            request.setAttribute("firebaseConfigurado", false);
+            request.setAttribute("suscripcionesPushActivas", 0);
         }
         request.getRequestDispatcher(VISTA).forward(request, response);
+    }
+
+    private void configurarFirebase(
+            HttpServletRequest request,
+            UsuarioAutenticadoDTO usuario
+    ) {
+        boolean configurado = firebaseConfig.estaConfigurado();
+        request.setAttribute("firebaseConfigurado", configurado);
+        request.setAttribute("firebaseApiKey", firebaseConfig.apiKey());
+        request.setAttribute("firebaseAuthDomain", firebaseConfig.authDomain());
+        request.setAttribute("firebaseProjectId", firebaseConfig.projectId());
+        request.setAttribute("firebaseStorageBucket", firebaseConfig.storageBucket());
+        request.setAttribute("firebaseMessagingSenderId", firebaseConfig.messagingSenderId());
+        request.setAttribute("firebaseAppId", firebaseConfig.appId());
+        request.setAttribute("firebaseVapidKey", firebaseConfig.vapidKey());
+        request.setAttribute("suscripcionesPushActivas", 0);
+        if (!configurado) {
+            return;
+        }
+        try {
+            request.setAttribute("suscripcionesPushActivas",
+                    suscripcionPushService.contarActivas(usuario.getIdUsuario()));
+        } catch (SQLException error) {
+            log("No fue posible contar las suscripciones push activas.", error);
+            request.setAttribute("firebaseAdvertencia",
+                    "Los avisos del navegador no están disponibles temporalmente.");
+        }
     }
 
     private static UsuarioAutenticadoDTO usuarioAutenticado(HttpServletRequest request) {
