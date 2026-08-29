@@ -1,6 +1,6 @@
 # Contexto maestro de SoraCare-FPUNE
 
-**Actualizado:** 21 de agosto de 2026
+**Actualizado:** 29 de agosto de 2026
 
 **Repositorio:** `TobiBug/SoraCare-FPUNE`
 
@@ -17,6 +17,7 @@ El sistema ya funciona como una plataforma integral para cuatro perfiles: **admi
 - Java 21.
 - Jakarta Servlet 6 y JSP.
 - Maven con empaquetado WAR.
+- JUnit 5 y Maven Surefire para las validaciones automatizadas críticas.
 - Apache Tomcat 10.1.57 para el entorno local.
 - PostgreSQL como base de datos.
 - JDBC y una separación pedagógica en controladores, servicios, DAO, DTO y modelos.
@@ -37,7 +38,7 @@ src/main/java/py/fpune/soracare/
   service/      reglas de negocio e integraciones
 
 src/main/resources/db/migration/
-  V001 ... V031 migraciones SQL acumulativas
+  V001 ... V032 migraciones SQL acumulativas
 
 src/main/webapp/
   WEB-INF/views/ vistas JSP privadas
@@ -185,6 +186,47 @@ El acceso con una cuenta existente fue probado. El alta nueva posee su formulari
 - La activación remota quedó pendiente de crédito o facturación en la cuenta de API.
 - Sora no diagnostica, no receta, no interpreta estudios y no solicita datos sensibles.
 
+### Cloudflare Turnstile: operativo y probado
+
+- Protege el inicio de sesión tradicional y el registro público de pacientes.
+- El navegador muestra el desafío, pero la autorización siempre se valida nuevamente desde el servidor.
+- Los tokens se comprueban con la acción esperada (`login` o `registro`) para impedir que un token de un formulario se reutilice en el otro.
+- Sin claves, el entorno local continúa funcionando para no bloquear el desarrollo; una configuración parcial se rechaza por seguridad.
+- Variables: `SORACARE_TURNSTILE_SITE_KEY` y `SORACARE_TURNSTILE_SECRET_KEY`.
+- Configuración local: `scripts\configurar-turnstile-local.ps1`.
+- La clave secreta nunca se incorpora al código, al WAR ni a GitHub.
+- La validación real fue comprobada en el inicio de sesión y el registro público.
+
+### Have I Been Pwned Passwords: integrado
+
+- Las contraseñas nuevas se comparan con el catálogo público Pwned Passwords antes de guardarse.
+- Se aplica al registro público, al cambio de contraseña y a las cuentas locales creadas por administración.
+- SoraCare calcula SHA-1 localmente y envía solamente los primeros cinco caracteres del hash mediante el modelo de privacidad `k-anonymity`; nunca envía la contraseña ni el hash completo.
+- La consulta utiliza `Add-Padding: true` y no requiere clave API.
+- Una contraseña filtrada se rechaza con un mensaje claro. Si el servicio no puede responder, se bloquea únicamente el alta o cambio de esa contraseña; el acceso de las cuentas existentes continúa funcionando.
+
+### Sentry: preparado para monitoreo técnico seguro
+
+- Captura errores no controlados del servidor mediante el SDK oficial de Java.
+- El servicio es opcional: si no existe un DSN, SoraCare inicia y funciona normalmente sin monitoreo remoto.
+- Antes de enviar un error, reemplaza su mensaje original por una descripción técnica genérica y conserva únicamente la pila de ejecución.
+- Sólo agrega el tipo de excepción, el método HTTP y una ruta normalizada sin parámetros ni identificadores numéricos.
+- No adjunta usuario, sesión, IP, cookies, encabezados, formularios, nombres, correos, cédulas, contraseñas ni información clínica.
+- Las trazas de rendimiento y el envío predeterminado de información personal permanecen desactivados.
+- Variables: `SORACARE_SENTRY_DSN` y `SORACARE_SENTRY_ENVIRONMENT`.
+- Configuración local: `scripts\configurar-sentry-local.ps1`.
+- El administrador dispone de `/admin/integraciones/sentry` para comprobar la conexión mediante un evento controlado.
+
+### Firebase Cloud Messaging: suscripciones web preparadas
+
+- El paciente puede autorizar o desactivar avisos para su navegador desde el centro de notificaciones.
+- La configuración pública de Firebase y la clave VAPID se cargan mediante variables de entorno; no se guarda una cuenta de servicio en el repositorio.
+- Los tokens de dispositivos se almacenan en `suscripciones_push` mediante la migración `V032` y cada cambio exige sesión de paciente más un token anti-CSRF.
+- El service worker muestra avisos generales y abre el centro de notificaciones.
+- Variables: `SORACARE_FIREBASE_API_KEY`, `SORACARE_FIREBASE_AUTH_DOMAIN`, `SORACARE_FIREBASE_PROJECT_ID`, `SORACARE_FIREBASE_STORAGE_BUCKET`, `SORACARE_FIREBASE_MESSAGING_SENDER_ID`, `SORACARE_FIREBASE_APP_ID` y `SORACARE_FIREBASE_VAPID_KEY`.
+- Configuración local: `scripts\configurar-firebase-local.ps1`.
+- El registro del dispositivo está implementado; el envío automático desde el servidor todavía no forma parte del flujo. Las pruebas de recepción se realizan manualmente desde Firebase Console.
+
 ### Cloudflare Quick Tunnel: sólo demostración temporal
 
 Se utilizó un túnel temporal para que otras personas probaran la aplicación desde teléfonos y computadoras. La dirección cambia al reiniciarlo y puede mostrar el error 1033 cuando el conector se detiene. No debe considerarse hosting permanente. Para una entrega pública estable hace falta desplegar Tomcat y PostgreSQL en infraestructura persistente o contratar un hosting compatible.
@@ -192,6 +234,7 @@ Se utilizó un túnel temporal para que otras personas probaran la aplicación d
 ## 9. Seguridad aplicada
 
 - Contraseñas locales almacenadas con BCrypt.
+- Rechazo de contraseñas nuevas presentes en filtraciones conocidas mediante Pwned Passwords.
 - Sesiones y filtros de autenticación.
 - Autorización por rol y protección de portales.
 - Restricción de historias, documentos, comprobantes y citas al propietario o profesional autorizado.
@@ -207,7 +250,7 @@ Este proyecto no debe publicar contraseñas de prueba, claves API, tokens OAuth 
 
 ## 10. Base de datos
 
-El esquema se llama `soracare` y evoluciona mediante migraciones SQL numeradas de `V001` a `V031`. Entre ellas se encuentran:
+El esquema se llama `soracare` y evoluciona mediante migraciones SQL numeradas de `V001` a `V032`. Entre ellas se encuentran:
 
 - Personas, pacientes, usuarios y roles.
 - Auditoría.
@@ -219,7 +262,7 @@ El esquema se llama `soracare` y evoluciona mediante migraciones SQL numeradas d
 - Reprogramaciones, presentación de médicos y estudios solicitados.
 - Analítica de disponibilidad, perfiles visuales, estados de correo e identidades Google.
 
-Las nuevas migraciones de este avance son `V027` a `V031`. No se deben editar migraciones ya aplicadas; los cambios futuros se agregan con el siguiente número disponible.
+Las nuevas migraciones de este avance son `V027` a `V032`. `V032` crea las suscripciones web de Firebase. No se deben editar migraciones ya aplicadas; los cambios futuros se agregan con el siguiente número disponible.
 
 ## 11. Cómo iniciar el proyecto en la notebook actual
 
@@ -229,6 +272,14 @@ Abrir PowerShell o la terminal de IntelliJ en la carpeta del proyecto y ejecutar
 Set-Location "C:\Users\adria\Desktop\Hospital\Proyecto\SoraCare-FPUNE-GIT"
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\scripts\iniciar-local-etapa8.ps1"
 ```
+
+Para activar Turnstile por primera vez, ejecutar antes:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\scripts\configurar-turnstile-local.ps1"
+```
+
+El configurador solicita la clave pública y oculta la clave secreta. Después se reinicia SoraCare con el comando habitual de `iniciar-local-etapa8.ps1`.
 
 El script:
 
@@ -266,9 +317,11 @@ Directorios externos usados en la notebook actual:
 - Notificaciones y permisos 403.
 - Informes, auditoría, configuración, usuarios y roles administrativos.
 - Google Calendar: agregar y retirar cita.
+- Validación aislada de Turnstile: modo local, configuración incompleta, token aceptado, token inválido y acción incorrecta.
+- Trece pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile y protección anti-CSRF del endpoint push.
 - Rutas públicas y paneles en resoluciones móviles y de escritorio.
 
-El `pom.xml` actual no incorpora todavía un proveedor moderno de JUnit; por eso una compilación correcta no debe describirse automáticamente como “todas las pruebas automatizadas ejecutadas”. Las pruebas manuales y las validaciones de compilación deben seguir documentándose por separado.
+El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar una cantidad mayor que cero; una compilación sin ese resumen no reemplaza la evidencia de pruebas. Las pruebas manuales, de integración con PostgreSQL y de servicios externos siguen documentándose por separado.
 
 ## 13. Pendientes recomendados
 
@@ -279,7 +332,7 @@ El `pom.xml` actual no incorpora todavía un proveedor moderno de JUnit; por eso
 5. Crédito de API y elección de un modelo público válido antes de activar OpenAI para Sora.
 6. Integración con una pasarela de pago real sólo si el alcance académico cambia.
 7. Política de privacidad, términos, copias de seguridad y estrategia de recuperación.
-8. Pruebas automatizadas modernas, integración continua y pruebas con más dispositivos reales.
+8. Ampliar las pruebas JUnit de integración con PostgreSQL, agregar integración continua y probar con más dispositivos reales.
 9. Revisión final de accesibilidad y seguridad antes de exponer datos reales.
 
 ## 14. Instrucciones para continuar en otro chat

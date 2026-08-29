@@ -50,6 +50,11 @@ $migraciones = @(
         Nombre = 'identidades verificadas de Google'
         Archivo = Join-Path $proyecto 'src\main\resources\db\migration\V031__crear_identidades_google.sql'
         Verificacion = "SELECT to_regclass('soracare.identidades_externas') IS NOT NULL;"
+    },
+    @{
+        Nombre = 'suscripciones web de Firebase Cloud Messaging'
+        Archivo = Join-Path $proyecto 'src\main\resources\db\migration\V032__crear_suscripciones_push.sql'
+        Verificacion = "SELECT to_regclass('soracare.suscripciones_push') IS NOT NULL;"
     }
 )
 
@@ -98,6 +103,57 @@ try {
         Write-Host 'Acceso con Google y sincronizacion opcional de Calendar disponibles.' -ForegroundColor Green
     } else {
         Write-Host 'Google aun no esta configurado; el acceso tradicional funcionara normalmente.' -ForegroundColor Yellow
+    }
+    $turnstileSiteKeyUsuario = [Environment]::GetEnvironmentVariable('SORACARE_TURNSTILE_SITE_KEY', 'User')
+    $turnstileSecretKeyUsuario = [Environment]::GetEnvironmentVariable('SORACARE_TURNSTILE_SECRET_KEY', 'User')
+    if (-not [string]::IsNullOrWhiteSpace($turnstileSiteKeyUsuario)) {
+        $env:SORACARE_TURNSTILE_SITE_KEY = $turnstileSiteKeyUsuario
+    }
+    if (-not [string]::IsNullOrWhiteSpace($turnstileSecretKeyUsuario)) {
+        $env:SORACARE_TURNSTILE_SECRET_KEY = $turnstileSecretKeyUsuario
+    }
+    if (-not [string]::IsNullOrWhiteSpace($turnstileSiteKeyUsuario) -and
+        -not [string]::IsNullOrWhiteSpace($turnstileSecretKeyUsuario)) {
+        Write-Host 'Cloudflare Turnstile protege el login y el registro tradicional.' -ForegroundColor Green
+    } elseif (-not [string]::IsNullOrWhiteSpace($turnstileSiteKeyUsuario) -or
+              -not [string]::IsNullOrWhiteSpace($turnstileSecretKeyUsuario)) {
+        Write-Host 'Turnstile tiene una configuracion incompleta: login y registro se bloquearan hasta corregirla.' -ForegroundColor Red
+    } else {
+        Write-Host 'Turnstile aun no esta configurado; los formularios seguiran disponibles en modo local.' -ForegroundColor Yellow
+    }
+    $sentryDsnUsuario = [Environment]::GetEnvironmentVariable('SORACARE_SENTRY_DSN', 'User')
+    $sentryAmbienteUsuario = [Environment]::GetEnvironmentVariable('SORACARE_SENTRY_ENVIRONMENT', 'User')
+    if (-not [string]::IsNullOrWhiteSpace($sentryDsnUsuario)) {
+        $env:SORACARE_SENTRY_DSN = $sentryDsnUsuario
+        if (-not [string]::IsNullOrWhiteSpace($sentryAmbienteUsuario)) {
+            $env:SORACARE_SENTRY_ENVIRONMENT = $sentryAmbienteUsuario
+        }
+        Write-Host 'Sentry monitoreara errores tecnicos anonimizados durante esta ejecucion.' -ForegroundColor Green
+    } else {
+        Write-Host 'Sentry aun no esta configurado; SoraCare funcionara normalmente sin monitoreo remoto.' -ForegroundColor Yellow
+    }
+    $firebaseVariables = @(
+        'SORACARE_FIREBASE_API_KEY',
+        'SORACARE_FIREBASE_AUTH_DOMAIN',
+        'SORACARE_FIREBASE_PROJECT_ID',
+        'SORACARE_FIREBASE_STORAGE_BUCKET',
+        'SORACARE_FIREBASE_MESSAGING_SENDER_ID',
+        'SORACARE_FIREBASE_APP_ID',
+        'SORACARE_FIREBASE_VAPID_KEY'
+    )
+    $firebaseCompletas = $true
+    foreach ($firebaseVariable in $firebaseVariables) {
+        $firebaseValor = [Environment]::GetEnvironmentVariable($firebaseVariable, 'User')
+        if ([string]::IsNullOrWhiteSpace($firebaseValor)) {
+            $firebaseCompletas = $false
+        } else {
+            Set-Item -Path "Env:$firebaseVariable" -Value $firebaseValor
+        }
+    }
+    if ($firebaseCompletas) {
+        Write-Host 'Firebase Cloud Messaging disponible para suscribir navegadores y telefonos.' -ForegroundColor Green
+    } else {
+        Write-Host 'Firebase Cloud Messaging aun no esta completo; los avisos internos seguiran funcionando.' -ForegroundColor Yellow
     }
     $openAiApiKeyUsuario = [Environment]::GetEnvironmentVariable('SORACARE_OPENAI_API_KEY', 'User')
     $openAiModeloUsuario = [Environment]::GetEnvironmentVariable('SORACARE_OPENAI_MODEL', 'User')
@@ -158,7 +214,7 @@ try {
     }
 
     Write-Host 'Compilando la administracion integral de la etapa 8...' -ForegroundColor Cyan
-    & $maven "-Dmaven.repo.local=$repositorioMaven" '-Dmaven.test.skip=true' package
+    & $maven "-Dmaven.repo.local=$repositorioMaven" clean package
     if ($LASTEXITCODE -ne 0) {
         throw 'No fue posible compilar el proyecto para el despliegue.'
     }
@@ -220,6 +276,17 @@ try {
     Remove-Item Env:SORACARE_TWILIO_AUTH_TOKEN -ErrorAction SilentlyContinue
     Remove-Item Env:SORACARE_TWILIO_FROM -ErrorAction SilentlyContinue
     Remove-Item Env:SORACARE_GOOGLE_CLIENT_ID -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_TURNSTILE_SITE_KEY -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_TURNSTILE_SECRET_KEY -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_SENTRY_DSN -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_SENTRY_ENVIRONMENT -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_FIREBASE_API_KEY -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_FIREBASE_AUTH_DOMAIN -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_FIREBASE_PROJECT_ID -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_FIREBASE_STORAGE_BUCKET -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_FIREBASE_MESSAGING_SENDER_ID -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_FIREBASE_APP_ID -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_FIREBASE_VAPID_KEY -ErrorAction SilentlyContinue
     Remove-Item Env:SORACARE_OPENAI_API_KEY -ErrorAction SilentlyContinue
     Remove-Item Env:SORACARE_OPENAI_MODEL -ErrorAction SilentlyContinue
     $dbPasswordEtapa8 = $null
