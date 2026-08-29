@@ -424,8 +424,27 @@ body.soracare-auth {
 .app-public .btn,
 .app-registration .btn,
 .soracare-auth .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 0.7rem;
     font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.app-shell .navbar .btn,
+.app-public .navbar .btn,
+.app-registration .navbar .btn {
+    padding-inline: 0.85rem;
+    white-space: nowrap;
+}
+
+.app-shell .navbar form,
+.app-public .navbar form,
+.app-registration .navbar form {
+    display: flex;
 }
 
 .app-shell .btn-primary,
@@ -3317,6 +3336,15 @@ body.soracare-auth {
 .app-patient-home .patient-hero-profile:hover {
     color: #134e4a;
     background: #ffffff;
+}
+
+.app-patient-notifications .notification-action {
+    gap: 0.45rem;
+    padding-inline: 0.9rem;
+}
+
+.app-patient-notifications .notification-action i {
+    font-size: 0.95rem;
 }
 
 .app-patient-home .patient-hero-icon {

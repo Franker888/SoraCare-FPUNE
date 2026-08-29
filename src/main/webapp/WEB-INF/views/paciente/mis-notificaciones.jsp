@@ -43,7 +43,7 @@
     <title>Mis notificaciones | SoraCare-FPUNE</title>
     <link href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/libs/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260829a">
     <style>
         body { background: #f4f7fb; }
         .hero { border: 0; border-radius: 1.25rem; color: #fff;
@@ -61,11 +61,15 @@
             Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: .76rem; }
     </style>
 </head>
-<body class="app-shell app-patient">
+<body class="app-shell app-patient app-patient-notifications">
 <nav class="navbar bg-white border-bottom">
     <div class="container py-2">
         <a class="navbar-brand fw-bold text-primary" href="${pageContext.request.contextPath}/paciente/inicio">SoraCare-FPUNE</a>
-        <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/paciente/inicio">Volver al panel</a>
+        <a class="btn btn-outline-primary btn-sm navbar-action"
+           href="${pageContext.request.contextPath}/paciente/inicio">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+            <span>Volver al panel</span>
+        </a>
     </div>
 </nav>
 <main class="container py-4 py-lg-5">
@@ -183,12 +187,20 @@
                         </span>
                     </div>
                     <p class="mb-3"><%= h(notificacion.contenido()) %></p>
-                    <div class="d-flex flex-wrap gap-2">
+                    <div class="notification-actions d-flex flex-wrap gap-2">
                         <% if (notificacion.idReceta() != null) { %>
-                        <a class="btn btn-primary btn-sm" href="${pageContext.request.contextPath}/mis-recetas">Ver indicaciones médicas</a>
+                        <a class="btn btn-outline-primary btn-sm notification-action"
+                           href="${pageContext.request.contextPath}/mis-recetas">
+                            <i class="bi bi-prescription2" aria-hidden="true"></i>
+                            <span>Ver indicaciones m&eacute;dicas</span>
+                        </a>
                         <% } %>
                         <% if (notificacion.idCita() != null) { %>
-                        <a class="btn btn-primary btn-sm" href="${pageContext.request.contextPath}/mis-citas">Ver mis citas</a>
+                        <a class="btn btn-outline-primary btn-sm notification-action"
+                           href="${pageContext.request.contextPath}/mis-citas">
+                            <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+                            <span>Ver mis citas</span>
+                        </a>
                         <% } %>
                         <% if (!notificacion.estaLeida()) { %>
                         <form method="post" action="${pageContext.request.contextPath}/mis-notificaciones">

@@ -54,7 +54,7 @@
     <meta name="robots" content="noindex,nofollow">
     <title>Portal del paciente | SoraCare-FPUNE</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815f">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260829a">
 </head>
 <body class="app-shell app-patient-home">
 <%@ include file="_navbar.jspf" %>
