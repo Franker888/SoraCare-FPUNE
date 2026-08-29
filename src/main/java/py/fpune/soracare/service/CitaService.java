@@ -42,10 +42,11 @@ public class CitaService {
 
     public Cita solicitar(SolicitudCitaDTO datos, Long idUsuarioCreador)
             throws SQLException {
+        SolicitudCitaValidada solicitud = validarSolicitud(datos);
         try (Connection conexion = ConexionBD.obtenerConexion()) {
             try {
                 conexion.setAutoCommit(false);
-                Cita creada = solicitar(conexion, datos, idUsuarioCreador);
+                Cita creada = solicitar(conexion, solicitud, idUsuarioCreador);
                 conexion.commit();
                 return creada;
             } catch (Exception error) {
@@ -60,21 +61,25 @@ public class CitaService {
     Cita solicitar(Connection conexion, SolicitudCitaDTO datos, Long idUsuarioCreador)
             throws SQLException {
         if (conexion == null) throw new IllegalArgumentException("La conexión es obligatoria.");
-        if (datos == null) throw new IllegalArgumentException("Los datos de la cita son obligatorios.");
-        long idPaciente = convertirLong(datos.idPaciente(), "Seleccioná un paciente.");
-        Long idHorario = convertirLongOpcional(datos.idHorario());
-        Long idExcepcion = convertirLongOpcional(datos.idExcepcion());
-        long idMedico = convertirLong(datos.idMedico(), "El médico del turno no es válido.");
-        int idEspecialidad = convertirEntero(datos.idEspecialidad(), "La especialidad del turno no es válida.");
-        long idConsultorio = convertirLong(datos.idConsultorio(), "El consultorio del turno no es válido.");
-        LocalDate fecha = convertirFecha(datos.fecha());
-        LocalTime horaInicio = convertirHora(datos.horaInicio());
-        String motivo = normalizarObligatorio(datos.motivoConsulta(), 500,
-                "El motivo de consulta es obligatorio.",
-                "El motivo de consulta no puede superar 500 caracteres.");
-        String observaciones = normalizarOpcional(datos.observaciones(), 1000,
-                "Las observaciones no pueden superar 1000 caracteres.");
-        String canal = normalizarCanal(datos.canalReserva());
+        return solicitar(conexion, validarSolicitud(datos), idUsuarioCreador);
+    }
+
+    private Cita solicitar(
+            Connection conexion,
+            SolicitudCitaValidada solicitud,
+            Long idUsuarioCreador
+    ) throws SQLException {
+        long idPaciente = solicitud.idPaciente();
+        Long idHorario = solicitud.idHorario();
+        Long idExcepcion = solicitud.idExcepcion();
+        long idMedico = solicitud.idMedico();
+        int idEspecialidad = solicitud.idEspecialidad();
+        long idConsultorio = solicitud.idConsultorio();
+        LocalDate fecha = solicitud.fecha();
+        LocalTime horaInicio = solicitud.horaInicio();
+        String motivo = solicitud.motivo();
+        String observaciones = solicitud.observaciones();
+        String canal = solicitud.canal();
 
         SlotDisponibleDTO slot = disponibilidadService
                 .listar(fecha, idMedico, idEspecialidad).stream()
@@ -138,6 +143,43 @@ public class CitaService {
             }
             throw error;
         }
+    }
+
+    private static SolicitudCitaValidada validarSolicitud(SolicitudCitaDTO datos) {
+        if (datos == null) throw new IllegalArgumentException("Los datos de la cita son obligatorios.");
+        long idPaciente = convertirLong(datos.idPaciente(), "Seleccioná un paciente.");
+        Long idHorario = convertirLongOpcional(datos.idHorario());
+        Long idExcepcion = convertirLongOpcional(datos.idExcepcion());
+        long idMedico = convertirLong(datos.idMedico(), "El médico del turno no es válido.");
+        int idEspecialidad = convertirEntero(datos.idEspecialidad(), "La especialidad del turno no es válida.");
+        long idConsultorio = convertirLong(datos.idConsultorio(), "El consultorio del turno no es válido.");
+        LocalDate fecha = convertirFecha(datos.fecha());
+        LocalTime horaInicio = convertirHora(datos.horaInicio());
+        String motivo = normalizarObligatorio(datos.motivoConsulta(), 500,
+                "El motivo de consulta es obligatorio.",
+                "El motivo de consulta no puede superar 500 caracteres.");
+        String observaciones = normalizarOpcional(datos.observaciones(), 1000,
+                "Las observaciones no pueden superar 1000 caracteres.");
+        String canal = normalizarCanal(datos.canalReserva());
+        return new SolicitudCitaValidada(
+                idPaciente, idHorario, idExcepcion, idMedico, idEspecialidad,
+                idConsultorio, fecha, horaInicio, motivo, observaciones, canal
+        );
+    }
+
+    private record SolicitudCitaValidada(
+            long idPaciente,
+            Long idHorario,
+            Long idExcepcion,
+            long idMedico,
+            int idEspecialidad,
+            long idConsultorio,
+            LocalDate fecha,
+            LocalTime horaInicio,
+            String motivo,
+            String observaciones,
+            String canal
+    ) {
     }
 
     public List<Cita> listarPorFecha(LocalDate fecha) throws SQLException {
