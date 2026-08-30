@@ -6,14 +6,17 @@ import org.springframework.web.context.support.AnnotationConfigWebApplicationCon
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import py.fpune.soracare.api.controller.ApiRestExcepciones;
+import py.fpune.soracare.api.controller.CitaRestController;
 import py.fpune.soracare.api.controller.DisponibilidadRestController;
 import py.fpune.soracare.api.controller.EspecialidadRestController;
 import py.fpune.soracare.api.controller.MedicoRestController;
 import py.fpune.soracare.api.controller.SesionRestController;
+import py.fpune.soracare.service.CitaService;
 import py.fpune.soracare.service.DisponibilidadService;
 import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
+import py.fpune.soracare.service.PacienteService;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.nio.file.Path;
@@ -80,6 +83,9 @@ class ApiRestConfiguracionTest {
             assertNotNull(contexto.getBean(DisponibilidadService.class));
             assertNotNull(contexto.getBean(DisponibilidadRestController.class));
             assertNotNull(contexto.getBean(SesionRestController.class));
+            assertNotNull(contexto.getBean(CitaService.class));
+            assertNotNull(contexto.getBean(PacienteService.class));
+            assertNotNull(contexto.getBean(CitaRestController.class));
             assertNotNull(contexto.getBean(ApiRestExcepciones.class));
         }
     }

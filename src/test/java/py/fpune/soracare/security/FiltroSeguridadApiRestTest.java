@@ -94,6 +94,19 @@ class FiltroSeguridadApiRestTest {
     }
 
     @Test
+    void permiteConsultarCitasSolamenteConRolPaciente() throws Exception {
+        Resultado resultado = ejecutar(
+                "GET",
+                "/citas",
+                usuario("PACIENTE"),
+                false
+        );
+
+        assertNotNull(resultado.cadena().getRequest());
+        assertEquals(200, resultado.response().getStatus());
+    }
+
+    @Test
     void bloqueaEscriturasEnCatalogosPublicos() throws Exception {
         Resultado resultado = ejecutar(
                 "POST",

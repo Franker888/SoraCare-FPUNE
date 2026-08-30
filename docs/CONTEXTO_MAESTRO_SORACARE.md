@@ -58,7 +58,7 @@ El alcance de Jakarta Persistence queda cerrado deliberadamente en cinco entidad
 
 Spring MVC convive con los Servlet y JSP existentes y atiende únicamente el prefijo `/api/v1/*`. Los recursos públicos permitidos son `GET /api/v1/especialidades`, con el catálogo activo; `GET /api/v1/medicos`, con el perfil profesional público y sus especialidades activas; y `GET /api/v1/disponibilidad?fecha=AAAA-MM-DD`, con filtros opcionales `idMedico` e `idEspecialidad`. Los tres reutilizan los servicios existentes. El DTO de médicos excluye cédula, correo, teléfono, dirección, fecha de nacimiento y demás datos internos. Disponibilidad aplica las reglas vigentes de horarios, bloqueos, excepciones, citas ocupadas y zona horaria de Asunción.
 
-La seguridad REST reutiliza la sesión local `HttpSession`; no crea otro login, claves API ni JWT. `GET /api/v1/sesion` exige un usuario autenticado sin cambio de contraseña pendiente y devuelve solamente su nombre de usuario, roles y un token CSRF. Las rutas presentes o futuras bajo `/api/v1/citas` exigen además el rol `PACIENTE`; los métodos de escritura deben enviar el token en la cabecera `X-CSRF-Token`. El filtro Servlet usa una lista explícita de rutas y métodos, por lo que bloquea por defecto recursos no declarados y escrituras sobre los catálogos públicos. La API usa errores JSON sin detalles técnicos y monitoreo mediante Sentry cuando corresponde. No se incorporó Spring Boot ni se reemplazó el despliegue WAR en Tomcat.
+La seguridad REST reutiliza la sesión local `HttpSession`; no crea otro login, claves API ni JWT. `GET /api/v1/sesion` exige un usuario autenticado sin cambio de contraseña pendiente y devuelve solamente su nombre de usuario, roles y un token CSRF. `GET /api/v1/citas` exige el rol `PACIENTE`, obtiene la identidad exclusivamente desde la sesión y devuelve solamente las citas de la ficha asociada; no acepta un `idPaciente` manipulable. Las rutas presentes o futuras bajo `/api/v1/citas` exigen además el rol `PACIENTE`; los métodos de escritura deben enviar el token en la cabecera `X-CSRF-Token`. El filtro Servlet usa una lista explícita de rutas y métodos, por lo que bloquea por defecto recursos no declarados y escrituras sobre los catálogos públicos. La API usa errores JSON sin detalles técnicos y monitoreo mediante Sentry cuando corresponde. No se incorporó Spring Boot ni se reemplazó el despliegue WAR en Tomcat.
 
 ## 3. Perfiles y funciones
 
@@ -336,7 +336,7 @@ Directorios externos usados en la notebook actual:
 - Informes, auditoría, configuración, usuarios y roles administrativos.
 - Google Calendar: agregar y retirar cita.
 - Validación aislada de Turnstile: modo local, configuración incompleta, token aceptado, token inválido y acción incorrecta.
-- Sesenta pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA, configuración de la unidad de persistencia, mapeo JPA y autenticación, autorización y CSRF de la API REST con Spring MVC.
+- Sesenta y cinco pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA, configuración de la unidad de persistencia, mapeo JPA y autenticación, autorización, aislamiento por paciente y CSRF de la API REST con Spring MVC.
 - Rutas públicas y paneles en resoluciones móviles y de escritorio.
 
 El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar una cantidad mayor que cero; una compilación sin ese resumen no reemplaza la evidencia de pruebas. Las pruebas manuales, de integración con PostgreSQL y de servicios externos siguen documentándose por separado.
@@ -352,8 +352,7 @@ El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar 
 7. Política de privacidad, términos, copias de seguridad y estrategia de recuperación.
 8. Ampliar las pruebas JUnit de integración con PostgreSQL, agregar integración continua y probar con más dispositivos reales.
 9. Revisión final de accesibilidad y seguridad antes de exponer datos reales.
-10. Implementar la primera operación REST de citas usando exclusivamente la identidad del paciente autenticado y la base de seguridad ya establecida.
-11. Dockerizar Tomcat, PostgreSQL y la configuración local después de cerrar las mejoras solicitadas por el profesor.
+10. Dockerizar Tomcat, PostgreSQL y la configuración local después de cerrar las mejoras solicitadas por el profesor.
 
 ## 14. Instrucciones para continuar en otro chat
 

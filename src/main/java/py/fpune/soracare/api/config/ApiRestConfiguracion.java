@@ -4,14 +4,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import py.fpune.soracare.api.controller.ApiRestExcepciones;
+import py.fpune.soracare.api.controller.CitaRestController;
 import py.fpune.soracare.api.controller.DisponibilidadRestController;
 import py.fpune.soracare.api.controller.EspecialidadRestController;
 import py.fpune.soracare.api.controller.MedicoRestController;
 import py.fpune.soracare.api.controller.SesionRestController;
+import py.fpune.soracare.service.CitaService;
 import py.fpune.soracare.service.DisponibilidadService;
 import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
+import py.fpune.soracare.service.PacienteService;
 
 @Configuration
 @EnableWebMvc
@@ -67,6 +70,24 @@ public class ApiRestConfiguracion {
     @Bean
     public SesionRestController sesionRestController() {
         return new SesionRestController();
+    }
+
+    @Bean
+    public CitaService citaService() {
+        return new CitaService();
+    }
+
+    @Bean
+    public PacienteService pacienteService() {
+        return new PacienteService();
+    }
+
+    @Bean
+    public CitaRestController citaRestController(
+            CitaService citaService,
+            PacienteService pacienteService
+    ) {
+        return new CitaRestController(citaService, pacienteService);
     }
 
     @Bean
