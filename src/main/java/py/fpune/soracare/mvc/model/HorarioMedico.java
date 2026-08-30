@@ -1,23 +1,61 @@
 package py.fpune.soracare.mvc.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 
+@Entity
+@Table(name = "horarios_medicos", schema = "soracare")
 public class HorarioMedico {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_horario")
     private Long idHorario;
+
+    @Column(name = "id_medico", nullable = false)
     private Long idMedico;
+
+    @Column(name = "id_especialidad", nullable = false)
     private Integer idEspecialidad;
+
+    @Column(name = "id_consultorio", nullable = false)
     private Long idConsultorio;
+
+    @Column(name = "dia_semana", nullable = false)
     private int diaSemana;
+
+    @Column(name = "hora_inicio", nullable = false)
     private LocalTime horaInicio;
+
+    @Column(name = "hora_fin", nullable = false)
     private LocalTime horaFin;
+
+    @Column(name = "duracion_turno_minutos", nullable = false)
     private int duracionTurnoMinutos;
+
+    @Column(name = "fecha_desde", nullable = false)
     private LocalDate fechaDesde;
+
+    @Column(name = "fecha_hasta")
     private LocalDate fechaHasta;
+
+    @Column(name = "activo", nullable = false)
     private boolean activo;
+
+    @Column(name = "fecha_creacion", nullable = false)
     private OffsetDateTime fechaCreacion;
+
+    @Column(name = "fecha_actualizacion", nullable = false)
     private OffsetDateTime fechaActualizacion;
 
     public HorarioMedico() {
@@ -262,5 +300,19 @@ public class HorarioMedico {
             OffsetDateTime fechaActualizacion
     ) {
         this.fechaActualizacion = fechaActualizacion;
+    }
+
+    @PrePersist
+    private void prepararCreacion() {
+        OffsetDateTime ahora = OffsetDateTime.now();
+        if (fechaCreacion == null) {
+            fechaCreacion = ahora;
+        }
+        fechaActualizacion = ahora;
+    }
+
+    @PreUpdate
+    private void prepararActualizacion() {
+        fechaActualizacion = OffsetDateTime.now();
     }
 }

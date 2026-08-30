@@ -63,60 +63,30 @@ public class HorarioMedicoService {
                 Connection conexion =
                         ConexionBD.obtenerConexion()
         ) {
-            conexion.setAutoCommit(
-                    false
+            verificarReferenciasDisponibles(
+                    conexion,
+                    horario
             );
+        }
 
-            try {
-                verificarReferenciasDisponibles(
-                        conexion,
-                        horario
-                );
+        verificarSinSuperposicion(
+                horario,
+                0
+        );
 
-                verificarSinSuperposicion(
-                        conexion,
-                        horario,
-                        0
-                );
-
-                HorarioMedico horarioCreado =
-                        horarioMedicoDAO.crear(
-                                conexion,
-                                horario
-                        );
-
-                conexion.commit();
-
-                return horarioCreado;
-
-            } catch (SQLException error) {
-
-                ejecutarRollback(
-                        conexion,
+        try {
+            return horarioMedicoDAO.crear(
+                    horario
+            );
+        } catch (SQLException error) {
+            if (esViolacionDeUnicidad(error)) {
+                throw new IllegalArgumentException(
+                        "Ya existe un horario igual para el médico, "
+                                + "especialidad y consultorio.",
                         error
                 );
-
-                if (esViolacionDeUnicidad(
-                        error
-                )) {
-                    throw new IllegalArgumentException(
-                            "Ya existe un horario igual para el médico, "
-                                    + "especialidad y consultorio.",
-                            error
-                    );
-                }
-
-                throw error;
-
-            } catch (RuntimeException error) {
-
-                ejecutarRollback(
-                        conexion,
-                        error
-                );
-
-                throw error;
             }
+            throw error;
         }
     }
 
@@ -163,62 +133,41 @@ public class HorarioMedicoService {
                 idHorario
         );
 
-        try (
-                Connection conexion =
-                        ConexionBD.obtenerConexion()
-        ) {
-            conexion.setAutoCommit(
-                    false
-            );
-
-            try {
-                HorarioMedico horario =
-                        horarioMedicoDAO.buscarPorId(
-                                conexion,
-                                idHorario
-                        ).orElseThrow(
-                                () ->
-                                        new IllegalArgumentException(
-                                                "El horario seleccionado no existe."
-                                        )
-                        );
-
-                if (horario.isActivo() == activo) {
-                    conexion.commit();
-                    return;
-                }
-
-                if (activo) {
-                    verificarReferenciasDisponibles(
-                            conexion,
-                            horario
-                    );
-
-                    verificarSinSuperposicion(
-                            conexion,
-                            horario,
-                            idHorario
-                    );
-                }
-
-                horarioMedicoDAO.actualizarActivo(
-                        conexion,
-                        idHorario,
-                        activo
+        HorarioMedico horario =
+                horarioMedicoDAO.buscarPorId(
+                        idHorario
+                ).orElseThrow(
+                        () ->
+                                new IllegalArgumentException(
+                                        "El horario seleccionado no existe."
+                                )
                 );
 
-                conexion.commit();
-
-            } catch (SQLException | RuntimeException error) {
-
-                ejecutarRollback(
-                        conexion,
-                        error
-                );
-
-                throw error;
-            }
+        if (horario.isActivo() == activo) {
+            return;
         }
+
+        if (activo) {
+            try (
+                    Connection conexion =
+                            ConexionBD.obtenerConexion()
+            ) {
+                verificarReferenciasDisponibles(
+                        conexion,
+                        horario
+                );
+            }
+
+            verificarSinSuperposicion(
+                    horario,
+                    idHorario
+            );
+        }
+
+        horarioMedicoDAO.actualizarActivo(
+                idHorario,
+                activo
+        );
     }
 
     private HorarioMedico convertirYValidar(
@@ -449,13 +398,11 @@ public class HorarioMedicoService {
     }
 
     private void verificarSinSuperposicion(
-            Connection conexion,
             HorarioMedico horario,
             long idHorarioExcluido
     ) throws SQLException {
 
         if (horarioMedicoDAO.existeSuperposicion(
-                conexion,
                 horario,
                 idHorarioExcluido
         )) {
@@ -611,38 +558,28 @@ public class HorarioMedicoService {
     }
 
     private static boolean esViolacionDeUnicidad(
-            SQLException error
+            Throwable error
     ) {
+        Throwable causaActual = error;
 
-        SQLException errorActual =
-                error;
+        while (causaActual != null) {
+            if (causaActual instanceof SQLException errorSql) {
+                SQLException errorActual = errorSql;
 
-        while (errorActual != null) {
-            if (SQLSTATE_VIOLACION_UNICIDAD.equals(
-                    errorActual.getSQLState()
-            )) {
-                return true;
+                while (errorActual != null) {
+                    if (SQLSTATE_VIOLACION_UNICIDAD.equals(
+                            errorActual.getSQLState()
+                    )) {
+                        return true;
+                    }
+
+                    errorActual = errorActual.getNextException();
+                }
             }
 
-            errorActual =
-                    errorActual.getNextException();
+            causaActual = causaActual.getCause();
         }
 
         return false;
-    }
-
-    private static void ejecutarRollback(
-            Connection conexion,
-            Exception errorOriginal
-    ) {
-
-        try {
-            conexion.rollback();
-
-        } catch (SQLException errorRollback) {
-            errorOriginal.addSuppressed(
-                    errorRollback
-            );
-        }
     }
 }

@@ -9,6 +9,7 @@
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
         <class>py.fpune.soracare.mvc.model.ExcepcionHorarioMedico</class>
+        <class>py.fpune.soracare.mvc.model.HorarioMedico</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
 
         <properties>
