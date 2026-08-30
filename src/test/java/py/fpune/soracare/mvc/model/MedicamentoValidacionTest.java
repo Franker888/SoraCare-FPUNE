@@ -1,11 +1,28 @@
 package py.fpune.soracare.mvc.model;
 
-public final class MedicamentoValidacionTest {
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import org.junit.jupiter.api.Test;
 
-    private MedicamentoValidacionTest() {
-    }
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.time.OffsetDateTime;
 
-    public static void main(String[] args) {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+class MedicamentoValidacionTest {
+
+    @Test
+    void normalizaLosDatosDelCatalogo() {
         Medicamento medicamento = new Medicamento();
         medicamento.setNombreComercial(" Paracetamol ");
         medicamento.setPrincipioActivo(" Acetaminofén ");
@@ -13,31 +30,66 @@ public final class MedicamentoValidacionTest {
         medicamento.setConcentracion(" 500 mg ");
         medicamento.setViaAdministracion(ViaAdministracion.ORAL);
 
-        verificar("Paracetamol".equals(medicamento.getNombreComercial()),
-                "El nombre debe normalizar espacios laterales.");
-        verificar("500 mg".equals(medicamento.getConcentracion()),
-                "La concentración debe normalizarse.");
-        esperarRechazo(() -> medicamento.setNombreComercial(""));
-        esperarRechazo(() -> medicamento.setViaAdministracion(null));
-
-        System.out.println("OK: validaciones del catálogo de medicamentos verificadas.");
+        assertEquals("Paracetamol", medicamento.getNombreComercial());
+        assertEquals("500 mg", medicamento.getConcentracion());
     }
 
-    private static void verificar(boolean condicion, String mensaje) {
-        if (!condicion) throw new AssertionError(mensaje);
+    @Test
+    void rechazaDatosObligatoriosInvalidos() {
+        Medicamento medicamento = new Medicamento();
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> medicamento.setNombreComercial("")
+        );
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> medicamento.setViaAdministracion(null)
+        );
     }
 
-    private static void esperarRechazo(Operacion operacion) {
-        try {
-            operacion.ejecutar();
-            throw new AssertionError("Se esperaba que el dato inválido fuera rechazado.");
-        } catch (IllegalArgumentException esperado) {
-            // Resultado esperado.
-        }
+    @Test
+    void defineElMapeoJpaDelMedicamento() throws Exception {
+        assertNotNull(Medicamento.class.getAnnotation(Entity.class));
+
+        Table tabla = Medicamento.class.getAnnotation(Table.class);
+        assertNotNull(tabla);
+        assertEquals("soracare", tabla.schema());
+        assertEquals("medicamentos", tabla.name());
+
+        Field id = Medicamento.class.getDeclaredField("idMedicamento");
+        GeneratedValue generacion = id.getAnnotation(GeneratedValue.class);
+        assertNotNull(generacion);
+        assertEquals(GenerationType.IDENTITY, generacion.strategy());
+
+        Field via = Medicamento.class.getDeclaredField("viaAdministracion");
+        Enumerated enumerado = via.getAnnotation(Enumerated.class);
+        assertNotNull(enumerado);
+        assertEquals(EnumType.STRING, enumerado.value());
     }
 
-    @FunctionalInterface
-    private interface Operacion {
-        void ejecutar();
+    @Test
+    void administraFechasMedianteElCicloDeVidaJpa() throws Exception {
+        Medicamento medicamento = new Medicamento();
+        Method crear = Medicamento.class.getDeclaredMethod("prepararCreacion");
+        crear.setAccessible(true);
+
+        assertNotNull(crear.getAnnotation(PrePersist.class));
+        crear.invoke(medicamento);
+        assertNotNull(medicamento.getFechaCreacion());
+        assertEquals(
+                medicamento.getFechaCreacion(),
+                medicamento.getFechaActualizacion()
+        );
+
+        OffsetDateTime fechaAnterior = medicamento.getFechaActualizacion();
+        Method actualizar = Medicamento.class.getDeclaredMethod(
+                "prepararActualizacion"
+        );
+        actualizar.setAccessible(true);
+
+        assertNotNull(actualizar.getAnnotation(PreUpdate.class));
+        actualizar.invoke(medicamento);
+        assertFalse(medicamento.getFechaActualizacion().isBefore(fechaAnterior));
     }
 }

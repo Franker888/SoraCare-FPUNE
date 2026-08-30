@@ -1,12 +1,10 @@
 package py.fpune.soracare.service;
 
-import py.fpune.soracare.config.ConexionBD;
 import py.fpune.soracare.dao.MedicamentoDAO;
 import py.fpune.soracare.dto.RegistroMedicamentoDTO;
 import py.fpune.soracare.mvc.model.Medicamento;
 import py.fpune.soracare.mvc.model.ViaAdministracion;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Locale;
@@ -28,23 +26,16 @@ public class MedicamentoService {
         medicamento.setViaAdministracion(convertirVia(datos.viaAdministracion()));
         medicamento.setRequiereReceta(convertirBooleano(datos.requiereReceta()));
 
-        try (Connection conexion = ConexionBD.obtenerConexion()) {
-            conexion.setAutoCommit(false);
-            try {
-                Medicamento creado = medicamentoDAO.crear(conexion, medicamento);
-                conexion.commit();
-                return creado;
-            } catch (Exception error) {
-                rollback(conexion, error);
-                if (error instanceof SQLException sql
-                        && SQLSTATE_UNICIDAD.equals(sql.getSQLState())) {
-                    throw new IllegalArgumentException(
-                            "Ya existe un medicamento con esos datos principales.", error);
-                }
-                if (error instanceof IllegalArgumentException validacion) throw validacion;
-                if (error instanceof SQLException sql) throw sql;
-                throw new SQLException("No fue posible registrar el medicamento.", error);
+        try {
+            return medicamentoDAO.crear(medicamento);
+        } catch (SQLException error) {
+            if (esViolacionDeUnicidad(error)) {
+                throw new IllegalArgumentException(
+                        "Ya existe un medicamento con esos datos principales.",
+                        error
+                );
             }
+            throw error;
         }
     }
 
@@ -60,18 +51,7 @@ public class MedicamentoService {
         if (idMedicamento <= 0) {
             throw new IllegalArgumentException("El medicamento seleccionado no es válido.");
         }
-        try (Connection conexion = ConexionBD.obtenerConexion()) {
-            conexion.setAutoCommit(false);
-            try {
-                medicamentoDAO.cambiarEstado(conexion, idMedicamento, activo);
-                conexion.commit();
-            } catch (Exception error) {
-                rollback(conexion, error);
-                if (error instanceof IllegalArgumentException validacion) throw validacion;
-                if (error instanceof SQLException sql) throw sql;
-                throw new SQLException("No fue posible actualizar el medicamento.", error);
-            }
-        }
+        medicamentoDAO.cambiarEstado(idMedicamento, activo);
     }
 
     private static ViaAdministracion convertirVia(String valor) {
@@ -92,11 +72,23 @@ public class MedicamentoService {
         };
     }
 
-    private static void rollback(Connection conexion, Exception original) {
-        try {
-            conexion.rollback();
-        } catch (SQLException error) {
-            original.addSuppressed(error);
+    private static boolean esViolacionDeUnicidad(Throwable error) {
+        Throwable causaActual = error;
+
+        while (causaActual != null) {
+            if (causaActual instanceof SQLException errorSql) {
+                SQLException errorActual = errorSql;
+
+                while (errorActual != null) {
+                    if (SQLSTATE_UNICIDAD.equals(errorActual.getSQLState())) {
+                        return true;
+                    }
+                    errorActual = errorActual.getNextException();
+                }
+            }
+            causaActual = causaActual.getCause();
         }
+
+        return false;
     }
 }

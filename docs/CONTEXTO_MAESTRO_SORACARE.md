@@ -21,7 +21,7 @@ El sistema ya funciona como una plataforma integral para cuatro perfiles: **admi
 - Apache Tomcat 10.1.57 para el entorno local.
 - PostgreSQL como base de datos.
 - JDBC y una separación pedagógica en controladores, servicios, DAO, DTO y modelos.
-- Jakarta Persistence 3.1 con Hibernate ORM 6.6 para la migración incremental de los DAO; la unidad `SoraCarePU` administra horarios, excepciones, citas y estados de citas.
+- Jakarta Persistence 3.1 con Hibernate ORM 6.6 para la migración incremental de los DAO; la unidad `SoraCarePU` administra horarios, excepciones, citas, estados de citas y medicamentos.
 - BCrypt para las contraseñas locales.
 - HTML, CSS, JavaScript y Bootstrap 5.3.3 en la interfaz.
 - PDF generado desde Java para comprobantes e indicaciones.
@@ -134,6 +134,8 @@ La atención médica cerrada queda incorporada al historial del paciente. Una at
 Los documentos clínicos se guardan fuera del WAR en un directorio configurable. Sólo el paciente propietario y los profesionales autorizados pueden consultarlos. Las fotos de perfil siguen el mismo principio de almacenamiento externo.
 
 Las antiguas “recetas” se presentan al usuario como **indicaciones médicas**. Una atención puede incluir varios medicamentos con dosis, frecuencia, duración, vía y observaciones, además de estudios clínicos solicitados. El paciente puede abrir o descargar el PDF consolidado.
+
+El catálogo de medicamentos usa una entidad JPA para altas, listados y cambios de estado. La consulta por conexión se conserva en JDBC únicamente dentro de la emisión de recetas, de modo que la validación del medicamento, la receta y su notificación sigan confirmándose o revirtiéndose como una sola transacción clínica.
 
 ## 7. Paneles, diseño y compatibilidad
 
@@ -324,7 +326,7 @@ Directorios externos usados en la notebook actual:
 - Informes, auditoría, configuración, usuarios y roles administrativos.
 - Google Calendar: agregar y retirar cita.
 - Validación aislada de Turnstile: modo local, configuración incompleta, token aceptado, token inválido y acción incorrecta.
-- Veintiocho pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA y mapeo JPA de citas.
+- Treinta y dos pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA y mapeo JPA de citas y medicamentos.
 - Rutas públicas y paneles en resoluciones móviles y de escritorio.
 
 El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar una cantidad mayor que cero; una compilación sin ese resumen no reemplaza la evidencia de pruebas. Las pruebas manuales, de integración con PostgreSQL y de servicios externos siguen documentándose por separado.

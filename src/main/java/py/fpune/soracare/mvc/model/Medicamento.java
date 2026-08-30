@@ -1,18 +1,53 @@
 package py.fpune.soracare.mvc.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+
 import java.time.OffsetDateTime;
 
+@Entity
+@Table(name = "medicamentos", schema = "soracare")
 public class Medicamento {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_medicamento")
     private Long idMedicamento;
+
+    @Column(name = "nombre_comercial", nullable = false, length = 120)
     private String nombreComercial;
+
+    @Column(name = "principio_activo", nullable = false, length = 120)
     private String principioActivo;
+
+    @Column(name = "presentacion", nullable = false, length = 100)
     private String presentacion;
+
+    @Column(name = "concentracion", length = 60)
     private String concentracion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "via_administracion", nullable = false, length = 40)
     private ViaAdministracion viaAdministracion;
+
+    @Column(name = "requiere_receta", nullable = false)
     private boolean requiereReceta = true;
+
+    @Column(name = "activo", nullable = false)
     private boolean activo = true;
+
+    @Column(name = "fecha_creacion", nullable = false)
     private OffsetDateTime fechaCreacion;
+
+    @Column(name = "fecha_actualizacion", nullable = false)
     private OffsetDateTime fechaActualizacion;
 
     public Long getIdMedicamento() {
@@ -107,6 +142,18 @@ public class Medicamento {
     public String getDescripcionCompleta() {
         String base = nombreComercial + " · " + principioActivo + " · " + presentacion;
         return concentracion == null ? base : base + " · " + concentracion;
+    }
+
+    @PrePersist
+    private void prepararCreacion() {
+        OffsetDateTime ahora = OffsetDateTime.now();
+        if (fechaCreacion == null) fechaCreacion = ahora;
+        fechaActualizacion = ahora;
+    }
+
+    @PreUpdate
+    private void prepararActualizacion() {
+        fechaActualizacion = OffsetDateTime.now();
     }
 
     private static String textoObligatorio(

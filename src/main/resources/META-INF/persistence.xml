@@ -12,6 +12,7 @@
         <class>py.fpune.soracare.mvc.model.HorarioMedico</class>
         <class>py.fpune.soracare.mvc.model.EstadoCita</class>
         <class>py.fpune.soracare.mvc.model.Cita</class>
+        <class>py.fpune.soracare.mvc.model.Medicamento</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
 
         <properties>
