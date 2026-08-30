@@ -7,7 +7,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import py.fpune.soracare.api.controller.ApiRestExcepciones;
 import py.fpune.soracare.api.controller.EspecialidadRestController;
+import py.fpune.soracare.api.controller.MedicoRestController;
 import py.fpune.soracare.service.EspecialidadService;
+import py.fpune.soracare.service.MedicoEspecialidadService;
+import py.fpune.soracare.service.MedicoService;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.nio.file.Path;
@@ -49,6 +52,9 @@ class ApiRestConfiguracionTest {
 
             assertNotNull(contexto.getBean(EspecialidadService.class));
             assertNotNull(contexto.getBean(EspecialidadRestController.class));
+            assertNotNull(contexto.getBean(MedicoService.class));
+            assertNotNull(contexto.getBean(MedicoEspecialidadService.class));
+            assertNotNull(contexto.getBean(MedicoRestController.class));
             assertNotNull(contexto.getBean(ApiRestExcepciones.class));
         }
     }
