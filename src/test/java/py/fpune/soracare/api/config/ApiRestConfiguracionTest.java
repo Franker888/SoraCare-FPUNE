@@ -9,6 +9,7 @@ import py.fpune.soracare.api.controller.ApiRestExcepciones;
 import py.fpune.soracare.api.controller.DisponibilidadRestController;
 import py.fpune.soracare.api.controller.EspecialidadRestController;
 import py.fpune.soracare.api.controller.MedicoRestController;
+import py.fpune.soracare.api.controller.SesionRestController;
 import py.fpune.soracare.service.DisponibilidadService;
 import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
@@ -28,12 +29,26 @@ class ApiRestConfiguracionTest {
         Element servlet = buscarPorNombre(
                 documento,
                 "servlet",
+                "servlet-name",
                 "apiRest"
         );
         Element mapeo = buscarPorNombre(
                 documento,
                 "servlet-mapping",
+                "servlet-name",
                 "apiRest"
+        );
+        Element filtro = buscarPorNombre(
+                documento,
+                "filter",
+                "filter-name",
+                "SeguridadApiRest"
+        );
+        Element mapeoFiltro = buscarPorNombre(
+                documento,
+                "filter-mapping",
+                "filter-name",
+                "SeguridadApiRest"
         );
 
         assertEquals(
@@ -42,6 +57,11 @@ class ApiRestConfiguracionTest {
         );
         assertEquals("2", texto(servlet, "load-on-startup"));
         assertEquals("/api/v1/*", texto(mapeo, "url-pattern"));
+        assertEquals(
+                "py.fpune.soracare.security.FiltroSeguridadApiRest",
+                texto(filtro, "filter-class")
+        );
+        assertEquals("/api/v1/*", texto(mapeoFiltro, "url-pattern"));
     }
 
     @Test
@@ -59,6 +79,7 @@ class ApiRestConfiguracionTest {
             assertNotNull(contexto.getBean(MedicoRestController.class));
             assertNotNull(contexto.getBean(DisponibilidadService.class));
             assertNotNull(contexto.getBean(DisponibilidadRestController.class));
+            assertNotNull(contexto.getBean(SesionRestController.class));
             assertNotNull(contexto.getBean(ApiRestExcepciones.class));
         }
     }
@@ -78,18 +99,19 @@ class ApiRestConfiguracionTest {
     private static Element buscarPorNombre(
             Document documento,
             String etiqueta,
+            String etiquetaNombre,
             String nombre
     ) {
         var nodos = documento.getElementsByTagName(etiqueta);
 
         for (int indice = 0; indice < nodos.getLength(); indice++) {
             Element elemento = (Element) nodos.item(indice);
-            if (nombre.equals(texto(elemento, "servlet-name"))) {
+            if (nombre.equals(texto(elemento, etiquetaNombre))) {
                 return elemento;
             }
         }
 
-        throw new AssertionError("No se encontró el servlet " + nombre + ".");
+        throw new AssertionError("No se encontró " + nombre + ".");
     }
 
     private static String texto(Element elemento, String etiqueta) {

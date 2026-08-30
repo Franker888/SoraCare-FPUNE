@@ -7,6 +7,7 @@ import py.fpune.soracare.api.controller.ApiRestExcepciones;
 import py.fpune.soracare.api.controller.DisponibilidadRestController;
 import py.fpune.soracare.api.controller.EspecialidadRestController;
 import py.fpune.soracare.api.controller.MedicoRestController;
+import py.fpune.soracare.api.controller.SesionRestController;
 import py.fpune.soracare.service.DisponibilidadService;
 import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
@@ -61,6 +62,11 @@ public class ApiRestConfiguracion {
             DisponibilidadService disponibilidadService
     ) {
         return new DisponibilidadRestController(disponibilidadService);
+    }
+
+    @Bean
+    public SesionRestController sesionRestController() {
+        return new SesionRestController();
     }
 
     @Bean

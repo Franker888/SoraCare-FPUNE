@@ -6,12 +6,36 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import py.fpune.soracare.api.dto.ErrorApiDTO;
+import py.fpune.soracare.api.security.ApiAccesoDenegadoException;
+import py.fpune.soracare.api.security.ApiNoAutenticadoException;
 import py.fpune.soracare.service.SentryMonitoreoService;
 
 import java.sql.SQLException;
 
 @RestControllerAdvice
 public class ApiRestExcepciones {
+
+    @ExceptionHandler(ApiNoAutenticadoException.class)
+    public ResponseEntity<ErrorApiDTO> manejarNoAutenticado(
+            ApiNoAutenticadoException error
+    ) {
+        return respuesta(
+                HttpStatus.UNAUTHORIZED,
+                "NO_AUTENTICADO",
+                error.getMessage()
+        );
+    }
+
+    @ExceptionHandler(ApiAccesoDenegadoException.class)
+    public ResponseEntity<ErrorApiDTO> manejarAccesoDenegado(
+            ApiAccesoDenegadoException error
+    ) {
+        return respuesta(
+                HttpStatus.FORBIDDEN,
+                "ACCESO_DENEGADO",
+                error.getMessage()
+        );
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorApiDTO> manejarValidacion(
