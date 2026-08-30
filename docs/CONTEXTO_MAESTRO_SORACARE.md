@@ -56,7 +56,7 @@ El alcance de Jakarta Persistence queda cerrado deliberadamente en cinco entidad
 
 ### API REST v1
 
-Spring MVC convive con los Servlet y JSP existentes y atiende únicamente el prefijo `/api/v1/*`. Los recursos públicos disponibles son `GET /api/v1/especialidades`, con el ID, nombre, descripción y duración estimada de las especialidades activas, y `GET /api/v1/medicos`, con el perfil profesional público y sus especialidades activas. Ambos reutilizan los servicios existentes. El DTO de médicos excluye cédula, correo, teléfono, dirección, fecha de nacimiento y demás datos internos. La API usa respuestas de error JSON sin detalles técnicos y monitoreo mediante Sentry cuando corresponde. No se incorporó Spring Boot ni se reemplazó el despliegue WAR en Tomcat.
+Spring MVC convive con los Servlet y JSP existentes y atiende únicamente el prefijo `/api/v1/*`. Los recursos públicos disponibles son `GET /api/v1/especialidades`, con el catálogo activo; `GET /api/v1/medicos`, con el perfil profesional público y sus especialidades activas; y `GET /api/v1/disponibilidad?fecha=AAAA-MM-DD`, con filtros opcionales `idMedico` e `idEspecialidad`. Los tres reutilizan los servicios existentes. El DTO de médicos excluye cédula, correo, teléfono, dirección, fecha de nacimiento y demás datos internos. Disponibilidad aplica las reglas vigentes de horarios, bloqueos, excepciones, citas ocupadas y zona horaria de Asunción. La API usa respuestas de error JSON sin detalles técnicos y monitoreo mediante Sentry cuando corresponde. No se incorporó Spring Boot ni se reemplazó el despliegue WAR en Tomcat.
 
 ## 3. Perfiles y funciones
 
@@ -334,7 +334,7 @@ Directorios externos usados en la notebook actual:
 - Informes, auditoría, configuración, usuarios y roles administrativos.
 - Google Calendar: agregar y retirar cita.
 - Validación aislada de Turnstile: modo local, configuración incompleta, token aceptado, token inválido y acción incorrecta.
-- Cuarenta y cuatro pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA, configuración de la unidad de persistencia, mapeo JPA y los catálogos públicos de la API REST con Spring MVC.
+- Cuarenta y nueve pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA, configuración de la unidad de persistencia, mapeo JPA y los recursos públicos de la API REST con Spring MVC.
 - Rutas públicas y paneles en resoluciones móviles y de escritorio.
 
 El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar una cantidad mayor que cero; una compilación sin ese resumen no reemplaza la evidencia de pruebas. Las pruebas manuales, de integración con PostgreSQL y de servicios externos siguen documentándose por separado.
@@ -350,7 +350,7 @@ El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar 
 7. Política de privacidad, términos, copias de seguridad y estrategia de recuperación.
 8. Ampliar las pruebas JUnit de integración con PostgreSQL, agregar integración continua y probar con más dispositivos reales.
 9. Revisión final de accesibilidad y seguridad antes de exponer datos reales.
-10. Ampliar gradualmente la API REST con disponibilidad antes de exponer operaciones autenticadas de citas.
+10. Diseñar autenticación, autorización y protección contra solicitudes maliciosas antes de exponer operaciones REST de citas.
 11. Dockerizar Tomcat, PostgreSQL y la configuración local después de cerrar las mejoras solicitadas por el profesor.
 
 ## 14. Instrucciones para continuar en otro chat
