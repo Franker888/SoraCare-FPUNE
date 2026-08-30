@@ -1,6 +1,7 @@
 package py.fpune.soracare.dao;
 
-import py.fpune.soracare.config.ConexionBD;
+import jakarta.persistence.PersistenceException;
+import py.fpune.soracare.config.JpaContexto;
 import py.fpune.soracare.dto.SlotDisponibleDTO;
 import py.fpune.soracare.mvc.model.Cita;
 
@@ -10,7 +11,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,62 +93,95 @@ public class CitaDAO {
     }
 
     public Optional<Cita> buscarPorId(long idCita) throws SQLException {
-        try (Connection conexion = ConexionBD.obtenerConexion()) {
-            return buscarPorId(conexion, idCita);
+        try {
+            return JpaContexto.ejecutarConsulta(
+                    entityManager -> entityManager.createQuery(
+                                    """
+                                    SELECT c
+                                    FROM Cita c
+                                    JOIN FETCH c.estado
+                                    WHERE c.idCita = :idCita
+                                    """,
+                                    Cita.class
+                            )
+                            .setParameter("idCita", idCita)
+                            .getResultStream()
+                            .findFirst()
+            );
+        } catch (PersistenceException error) {
+            throw convertir("No fue posible consultar la cita.", error);
         }
     }
 
     public List<Cita> listarEntre(OffsetDateTime desde, OffsetDateTime hasta)
             throws SQLException {
-        String sql = BASE_SELECT + """
-                WHERE c.fecha_hora_inicio >= ? AND c.fecha_hora_inicio < ?
-                ORDER BY c.fecha_hora_inicio, c.id_medico, c.id_cita
-                """;
-        List<Cita> citas = new ArrayList<>();
-        try (Connection conexion = ConexionBD.obtenerConexion();
-             PreparedStatement sentencia = conexion.prepareStatement(sql)) {
-            sentencia.setObject(1, desde);
-            sentencia.setObject(2, hasta);
-            try (ResultSet resultado = sentencia.executeQuery()) {
-                while (resultado.next()) citas.add(mapear(resultado));
-            }
+        try {
+            return JpaContexto.ejecutarConsulta(
+                    entityManager -> entityManager.createQuery(
+                                    """
+                                    SELECT c
+                                    FROM Cita c
+                                    JOIN FETCH c.estado
+                                    WHERE c.fechaHoraInicio >= :desde
+                                      AND c.fechaHoraInicio < :hasta
+                                    ORDER BY c.fechaHoraInicio,
+                                             c.idMedico,
+                                             c.idCita
+                                    """,
+                                    Cita.class
+                            )
+                            .setParameter("desde", desde)
+                            .setParameter("hasta", hasta)
+                            .getResultList()
+            );
+        } catch (PersistenceException error) {
+            throw convertir("No fue posible consultar las citas del período.", error);
         }
-        return citas;
     }
 
     public List<Cita> listarProximas(int limite) throws SQLException {
-        String sql = BASE_SELECT + """
-                WHERE c.fecha_hora_fin >= CURRENT_TIMESTAMP
-                ORDER BY c.fecha_hora_inicio, c.id_cita
-                LIMIT ?
-                """;
-        List<Cita> citas = new ArrayList<>();
-        try (Connection conexion = ConexionBD.obtenerConexion();
-             PreparedStatement sentencia = conexion.prepareStatement(sql)) {
-            sentencia.setInt(1, limite);
-            try (ResultSet resultado = sentencia.executeQuery()) {
-                while (resultado.next()) citas.add(mapear(resultado));
-            }
+        try {
+            return JpaContexto.ejecutarConsulta(
+                    entityManager -> entityManager.createQuery(
+                                    """
+                                    SELECT c
+                                    FROM Cita c
+                                    JOIN FETCH c.estado
+                                    WHERE c.fechaHoraFin >= CURRENT_TIMESTAMP
+                                    ORDER BY c.fechaHoraInicio,
+                                             c.idCita
+                                    """,
+                                    Cita.class
+                            )
+                            .setMaxResults(limite)
+                            .getResultList()
+            );
+        } catch (PersistenceException error) {
+            throw convertir("No fue posible consultar las próximas citas.", error);
         }
-        return citas;
     }
 
     public List<Cita> listarPorPaciente(long idPaciente, int limite) throws SQLException {
-        String sql = BASE_SELECT + """
-                WHERE c.id_paciente = ?
-                ORDER BY c.fecha_hora_inicio DESC, c.id_cita DESC
-                LIMIT ?
-                """;
-        List<Cita> citas = new ArrayList<>();
-        try (Connection conexion = ConexionBD.obtenerConexion();
-             PreparedStatement sentencia = conexion.prepareStatement(sql)) {
-            sentencia.setLong(1, idPaciente);
-            sentencia.setInt(2, limite);
-            try (ResultSet resultado = sentencia.executeQuery()) {
-                while (resultado.next()) citas.add(mapear(resultado));
-            }
+        try {
+            return JpaContexto.ejecutarConsulta(
+                    entityManager -> entityManager.createQuery(
+                                    """
+                                    SELECT c
+                                    FROM Cita c
+                                    JOIN FETCH c.estado
+                                    WHERE c.idPaciente = :idPaciente
+                                    ORDER BY c.fechaHoraInicio DESC,
+                                             c.idCita DESC
+                                    """,
+                                    Cita.class
+                            )
+                            .setParameter("idPaciente", idPaciente)
+                            .setMaxResults(limite)
+                            .getResultList()
+            );
+        } catch (PersistenceException error) {
+            throw convertir("No fue posible consultar las citas del paciente.", error);
         }
-        return citas;
     }
 
     public boolean existeSuperposicion(
@@ -317,5 +350,12 @@ public class CitaDAO {
         cita.setFechaCreacion(resultado.getObject("fecha_creacion", OffsetDateTime.class));
         cita.setFechaActualizacion(resultado.getObject("fecha_actualizacion", OffsetDateTime.class));
         return cita;
+    }
+
+    private static SQLException convertir(
+            String mensaje,
+            RuntimeException error
+    ) {
+        return new SQLException(mensaje, error);
     }
 }

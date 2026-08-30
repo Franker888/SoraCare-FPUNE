@@ -10,6 +10,8 @@
 
         <class>py.fpune.soracare.mvc.model.ExcepcionHorarioMedico</class>
         <class>py.fpune.soracare.mvc.model.HorarioMedico</class>
+        <class>py.fpune.soracare.mvc.model.EstadoCita</class>
+        <class>py.fpune.soracare.mvc.model.Cita</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
 
         <properties>

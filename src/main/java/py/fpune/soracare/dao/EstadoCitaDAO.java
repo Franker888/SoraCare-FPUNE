@@ -1,13 +1,13 @@
 package py.fpune.soracare.dao;
 
-import py.fpune.soracare.config.ConexionBD;
+import jakarta.persistence.PersistenceException;
+import py.fpune.soracare.config.JpaContexto;
 import py.fpune.soracare.mvc.model.EstadoCita;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,15 +29,25 @@ public class EstadoCitaDAO {
     }
 
     public List<EstadoCita> listarActivos() throws SQLException {
-        String sql = "SELECT " + COLUMNAS
-                + " FROM soracare.estados_citas WHERE activo = TRUE ORDER BY id_estado_cita";
-        List<EstadoCita> estados = new ArrayList<>();
-        try (Connection conexion = ConexionBD.obtenerConexion();
-             PreparedStatement sentencia = conexion.prepareStatement(sql);
-             ResultSet resultado = sentencia.executeQuery()) {
-            while (resultado.next()) estados.add(mapear(resultado));
+        try {
+            return JpaContexto.ejecutarConsulta(
+                    entityManager -> entityManager.createQuery(
+                                    """
+                                    SELECT e
+                                    FROM EstadoCita e
+                                    WHERE e.activo = TRUE
+                                    ORDER BY e.idEstadoCita
+                                    """,
+                                    EstadoCita.class
+                            )
+                            .getResultList()
+            );
+        } catch (PersistenceException error) {
+            throw new SQLException(
+                    "No fue posible consultar los estados de citas.",
+                    error
+            );
         }
-        return estados;
     }
 
     private static EstadoCita mapear(ResultSet resultado) throws SQLException {
