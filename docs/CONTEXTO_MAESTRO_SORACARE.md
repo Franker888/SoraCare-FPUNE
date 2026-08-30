@@ -114,7 +114,7 @@ src/main/webapp/
 
 La agenda se construye a partir de horarios recurrentes por médico, especialidad y consultorio. Las excepciones permiten bloqueos totales, bloqueos parciales o disponibilidad extraordinaria. La lista de fechas que ve el paciente se limita a días atendidos por el profesional seleccionado. El médico administra sus propios bloqueos desde `/medico/mi-disponibilidad`; si el período contiene citas futuras, primero debe cancelarlas con un motivo o reprogramarlas y el sistema nunca las elimina silenciosamente.
 
-El sistema evita que dos pacientes reserven el mismo médico, fecha y turno. La recepcionista puede consultar disponibilidad interna y el médico puede consultar sus espacios libres. Las búsquedas de disponibilidad se registran de forma analítica y sin almacenar el texto clínico del paciente. Los DAO de horarios recurrentes y excepciones usan entidades, JPQL y transacciones locales de `SoraCarePU`, reutilizando el conjunto de conexiones seguro existente. Flyway continúa siendo la única fuente del esquema y JPA tiene deshabilitada la generación de tablas.
+El sistema evita que dos pacientes reserven el mismo médico, fecha y turno. La recepcionista puede consultar disponibilidad interna y el médico puede consultar sus espacios libres. Las búsquedas de disponibilidad se registran de forma analítica y sin almacenar el texto clínico del paciente. Los DAO de horarios recurrentes y excepciones usan entidades y JPQL; `JpaContexto` centraliza la apertura, cierre, confirmación y reversión de las transacciones locales de `SoraCarePU`, reutilizando el conjunto de conexiones seguro existente. Flyway continúa siendo la única fuente del esquema y JPA tiene deshabilitada la generación de tablas.
 
 ## 5. Pagos y comprobantes
 
@@ -324,7 +324,7 @@ Directorios externos usados en la notebook actual:
 - Informes, auditoría, configuración, usuarios y roles administrativos.
 - Google Calendar: agregar y retirar cita.
 - Validación aislada de Turnstile: modo local, configuración incompleta, token aceptado, token inválido y acción incorrecta.
-- Veintitrés pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico y validación de horarios recurrentes.
+- Veinticinco pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes y uso seguro del contexto JPA.
 - Rutas públicas y paneles en resoluciones móviles y de escritorio.
 
 El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar una cantidad mayor que cero; una compilación sin ese resumen no reemplaza la evidencia de pruebas. Las pruebas manuales, de integración con PostgreSQL y de servicios externos siguen documentándose por separado.

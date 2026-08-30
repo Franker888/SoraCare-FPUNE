@@ -1,7 +1,5 @@
 package py.fpune.soracare.dao;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.PersistenceException;
 import py.fpune.soracare.config.JpaContexto;
 import py.fpune.soracare.mvc.model.ExcepcionHorarioMedico;
@@ -15,18 +13,14 @@ public class ExcepcionHorarioMedicoDAO {
 
     public ExcepcionHorarioMedico crear(ExcepcionHorarioMedico excepcion)
             throws SQLException {
-        try (EntityManager entityManager = JpaContexto.crearEntityManager()) {
-            EntityTransaction transaccion = entityManager.getTransaction();
-            try {
-                transaccion.begin();
+        try {
+            return JpaContexto.ejecutarEnTransaccion(entityManager -> {
                 entityManager.persist(excepcion);
                 entityManager.flush();
-                transaccion.commit();
                 return excepcion;
-            } catch (RuntimeException error) {
-                rollback(transaccion, error);
-                throw convertir("No fue posible registrar la excepción de agenda.", error);
-            }
+            });
+        } catch (RuntimeException error) {
+            throw convertir("No fue posible registrar la excepción de agenda.", error);
         }
     }
 
@@ -83,9 +77,14 @@ public class ExcepcionHorarioMedicoDAO {
 
     public Optional<ExcepcionHorarioMedico> buscarPorId(long idExcepcion)
             throws SQLException {
-        try (EntityManager entityManager = JpaContexto.crearEntityManager()) {
-            return Optional.ofNullable(
-                    entityManager.find(ExcepcionHorarioMedico.class, idExcepcion)
+        try {
+            return JpaContexto.ejecutarConsulta(
+                    entityManager -> Optional.ofNullable(
+                            entityManager.find(
+                                    ExcepcionHorarioMedico.class,
+                                    idExcepcion
+                            )
+                    )
             );
         } catch (PersistenceException error) {
             throw convertir("No fue posible consultar la excepción de agenda.", error);
@@ -94,10 +93,8 @@ public class ExcepcionHorarioMedicoDAO {
 
     public void actualizarActivo(long idExcepcion, boolean activo)
             throws SQLException {
-        try (EntityManager entityManager = JpaContexto.crearEntityManager()) {
-            EntityTransaction transaccion = entityManager.getTransaction();
-            try {
-                transaccion.begin();
+        try {
+            JpaContexto.ejecutarEnTransaccion(entityManager -> {
                 ExcepcionHorarioMedico excepcion = entityManager.find(
                         ExcepcionHorarioMedico.class,
                         idExcepcion
@@ -108,14 +105,15 @@ public class ExcepcionHorarioMedicoDAO {
                     );
                 }
                 excepcion.setActivo(activo);
-                transaccion.commit();
-            } catch (RuntimeException error) {
-                rollback(transaccion, error);
-                if (error instanceof IllegalArgumentException validacion) {
-                    throw validacion;
-                }
-                throw convertir("No fue posible actualizar la excepción de agenda.", error);
-            }
+                return null;
+            });
+        } catch (IllegalArgumentException validacion) {
+            throw validacion;
+        } catch (RuntimeException error) {
+            throw convertir(
+                    "No fue posible actualizar la excepción de agenda.",
+                    error
+            );
         }
     }
 
@@ -124,28 +122,19 @@ public class ExcepcionHorarioMedicoDAO {
             String parametro,
             Object valor
     ) throws SQLException {
-        try (EntityManager entityManager = JpaContexto.crearEntityManager()) {
-            var consulta = entityManager.createQuery(
-                    jpql,
-                    ExcepcionHorarioMedico.class
-            );
-            if (parametro != null) consulta.setParameter(parametro, valor);
-            return consulta.getResultList();
+        try {
+            return JpaContexto.ejecutarConsulta(entityManager -> {
+                var consulta = entityManager.createQuery(
+                        jpql,
+                        ExcepcionHorarioMedico.class
+                );
+                if (parametro != null) {
+                    consulta.setParameter(parametro, valor);
+                }
+                return consulta.getResultList();
+            });
         } catch (PersistenceException error) {
             throw convertir("No fue posible consultar las excepciones de agenda.", error);
-        }
-    }
-
-    private static void rollback(
-            EntityTransaction transaccion,
-            RuntimeException error
-    ) {
-        if (transaccion != null && transaccion.isActive()) {
-            try {
-                transaccion.rollback();
-            } catch (RuntimeException errorRollback) {
-                error.addSuppressed(errorRollback);
-            }
         }
     }
 

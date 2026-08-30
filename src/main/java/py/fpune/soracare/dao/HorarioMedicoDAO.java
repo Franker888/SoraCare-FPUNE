@@ -1,7 +1,5 @@
 package py.fpune.soracare.dao;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.PersistenceException;
 import py.fpune.soracare.config.JpaContexto;
 import py.fpune.soracare.mvc.model.HorarioMedico;
@@ -10,7 +8,6 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 public class HorarioMedicoDAO {
 
@@ -19,23 +16,26 @@ public class HorarioMedicoDAO {
             throw new SQLException("El horario médico no puede ser nulo.");
         }
 
-        return ejecutarEnTransaccion(
-                "No fue posible registrar el horario médico.",
-                entityManager -> {
-                    entityManager.persist(horario);
-                    entityManager.flush();
-                    return horario;
-                }
-        );
+        try {
+            return JpaContexto.ejecutarEnTransaccion(entityManager -> {
+                entityManager.persist(horario);
+                entityManager.flush();
+                return horario;
+            });
+        } catch (RuntimeException error) {
+            throw convertir("No fue posible registrar el horario médico.", error);
+        }
     }
 
     public Optional<HorarioMedico> buscarPorId(long idHorario)
             throws SQLException {
         validarIdHorario(idHorario);
 
-        try (EntityManager entityManager = JpaContexto.crearEntityManager()) {
-            return Optional.ofNullable(
-                    entityManager.find(HorarioMedico.class, idHorario)
+        try {
+            return JpaContexto.ejecutarConsulta(
+                    entityManager -> Optional.ofNullable(
+                            entityManager.find(HorarioMedico.class, idHorario)
+                    )
             );
         } catch (PersistenceException error) {
             throw convertir("No fue posible consultar el horario médico.", error);
@@ -85,34 +85,42 @@ public class HorarioMedicoDAO {
             throw new SQLException("El horario médico no puede ser nulo.");
         }
 
-        try (EntityManager entityManager = JpaContexto.crearEntityManager()) {
-            Long coincidencias = entityManager.createQuery(
-                            """
-                            SELECT COUNT(h)
-                            FROM HorarioMedico h
-                            WHERE h.activo = TRUE
-                              AND h.idHorario <> :idExcluido
-                              AND h.diaSemana = :diaSemana
-                              AND :horaInicio < h.horaFin
-                              AND :horaFin > h.horaInicio
-                              AND (h.fechaHasta IS NULL
-                                   OR h.fechaHasta >= :fechaDesde)
-                              AND (:fechaHasta IS NULL
-                                   OR h.fechaDesde <= :fechaHasta)
-                              AND (h.idMedico = :idMedico
-                                   OR h.idConsultorio = :idConsultorio)
-                            """,
-                            Long.class
-                    )
-                    .setParameter("idExcluido", Math.max(idHorarioExcluido, 0))
-                    .setParameter("diaSemana", horario.getDiaSemana())
-                    .setParameter("horaInicio", horario.getHoraInicio())
-                    .setParameter("horaFin", horario.getHoraFin())
-                    .setParameter("fechaDesde", horario.getFechaDesde())
-                    .setParameter("fechaHasta", horario.getFechaHasta())
-                    .setParameter("idMedico", horario.getIdMedico())
-                    .setParameter("idConsultorio", horario.getIdConsultorio())
-                    .getSingleResult();
+        try {
+            Long coincidencias = JpaContexto.ejecutarConsulta(
+                    entityManager -> entityManager.createQuery(
+                                    """
+                                    SELECT COUNT(h)
+                                    FROM HorarioMedico h
+                                    WHERE h.activo = TRUE
+                                      AND h.idHorario <> :idExcluido
+                                      AND h.diaSemana = :diaSemana
+                                      AND :horaInicio < h.horaFin
+                                      AND :horaFin > h.horaInicio
+                                      AND (h.fechaHasta IS NULL
+                                           OR h.fechaHasta >= :fechaDesde)
+                                      AND (:fechaHasta IS NULL
+                                           OR h.fechaDesde <= :fechaHasta)
+                                      AND (h.idMedico = :idMedico
+                                           OR h.idConsultorio = :idConsultorio)
+                                    """,
+                                    Long.class
+                            )
+                            .setParameter(
+                                    "idExcluido",
+                                    Math.max(idHorarioExcluido, 0)
+                            )
+                            .setParameter("diaSemana", horario.getDiaSemana())
+                            .setParameter("horaInicio", horario.getHoraInicio())
+                            .setParameter("horaFin", horario.getHoraFin())
+                            .setParameter("fechaDesde", horario.getFechaDesde())
+                            .setParameter("fechaHasta", horario.getFechaHasta())
+                            .setParameter("idMedico", horario.getIdMedico())
+                            .setParameter(
+                                    "idConsultorio",
+                                    horario.getIdConsultorio()
+                            )
+                            .getSingleResult()
+            );
 
             return coincidencias > 0;
         } catch (PersistenceException error) {
@@ -127,69 +135,42 @@ public class HorarioMedicoDAO {
             throws SQLException {
         validarIdHorario(idHorario);
 
-        ejecutarEnTransaccion(
-                "No fue posible actualizar el horario médico.",
-                entityManager -> {
-                    HorarioMedico horario = entityManager.find(
-                            HorarioMedico.class,
-                            idHorario
+        try {
+            JpaContexto.ejecutarEnTransaccion(entityManager -> {
+                HorarioMedico horario = entityManager.find(
+                        HorarioMedico.class,
+                        idHorario
+                );
+                if (horario == null) {
+                    throw new PersistenceException(
+                            "El horario seleccionado no existe."
                     );
-                    if (horario == null) {
-                        throw new PersistenceException(
-                                "El horario seleccionado no existe."
-                        );
-                    }
-                    horario.setActivo(activo);
-                    return null;
                 }
-        );
+                horario.setActivo(activo);
+                return null;
+            });
+        } catch (RuntimeException error) {
+            throw convertir("No fue posible actualizar el horario médico.", error);
+        }
     }
 
     private static List<HorarioMedico> consultarLista(
             String jpql,
             LocalDate fecha
     ) throws SQLException {
-        try (EntityManager entityManager = JpaContexto.crearEntityManager()) {
-            var consulta = entityManager.createQuery(jpql, HorarioMedico.class);
-            if (fecha != null) {
-                consulta.setParameter("fecha", fecha);
-            }
-            return consulta.getResultList();
+        try {
+            return JpaContexto.ejecutarConsulta(entityManager -> {
+                var consulta = entityManager.createQuery(
+                        jpql,
+                        HorarioMedico.class
+                );
+                if (fecha != null) {
+                    consulta.setParameter("fecha", fecha);
+                }
+                return consulta.getResultList();
+            });
         } catch (PersistenceException error) {
             throw convertir("No fue posible consultar los horarios médicos.", error);
-        }
-    }
-
-    private static <T> T ejecutarEnTransaccion(
-            String mensajeError,
-            Function<EntityManager, T> operacion
-    ) throws SQLException {
-        try (EntityManager entityManager = JpaContexto.crearEntityManager()) {
-            EntityTransaction transaccion = entityManager.getTransaction();
-            try {
-                transaccion.begin();
-                T resultado = operacion.apply(entityManager);
-                transaccion.commit();
-                return resultado;
-            } catch (RuntimeException error) {
-                rollback(transaccion, error);
-                throw convertir(mensajeError, error);
-            }
-        } catch (PersistenceException error) {
-            throw convertir(mensajeError, error);
-        }
-    }
-
-    private static void rollback(
-            EntityTransaction transaccion,
-            RuntimeException error
-    ) {
-        if (transaccion != null && transaccion.isActive()) {
-            try {
-                transaccion.rollback();
-            } catch (RuntimeException errorRollback) {
-                error.addSuppressed(errorRollback);
-            }
         }
     }
 
