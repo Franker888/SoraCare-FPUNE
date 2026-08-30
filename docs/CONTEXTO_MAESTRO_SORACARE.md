@@ -22,6 +22,7 @@ El sistema ya funciona como una plataforma integral para cuatro perfiles: **admi
 - PostgreSQL como base de datos.
 - JDBC y una separación pedagógica en controladores, servicios, DAO, DTO y modelos.
 - Jakarta Persistence 3.1 con Hibernate ORM 6.6 para la migración incremental de los DAO; la unidad `SoraCarePU` administra horarios, excepciones, citas, estados de citas y medicamentos.
+- Spring MVC 6.2 para la API REST incremental, integrado en el mismo WAR y compatible con Jakarta EE 10 y Tomcat 10.1.
 - BCrypt para las contraseñas locales.
 - HTML, CSS, JavaScript y Bootstrap 5.3.3 en la interfaz.
 - PDF generado desde Java para comprobantes e indicaciones.
@@ -31,6 +32,7 @@ Estructura principal:
 
 ```text
 src/main/java/py/fpune/soracare/
+  api/          configuración, controladores y DTO de la API REST v1
   config/       conexión y ciclo de vida de recursos
   dao/          acceso transaccional a PostgreSQL
   dto/          objetos de transferencia
@@ -51,6 +53,10 @@ src/main/webapp/
 ```
 
 El alcance de Jakarta Persistence queda cerrado deliberadamente en cinco entidades: horarios recurrentes, excepciones, citas, estados de citas y medicamentos. JPA se usa en consultas y operaciones independientes donde elimina SQL y administración manual de recursos; JDBC se mantiene en informes, consultas especializadas y procesos que deben compartir una sola transacción con varias tablas. No se busca convertir automáticamente los 32 DAO.
+
+### API REST v1
+
+Spring MVC convive con los Servlet y JSP existentes y atiende únicamente el prefijo `/api/v1/*`. El primer recurso público es `GET /api/v1/especialidades`, que reutiliza `EspecialidadService` y responde JSON con el ID, nombre, descripción y duración estimada de las especialidades activas. La API usa DTO propios, respuestas de error JSON sin detalles internos y monitoreo técnico mediante Sentry cuando corresponde. No se incorporó Spring Boot ni se reemplazó el despliegue WAR en Tomcat.
 
 ## 3. Perfiles y funciones
 
@@ -328,7 +334,7 @@ Directorios externos usados en la notebook actual:
 - Informes, auditoría, configuración, usuarios y roles administrativos.
 - Google Calendar: agregar y retirar cita.
 - Validación aislada de Turnstile: modo local, configuración incompleta, token aceptado, token inválido y acción incorrecta.
-- Treinta y seis pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA, configuración de la unidad de persistencia y mapeo JPA de las entidades seleccionadas.
+- Cuarenta y una pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA, configuración de la unidad de persistencia, mapeo JPA y la primera API REST con Spring MVC.
 - Rutas públicas y paneles en resoluciones móviles y de escritorio.
 
 El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar una cantidad mayor que cero; una compilación sin ese resumen no reemplaza la evidencia de pruebas. Las pruebas manuales, de integración con PostgreSQL y de servicios externos siguen documentándose por separado.
@@ -344,7 +350,7 @@ El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar 
 7. Política de privacidad, términos, copias de seguridad y estrategia de recuperación.
 8. Ampliar las pruebas JUnit de integración con PostgreSQL, agregar integración continua y probar con más dispositivos reales.
 9. Revisión final de accesibilidad y seguridad antes de exponer datos reales.
-10. Evaluar una API REST futura con Spring cuando la migración incremental a Jakarta Persistence esté estable.
+10. Ampliar gradualmente la API REST con médicos y disponibilidad antes de exponer operaciones autenticadas de citas.
 11. Dockerizar Tomcat, PostgreSQL y la configuración local después de cerrar las mejoras solicitadas por el profesor.
 
 ## 14. Instrucciones para continuar en otro chat
