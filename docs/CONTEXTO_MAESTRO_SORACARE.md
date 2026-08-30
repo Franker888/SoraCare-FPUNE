@@ -1,6 +1,6 @@
 # Contexto maestro de SoraCare-FPUNE
 
-**Actualizado:** 29 de agosto de 2026
+**Actualizado:** 30 de agosto de 2026
 
 **Repositorio:** `TobiBug/SoraCare-FPUNE`
 
@@ -49,6 +49,8 @@ src/main/webapp/
   assets/        CSS, JavaScript, imágenes y librerías web
   index.jsp      página pública principal
 ```
+
+El alcance de Jakarta Persistence queda cerrado deliberadamente en cinco entidades: horarios recurrentes, excepciones, citas, estados de citas y medicamentos. JPA se usa en consultas y operaciones independientes donde elimina SQL y administración manual de recursos; JDBC se mantiene en informes, consultas especializadas y procesos que deben compartir una sola transacción con varias tablas. No se busca convertir automáticamente los 32 DAO.
 
 ## 3. Perfiles y funciones
 
@@ -326,7 +328,7 @@ Directorios externos usados en la notebook actual:
 - Informes, auditoría, configuración, usuarios y roles administrativos.
 - Google Calendar: agregar y retirar cita.
 - Validación aislada de Turnstile: modo local, configuración incompleta, token aceptado, token inválido y acción incorrecta.
-- Treinta y dos pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA y mapeo JPA de citas y medicamentos.
+- Treinta y seis pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA, configuración de la unidad de persistencia y mapeo JPA de las entidades seleccionadas.
 - Rutas públicas y paneles en resoluciones móviles y de escritorio.
 
 El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar una cantidad mayor que cero; una compilación sin ese resumen no reemplaza la evidencia de pruebas. Las pruebas manuales, de integración con PostgreSQL y de servicios externos siguen documentándose por separado.
