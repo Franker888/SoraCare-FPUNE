@@ -4,7 +4,8 @@
 
 **Carrera y asignatura:** Ingeniería de Software II - FPUNE
 
-**Equipo:** Gerardo Adrián González Brizuela y Tobías Fabián Sánchez Florentín
+**Equipo:** Gerardo Adrián González Brizuela, Tobías Fabián Sánchez Florentín,
+María Victoria Fleitas Sosa y César Bacilis Olmedo Maidana
 
 **Fecha de corte:** 31 de agosto de 2026
 

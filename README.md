@@ -20,8 +20,8 @@ El cierre técnico de las mejoras solicitadas por el profesor está resumido en
 ## 👥 Equipo
 * Gerardo Adrián González Brizuela
 * Tobías Fabián Sánchez Florentín
-* María Victoria Fleita Sosa
-* César Bastilis Olmedo Maidana
+* María Victoria Fleitas Sosa
+* César Bacilis Olmedo Maidana
 
 ---
 
