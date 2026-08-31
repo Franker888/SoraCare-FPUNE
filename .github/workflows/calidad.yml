@@ -35,8 +35,10 @@ jobs:
           cache: maven
           cache-dependency-path: pom.xml
 
-      - name: Ejecutar pruebas y generar el WAR
-        run: mvn --batch-mode --no-transfer-progress clean verify
+      - name: Ejecutar pruebas, PostgreSQL temporal y generar el WAR
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -Pintegracion-postgresql clean verify
 
       - name: Comprobar el WAR generado
         run: test -s target/SoraCare-FPUNE.war
@@ -45,8 +47,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: reportes-junit-${{ github.run_id }}
-          path: target/surefire-reports/
+          name: reportes-pruebas-${{ github.run_id }}
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
           if-no-files-found: warn
           retention-days: 14
 
@@ -64,6 +68,7 @@ jobs:
             echo "## Calidad de SoraCare"
             echo "- Java 21 y Maven: correctos"
             echo "- Pruebas JUnit: aprobadas"
+            echo "- PostgreSQL temporal y Flyway: aprobados"
             echo "- WAR: target/SoraCare-FPUNE.war"
           } >> "$GITHUB_STEP_SUMMARY"
 

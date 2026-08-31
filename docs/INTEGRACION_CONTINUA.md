@@ -10,10 +10,18 @@ también puede iniciarse manualmente desde la pestaña **Actions**.
 
 1. descarga el código sin conservar credenciales Git;
 2. configura Eclipse Temurin 21 y la caché de dependencias Maven;
-3. ejecuta `mvn --batch-mode --no-transfer-progress clean verify`;
-4. exige que exista `target/SoraCare-FPUNE.war`;
-5. conserva los reportes JUnit durante 14 días;
-6. conserva el WAR verificado durante 7 días.
+3. ejecuta las pruebas unitarias de JUnit;
+4. levanta un PostgreSQL temporal con Testcontainers;
+5. aplica y valida las migraciones `V001` a `V032` mediante Flyway;
+6. comprueba el esquema y una operación real de `EspecialidadDAO`;
+7. elimina automáticamente el contenedor y sus datos de prueba;
+8. exige que exista `target/SoraCare-FPUNE.war`;
+9. conserva los reportes JUnit y Failsafe durante 14 días;
+10. conserva el WAR verificado durante 7 días.
+
+La base temporal se llama `soracare_pruebas`, utiliza un puerto aleatorio y una
+contraseña generada en memoria. No se conecta a `soracare_db`, no reutiliza su
+volumen y no puede modificar los datos locales del proyecto.
 
 ### Imagen Docker
 
@@ -58,10 +66,10 @@ obligatorios antes de fusionar cambios a la rama principal.
 Las órdenes principales pueden repetirse localmente:
 
 ```powershell
-mvn --batch-mode --no-transfer-progress clean verify
+mvn --batch-mode --no-transfer-progress -Pintegracion-postgresql clean verify
 docker build --tag soracare-fpune:ci .
 ```
 
-La ejecución de PostgreSQL, Flyway y las pruebas de integración con una base
-temporal formarán el siguiente frente. No se agregaron contraseñas ficticias ni
-servicios de base de datos a este primer workflow.
+Docker Desktop debe estar iniciado para ejecutar el perfil
+`integracion-postgresql`. Sin ese perfil, `mvn clean verify` conserva el ciclo
+rápido de pruebas que no necesitan infraestructura externa.
