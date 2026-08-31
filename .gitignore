@@ -13,6 +13,7 @@ outputs/
 # Entorno y credenciales
 .env
 .env.*
+!.env.docker.example
 *.log
 application-local.properties
 

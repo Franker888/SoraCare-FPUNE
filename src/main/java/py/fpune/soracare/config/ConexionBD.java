@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -13,12 +14,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class ConexionBD {
 
-    private static final String URL =
+    private static final String VARIABLE_URL = "SORACARE_DB_URL";
+    private static final String VARIABLE_USUARIO = "SORACARE_DB_USER";
+    private static final String VARIABLE_CONTRASENA = "SORACARE_DB_PASSWORD";
+
+    private static final String URL_PREDETERMINADA =
             "jdbc:postgresql://127.0.0.1:5432/soracare_db"
                     + "?sslmode=disable&ApplicationName=SoraCare-FPUNE";
 
-    private static final String USUARIO =
-            "soracare_app";
+    private static final String USUARIO_PREDETERMINADO = "soracare_app";
 
     private static final int MAXIMO_CONEXIONES = 10;
     private static final long ESPERA_CONEXION_SEGUNDOS = 10;
@@ -36,14 +40,7 @@ public final class ConexionBD {
     }
 
     public static Connection obtenerConexion() throws SQLException {
-        String contrasena =
-                System.getenv("SORACARE_DB_PASSWORD");
-
-        if (contrasena == null || contrasena.isBlank()) {
-            throw new SQLException(
-                    "No se configuró la variable SORACARE_DB_PASSWORD"
-            );
-        }
+        Configuracion configuracion = resolverConfiguracion(System::getenv);
 
         if (cerrado) {
             throw new SQLException("El conjunto de conexiones ya fue cerrado.");
@@ -67,7 +64,7 @@ public final class ConexionBD {
 
             if (crear) {
                 try {
-                    Connection nueva = crearConexion(contrasena);
+                    Connection nueva = crearConexion(configuracion);
                     TODAS.add(nueva);
                     return envolver(nueva);
                 } catch (SQLException error) {
@@ -120,7 +117,44 @@ public final class ConexionBD {
         return DISPONIBLES.size();
     }
 
-    private static Connection crearConexion(String contrasena) throws SQLException {
+    static Configuracion resolverConfiguracion(
+            Function<String, String> entorno
+    ) throws SQLException {
+        String url = valorOEntornoPredeterminado(
+                entorno.apply(VARIABLE_URL),
+                URL_PREDETERMINADA
+        );
+        if (!url.startsWith("jdbc:postgresql://")) {
+            throw new SQLException(
+                    "SORACARE_DB_URL debe ser una dirección JDBC de PostgreSQL."
+            );
+        }
+
+        String usuario = valorOEntornoPredeterminado(
+                entorno.apply(VARIABLE_USUARIO),
+                USUARIO_PREDETERMINADO
+        );
+        String contrasena = entorno.apply(VARIABLE_CONTRASENA);
+        if (contrasena == null || contrasena.isBlank()) {
+            throw new SQLException(
+                    "No se configuró la variable SORACARE_DB_PASSWORD"
+            );
+        }
+        return new Configuracion(url, usuario, contrasena);
+    }
+
+    private static String valorOEntornoPredeterminado(
+            String valor,
+            String predeterminado
+    ) {
+        return valor == null || valor.isBlank()
+                ? predeterminado
+                : valor.strip();
+    }
+
+    private static Connection crearConexion(
+            Configuracion configuracion
+    ) throws SQLException {
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException error) {
@@ -128,7 +162,11 @@ public final class ConexionBD {
                     "No se pudo cargar el controlador JDBC de PostgreSQL", error
             );
         }
-        return DriverManager.getConnection(URL, USUARIO, contrasena);
+        return DriverManager.getConnection(
+                configuracion.url(),
+                configuracion.usuario(),
+                configuracion.contrasena()
+        );
     }
 
     private static boolean esUtil(Connection conexion) {
@@ -209,5 +247,8 @@ public final class ConexionBD {
         } catch (SQLException ignorado) {
             // El contenedor se está cerrando y no puede recuperar esta conexión.
         }
+    }
+
+    record Configuracion(String url, String usuario, String contrasena) {
     }
 }

@@ -2,6 +2,18 @@
 
 Sistema web de gestión hospitalaria para **Ingeniería de Software II** (FPUNE - 2026).
 
+## Ejecución con Docker
+
+La instalación Docker incluye PostgreSQL, Flyway, Java 21 y Tomcat. En Windows
+requiere Docker Desktop con WSL 2 activo.
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\scripts\iniciar-docker.ps1"
+```
+
+Luego se abre `http://localhost:8081/SoraCare-FPUNE/`. La guía completa está
+en [docs/DOCKER.md](docs/DOCKER.md).
+
 ## 👥 Equipo
 * Gerardo Adrián González Brizuela
 * Tobías Fabián Sánchez Florentín

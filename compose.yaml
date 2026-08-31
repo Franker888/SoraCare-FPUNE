@@ -1,0 +1,107 @@
+name: soracare
+
+services:
+  postgres:
+    image: postgres:18.6-bookworm
+    restart: unless-stopped
+    shm_size: 128mb
+    environment:
+      POSTGRES_DB: soracare_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${SORACARE_POSTGRES_ADMIN_PASSWORD:?Ejecuta scripts/iniciar-docker.ps1}
+      SORACARE_DB_PASSWORD: ${SORACARE_DB_PASSWORD:?Ejecuta scripts/iniciar-docker.ps1}
+      POSTGRES_INITDB_ARGS: --data-checksums --encoding=UTF8
+      TZ: America/Asuncion
+    volumes:
+      - soracare-postgres:/var/lib/postgresql
+      - ./docker/postgres/00-crear-usuario-aplicacion.sh:/docker-entrypoint-initdb.d/00-crear-usuario-aplicacion.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d soracare_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - interna
+
+  migraciones:
+    image: flyway/flyway:13.4.0-alpine
+    restart: "no"
+    environment:
+      FLYWAY_URL: jdbc:postgresql://postgres:5432/soracare_db
+      FLYWAY_USER: soracare_app
+      FLYWAY_PASSWORD: ${SORACARE_DB_PASSWORD:?Ejecuta scripts/iniciar-docker.ps1}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+      FLYWAY_DEFAULT_SCHEMA: soracare
+      FLYWAY_SCHEMAS: soracare
+      FLYWAY_CONNECT_RETRIES: "30"
+      FLYWAY_CLEAN_DISABLED: "true"
+      FLYWAY_VALIDATE_MIGRATION_NAMING: "true"
+    command: ["migrate"]
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/sql:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - interna
+
+  aplicacion:
+    image: soracare-fpune:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SORACARE_DB_URL: "jdbc:postgresql://postgres:5432/soracare_db?sslmode=disable&ApplicationName=SoraCare-Docker"
+      SORACARE_DB_USER: soracare_app
+      SORACARE_DB_PASSWORD: ${SORACARE_DB_PASSWORD:?Ejecuta scripts/iniciar-docker.ps1}
+      SORACARE_DOCUMENTOS_DIR: /var/lib/soracare/documentos-clinicos
+      SORACARE_PERFILES_DIR: /var/lib/soracare/fotos-perfil
+      SORACARE_OPENAI_API_KEY: ${SORACARE_OPENAI_API_KEY:-}
+      SORACARE_OPENAI_MODEL: ${SORACARE_OPENAI_MODEL:-gpt-5.6-terra}
+      SORACARE_RESEND_API_KEY: ${SORACARE_RESEND_API_KEY:-}
+      SORACARE_EMAIL_FROM: ${SORACARE_EMAIL_FROM:-}
+      SORACARE_TWILIO_ACCOUNT_SID: ${SORACARE_TWILIO_ACCOUNT_SID:-}
+      SORACARE_TWILIO_AUTH_TOKEN: ${SORACARE_TWILIO_AUTH_TOKEN:-}
+      SORACARE_TWILIO_FROM: ${SORACARE_TWILIO_FROM:-}
+      SORACARE_GOOGLE_CLIENT_ID: ${SORACARE_GOOGLE_CLIENT_ID:-}
+      SORACARE_TURNSTILE_SITE_KEY: ${SORACARE_TURNSTILE_SITE_KEY:-}
+      SORACARE_TURNSTILE_SECRET_KEY: ${SORACARE_TURNSTILE_SECRET_KEY:-}
+      SORACARE_SENTRY_DSN: ${SORACARE_SENTRY_DSN:-}
+      SORACARE_SENTRY_ENVIRONMENT: ${SORACARE_SENTRY_ENVIRONMENT:-docker-local}
+      SORACARE_FIREBASE_API_KEY: ${SORACARE_FIREBASE_API_KEY:-}
+      SORACARE_FIREBASE_AUTH_DOMAIN: ${SORACARE_FIREBASE_AUTH_DOMAIN:-}
+      SORACARE_FIREBASE_PROJECT_ID: ${SORACARE_FIREBASE_PROJECT_ID:-}
+      SORACARE_FIREBASE_STORAGE_BUCKET: ${SORACARE_FIREBASE_STORAGE_BUCKET:-}
+      SORACARE_FIREBASE_MESSAGING_SENDER_ID: ${SORACARE_FIREBASE_MESSAGING_SENDER_ID:-}
+      SORACARE_FIREBASE_APP_ID: ${SORACARE_FIREBASE_APP_ID:-}
+      SORACARE_FIREBASE_VAPID_KEY: ${SORACARE_FIREBASE_VAPID_KEY:-}
+      TZ: America/Asuncion
+    volumes:
+      - soracare-documentos:/var/lib/soracare/documentos-clinicos
+      - soracare-perfiles:/var/lib/soracare/fotos-perfil
+    ports:
+      - "127.0.0.1:${SORACARE_HTTP_PORT:-8081}:8080"
+    depends_on:
+      migraciones:
+        condition: service_completed_successfully
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - interna
+      - publica
+
+volumes:
+  soracare-postgres:
+  soracare-documentos:
+  soracare-perfiles:
+
+networks:
+  interna:
+    internal: true
+  publica:

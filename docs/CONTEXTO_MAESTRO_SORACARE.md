@@ -23,6 +23,7 @@ El sistema ya funciona como una plataforma integral para cuatro perfiles: **admi
 - JDBC y una separación pedagógica en controladores, servicios, DAO, DTO y modelos.
 - Jakarta Persistence 3.1 con Hibernate ORM 6.6 para la migración incremental de los DAO; la unidad `SoraCarePU` administra horarios, excepciones, citas, estados de citas y medicamentos.
 - Spring MVC 6.2 para la API REST incremental, integrado en el mismo WAR y compatible con Jakarta EE 10 y Tomcat 10.1.
+- Docker Compose para ejecutar de forma reproducible PostgreSQL, Flyway y el WAR de SoraCare sobre Tomcat, sin incorporar secretos en la imagen ni en Git.
 - BCrypt para las contraseñas locales.
 - HTML, CSS, JavaScript y Bootstrap 5.3.3 en la interfaz.
 - PDF generado desde Java para comprobantes e indicaciones.
@@ -324,6 +325,16 @@ Directorios externos usados en la notebook actual:
 - Documentos: `C:\Users\adria\Desktop\Hospital\Datos\SoraCare\documentos-clinicos`
 - Fotos: `C:\Users\adria\Desktop\Hospital\Datos\SoraCare\fotos-perfil`
 
+### Ejecución Docker aislada
+
+Con Docker Desktop y WSL 2 activos se puede ejecutar:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\scripts\iniciar-docker.ps1"
+```
+
+La instalación Docker usa `http://localhost:8081/SoraCare-FPUNE/`, una base de datos y volúmenes propios, y no modifica la instalación tradicional de PostgreSQL y Tomcat. El script genera secretos aleatorios en `.env.docker`, reutiliza en memoria las integraciones opcionales configuradas en Windows y mantiene las claves fuera de la imagen y de Git. La arquitectura y los comandos de diagnóstico están documentados en `docs/DOCKER.md`.
+
 ## 12. Validación realizada
 
 - Compilación Maven y generación del WAR.
@@ -340,7 +351,7 @@ Directorios externos usados en la notebook actual:
 - Informes, auditoría, configuración, usuarios y roles administrativos.
 - Google Calendar: agregar y retirar cita.
 - Validación aislada de Turnstile: modo local, configuración incompleta, token aceptado, token inválido y acción incorrecta.
-- Setenta y cinco pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA, configuración de la unidad de persistencia, mapeo JPA, Sora/OpenAI y autenticación, autorización, aislamiento por paciente y CSRF de la API REST con Spring MVC.
+- Setenta y nueve pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA, configuración de la unidad de persistencia, mapeo JPA, Sora/OpenAI, configuración de PostgreSQL para Docker y autenticación, autorización, aislamiento por paciente y CSRF de la API REST con Spring MVC.
 - Rutas públicas y paneles en resoluciones móviles y de escritorio.
 
 El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar una cantidad mayor que cero; una compilación sin ese resumen no reemplaza la evidencia de pruebas. Las pruebas manuales, de integración con PostgreSQL y de servicios externos siguen documentándose por separado.
@@ -351,12 +362,10 @@ El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar 
 2. Configuración de producción para Google OAuth y Calendar, con dominio definitivo.
 3. Dominio verificado para Resend y remitente institucional.
 4. Activación y prueba extremo a extremo de Twilio SMS.
-5. Cargar saldo de API en la organización asociada a la clave configurada y repetir la prueba real de Sora.
-6. Integración con una pasarela de pago real sólo si el alcance académico cambia.
-7. Política de privacidad, términos, copias de seguridad y estrategia de recuperación.
-8. Ampliar las pruebas JUnit de integración con PostgreSQL, agregar integración continua y probar con más dispositivos reales.
-9. Revisión final de accesibilidad y seguridad antes de exponer datos reales.
-10. Dockerizar Tomcat, PostgreSQL y la configuración local después de cerrar las mejoras solicitadas por el profesor.
+5. Integración con una pasarela de pago real sólo si el alcance académico cambia.
+6. Política de privacidad, términos, copias de seguridad y estrategia de recuperación.
+7. Ampliar las pruebas JUnit de integración con PostgreSQL, agregar integración continua y probar con más dispositivos reales.
+8. Revisión final de accesibilidad y seguridad antes de exponer datos reales.
 
 ## 14. Instrucciones para continuar en otro chat
 
