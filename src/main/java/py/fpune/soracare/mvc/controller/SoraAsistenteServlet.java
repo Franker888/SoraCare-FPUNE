@@ -7,12 +7,15 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
+import py.fpune.soracare.service.SoraContextoPublicoService;
 import py.fpune.soracare.service.SoraOpenAIService;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
@@ -35,13 +38,21 @@ public class SoraAsistenteServlet extends HttpServlet {
 
     private final Gson gson = new Gson();
     private final SoraOpenAIService soraService;
+    private final SoraContextoPublicoService contextoService;
 
     public SoraAsistenteServlet() {
-        this(new SoraOpenAIService());
+        this(
+                new SoraOpenAIService(),
+                new SoraContextoPublicoService()
+        );
     }
 
-    SoraAsistenteServlet(SoraOpenAIService soraService) {
+    SoraAsistenteServlet(
+            SoraOpenAIService soraService,
+            SoraContextoPublicoService contextoService
+    ) {
         this.soraService = Objects.requireNonNull(soraService);
+        this.contextoService = Objects.requireNonNull(contextoService);
     }
 
     @Override
@@ -112,15 +123,21 @@ public class SoraAsistenteServlet extends HttpServlet {
         }
 
         try {
+            SoraContextoPublicoService.ContextoPublico contexto =
+                    consultarContextoPublico();
             String respuestaSora = soraService.responder(
                     solicitud.mensaje,
                     solicitud.historial,
-                    crearIdentificadorSeguridad(sesion)
+                    crearIdentificadorSeguridad(sesion),
+                    contexto.texto() + construirContextoSesion(sesion)
             );
             escribirJson(
                     response,
                     HttpServletResponse.SC_OK,
-                    new RespuestaChat(respuestaSora, "ia")
+                    new RespuestaChat(
+                            respuestaSora,
+                            "ia"
+                    )
             );
         } catch (IllegalArgumentException error) {
             responderError(
@@ -215,6 +232,27 @@ public class SoraAsistenteServlet extends HttpServlet {
                     error
             );
         }
+    }
+
+    private SoraContextoPublicoService.ContextoPublico
+    consultarContextoPublico() {
+        try {
+            return contextoService.consultar();
+        } catch (SQLException error) {
+            log("No fue posible actualizar el contexto público de Sora.", error);
+            return SoraContextoPublicoService.ContextoPublico.noDisponible();
+        }
+    }
+
+    private static String construirContextoSesion(HttpSession sesion) {
+        Object atributo = sesion.getAttribute("usuarioAutenticado");
+        if (!(atributo instanceof UsuarioAutenticadoDTO usuario)) {
+            return "\nEstado de la sesión: visitante sin autenticación.";
+        }
+        if (usuario.tieneRol("PACIENTE")) {
+            return "\nEstado de la sesión: paciente autenticado.";
+        }
+        return "\nEstado de la sesión: usuario interno autenticado.";
     }
 
     private void responderError(

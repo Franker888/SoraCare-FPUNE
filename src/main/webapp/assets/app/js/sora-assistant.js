@@ -16,6 +16,8 @@
     var submitButton = form.querySelector("button[type='submit']");
     var conversation = assistant.querySelector(".sora-conversation");
     var quickActions = assistant.querySelector(".sora-quick-actions");
+    var status = assistant.querySelector(".sora-status");
+    var statusText = assistant.querySelector(".sora-status-text");
     var pendingResponse = false;
     var conversationHistory = [];
 
@@ -187,13 +189,13 @@
         return enlace;
     }
 
-    function agregarMensaje(texto, tipo, respuesta) {
-        var mensaje = document.createElement("div");
-        mensaje.className = "sora-message sora-message-" + tipo;
-        var contenido = document.createElement("span");
-        contenido.textContent = texto;
-        mensaje.appendChild(contenido);
+    function actualizarEstado(texto, modo) {
+        if (!status || !statusText) return;
+        status.dataset.mode = modo;
+        statusText.textContent = texto;
+    }
 
+    function agregarAccionesRespuesta(mensaje, respuesta) {
         if (respuesta && respuesta.acciones && respuesta.acciones.length) {
             var acciones = document.createElement("div");
             acciones.className = "sora-result-actions";
@@ -202,12 +204,24 @@
             });
             mensaje.appendChild(acciones);
         }
+    }
+
+    function agregarMensaje(texto, tipo, respuesta) {
+        var mensaje = document.createElement("div");
+        mensaje.className = "sora-message sora-message-" + tipo;
+        var contenido = document.createElement("span");
+        contenido.className = "sora-message-copy";
+        contenido.textContent = texto;
+        mensaje.appendChild(contenido);
+        agregarAccionesRespuesta(mensaje, respuesta);
 
         conversation.appendChild(mensaje);
         conversation.scrollTop = conversation.scrollHeight;
+        return {elemento: mensaje, contenido: contenido};
     }
 
     function mostrarEscribiendo() {
+        actualizarEstado("Pensando con IA...", "thinking");
         var indicador = document.createElement("div");
         indicador.className = "sora-message sora-message-bot sora-typing";
         indicador.setAttribute("aria-label", "Sora está escribiendo");
@@ -236,16 +250,56 @@
 
     function completarRespuesta(indicador, consulta, respuesta) {
         indicador.remove();
-        agregarMensaje(respuesta.mensaje, "bot", respuesta);
-        registrarTurno(consulta, respuesta.mensaje);
-        pendingResponse = false;
-        submitButton.disabled = false;
-        input.focus();
+        var registro = agregarMensaje("", "bot");
+        var mensaje = respuesta.mensaje;
+        var reducirMovimiento = window.matchMedia
+            && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var posicion = 0;
+        var salto = Math.max(1, Math.ceil(mensaje.length / 180));
+
+        registro.elemento.classList.add("is-writing");
+
+        function finalizar() {
+            registro.contenido.textContent = mensaje;
+            registro.elemento.classList.remove("is-writing");
+            agregarAccionesRespuesta(registro.elemento, respuesta);
+            registrarTurno(consulta, mensaje);
+            actualizarEstado(
+                respuesta.modo === "ia"
+                    ? "Conectada con OpenAI"
+                    : "Orientación local disponible",
+                respuesta.modo === "ia" ? "ready" : "local"
+            );
+            pendingResponse = false;
+            submitButton.disabled = false;
+            conversation.scrollTop = conversation.scrollHeight;
+            input.focus();
+        }
+
+        if (reducirMovimiento) {
+            finalizar();
+            return;
+        }
+
+        function escribir() {
+            posicion = Math.min(mensaje.length, posicion + salto);
+            registro.contenido.textContent = mensaje.substring(0, posicion);
+            conversation.scrollTop = conversation.scrollHeight;
+            if (posicion < mensaje.length) {
+                window.setTimeout(escribir, 12);
+            } else {
+                finalizar();
+            }
+        }
+
+        escribir();
     }
 
     function responderLocal(indicador, consulta) {
         window.setTimeout(function () {
-            completarRespuesta(indicador, consulta, resolver(consulta));
+            var respuesta = resolver(consulta);
+            respuesta.modo = "local";
+            completarRespuesta(indicador, consulta, respuesta);
         }, 320);
     }
 
@@ -278,7 +332,8 @@
             }
             completarRespuesta(indicador, consulta, {
                 mensaje: datos.respuesta.trim(),
-                acciones: respuestaLocal.acciones || []
+                acciones: respuestaLocal.acciones || [],
+                modo: datos.modo === "ia" ? "ia" : "local"
             });
         }).catch(function () {
             responderLocal(indicador, consulta);

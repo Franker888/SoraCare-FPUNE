@@ -167,6 +167,24 @@
     font-weight: 600;
 }
 
+.sora-identity .sora-status {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.sora-status[data-mode="thinking"] i {
+    animation: sora-status-pulse 900ms infinite ease-in-out;
+}
+
+.sora-status[data-mode="local"] {
+    color: #fff3c7;
+}
+
+@keyframes sora-status-pulse {
+    50% { opacity: 0.45; transform: scale(0.86); }
+}
+
 .sora-close {
     position: relative;
     z-index: 2;
@@ -214,6 +232,27 @@
     border-bottom-right-radius: 0.28rem;
     color: #ffffff;
     background: linear-gradient(135deg, var(--sora-blue), #3979e1);
+}
+
+.sora-message-copy {
+    display: block;
+    white-space: pre-line;
+}
+
+.sora-message.is-writing .sora-message-copy::after {
+    content: "";
+    display: inline-block;
+    width: 0.4rem;
+    height: 0.9rem;
+    margin-left: 0.2rem;
+    border-radius: 0.1rem;
+    vertical-align: -0.08rem;
+    background: var(--sora-blue);
+    animation: sora-cursor 720ms infinite;
+}
+
+@keyframes sora-cursor {
+    50% { opacity: 0; }
 }
 
 .sora-result-actions {
@@ -399,7 +438,9 @@
 
 @media (prefers-reduced-motion: reduce) {
     .sora-panel,
-    .sora-typing span {
+    .sora-typing span,
+    .sora-message.is-writing .sora-message-copy::after,
+    .sora-status[data-mode="thinking"] i {
         animation: none;
     }
 

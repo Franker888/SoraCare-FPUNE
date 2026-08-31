@@ -30,16 +30,17 @@ class SoraOpenAIServiceValidacionTest {
                                 "asistente", "Podés verla en Mis citas."
                         )
                 ),
-                "identificador-anonimo"
+                "identificador-anonimo",
+                "Especialidades activas: Cardiología."
         );
         JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
         JsonArray entrada = json.getAsJsonArray("input");
 
         assertEquals("modelo-prueba", json.get("model").getAsString());
         assertFalse(json.get("store").getAsBoolean());
-        assertEquals("none", json.getAsJsonObject("reasoning")
+        assertEquals("low", json.getAsJsonObject("reasoning")
                 .get("effort").getAsString());
-        assertEquals("low", json.getAsJsonObject("text")
+        assertEquals("medium", json.getAsJsonObject("text")
                 .get("verbosity").getAsString());
         assertEquals("identificador-anonimo",
                 json.get("safety_identifier").getAsString());
@@ -50,6 +51,10 @@ class SoraOpenAIServiceValidacionTest {
                 .get("role").getAsString());
         assertTrue(entrada.get(2).getAsJsonObject()
                 .get("content").getAsString().contains("reprogramo"));
+        assertTrue(json.get("instructions").getAsString()
+                .contains("Cardiología"));
+        assertTrue(json.get("instructions").getAsString()
+                .contains("texto plano"));
     }
 
     @Test
@@ -97,7 +102,12 @@ class SoraOpenAIServiceValidacionTest {
         assertEquals("gpt-5.6-terra", servicio.modeloConfigurado());
         assertThrows(
                 IllegalStateException.class,
-                () -> servicio.responder("Hola", List.of(), "sesion-prueba")
+                () -> servicio.responder(
+                        "Hola",
+                        List.of(),
+                        "sesion-prueba",
+                        ""
+                )
         );
     }
 }

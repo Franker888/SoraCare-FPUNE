@@ -2241,7 +2241,7 @@
             </span>
             <span class="sora-launcher-copy">
                 <strong>Hola, soy Sora</strong>
-                <small>¿Tenés dudas? Te acompaño</small>
+                <small>Asistente conversacional con IA</small>
             </span>
             <span class="sora-online" aria-hidden="true"></span>
         </button>
@@ -2262,8 +2262,11 @@
                     </span>
                     <div>
                         <strong id="sora-public-title">Sora</strong>
-                        <small>Guía virtual de SoraCare</small>
-                        <span><i class="bi bi-circle-fill" aria-hidden="true"></i> Lista para orientarte</span>
+                        <small>Asistente de SoraCare con IA</small>
+                        <span class="sora-status" data-mode="ready">
+                            <i class="bi bi-stars" aria-hidden="true"></i>
+                            <span class="sora-status-text">Conectada y lista para conversar</span>
+                        </span>
                     </div>
                 </div>
                 <button type="button" class="sora-close" aria-label="Cerrar a Sora">
@@ -2275,15 +2278,15 @@
                 <div class="sora-message sora-message-bot">
                     <span>
                         ¡Hola! Soy Sora. Puedo guiarte para crear una cuenta,
-                        encontrar un médico o agendar tu primera cita.
-                        ¿Qué necesitás hacer?
+                        conversar sobre las funciones de SoraCare y consultar
+                        el catálogo público actualizado. ¿Qué te gustaría saber?
                     </span>
                 </div>
                 <div class="sora-quick-actions" aria-label="Preguntas frecuentes para Sora">
-                    <button type="button" data-sora-query="Soy nuevo">Soy nuevo</button>
-                    <button type="button" data-sora-query="Quiero agendar una cita">Agendar una cita</button>
-                    <button type="button" data-sora-query="Buscar un médico">Buscar médico</button>
-                    <button type="button" data-sora-query="Cómo puedo pagar">Métodos de pago</button>
+                    <button type="button" data-sora-query="¿Qué podés hacer por mí?">¿Qué podés hacer?</button>
+                    <button type="button" data-sora-query="¿Qué especialidades están disponibles?">Ver especialidades</button>
+                    <button type="button" data-sora-query="¿Qué médicos atienden actualmente?">Conocer médicos</button>
+                    <button type="button" data-sora-query="Ayudame a reservar mi primera cita paso a paso">Ayudame a agendar</button>
                 </div>
             </div>
 
@@ -2294,15 +2297,15 @@
                 <input id="sora-public-input"
                        type="text"
                        maxlength="400"
-                       placeholder="Ej.: ¿cómo agendo una cita?"
+                       placeholder="Preguntale algo sobre SoraCare..."
                        autocomplete="off">
                 <button type="submit" aria-label="Enviar consulta a Sora">
                     <i class="bi bi-send" aria-hidden="true"></i>
                 </button>
             </form>
             <p class="sora-disclaimer">
-                Sora orienta el uso de la plataforma. No brinda diagnósticos,
-                no receta medicamentos y no reemplaza la atención profesional.
+                Sora usa IA para orientarte sobre la plataforma y puede cometer
+                errores. No diagnostica, no receta ni reemplaza la atención profesional.
             </p>
         </section>
     </aside>
@@ -2317,7 +2320,7 @@
         src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js">
     </script>
 
-    <script src="<%= contexto %>/assets/app/js/sora-assistant.js?v=20260821a"></script>
+    <script src="<%= contexto %>/assets/app/js/sora-assistant.js?v=20260830b"></script>
 
     <script>
         const carruselPrincipal = document.getElementById('heroCarousel');

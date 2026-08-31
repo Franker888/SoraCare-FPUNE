@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.Test;
+import py.fpune.soracare.service.SoraContextoPublicoService;
 import py.fpune.soracare.service.SoraOpenAIService;
 
 import java.io.BufferedReader;
@@ -28,7 +29,7 @@ class SoraAsistenteServletTest {
     void rechazaContenidoQueNoSeaJsonSinConsumirOpenAI() throws Exception {
         SoraFalsa servicio = new SoraFalsa();
         ResultadoHttp resultado = ejecutarPost(
-                new SoraAsistenteServlet(servicio),
+                crearServlet(servicio),
                 crearSesion("sesion-prueba"),
                 "text/plain",
                 "{\"mensaje\":\"Hola\"}",
@@ -44,7 +45,7 @@ class SoraAsistenteServletTest {
     void rechazaUnCuerpoDemasiadoGrandeSinConsumirOpenAI() throws Exception {
         SoraFalsa servicio = new SoraFalsa();
         ResultadoHttp resultado = ejecutarPost(
-                new SoraAsistenteServlet(servicio),
+                crearServlet(servicio),
                 crearSesion("sesion-prueba"),
                 "application/json",
                 "{}",
@@ -59,7 +60,7 @@ class SoraAsistenteServletTest {
     void enviaAOpenAIUnIdentificadorAnonimoDeLaSesion() throws Exception {
         SoraFalsa servicio = new SoraFalsa();
         ResultadoHttp resultado = ejecutarPost(
-                new SoraAsistenteServlet(servicio),
+                crearServlet(servicio),
                 crearSesion("sesion-secreta-prueba"),
                 "application/json;charset=UTF-8",
                 "{\"mensaje\":\"¿Cómo reprogramo mi cita?\",\"historial\":[]}",
@@ -70,12 +71,13 @@ class SoraAsistenteServletTest {
         assertTrue(resultado.cuerpo().contains("respuesta de prueba"));
         assertEquals(64, servicio.identificador.get().length());
         assertFalse(servicio.identificador.get().contains("sesion-secreta"));
+        assertTrue(servicio.contexto.get().contains("Contexto de prueba"));
     }
 
     @Test
     void limitaLaNovenaConsultaYComunicaCuandoReintentar() throws Exception {
         SoraFalsa servicio = new SoraFalsa();
-        SoraAsistenteServlet servlet = new SoraAsistenteServlet(servicio);
+        SoraAsistenteServlet servlet = crearServlet(servicio);
         HttpSession sesion = crearSesion("sesion-limite");
         ResultadoHttp resultado = null;
 
@@ -92,6 +94,10 @@ class SoraAsistenteServletTest {
         assertEquals(429, resultado.estado());
         assertEquals("60", resultado.cabeceras().get("Retry-After"));
         assertEquals(8, servicio.llamadas.get());
+    }
+
+    private static SoraAsistenteServlet crearServlet(SoraFalsa servicio) {
+        return new SoraAsistenteServlet(servicio, new ContextoFalso());
     }
 
     private static ResultadoHttp ejecutarPost(
@@ -178,16 +184,29 @@ class SoraAsistenteServletTest {
         private final AtomicInteger llamadas = new AtomicInteger();
         private final AtomicReference<String> identificador =
                 new AtomicReference<>();
+        private final AtomicReference<String> contexto =
+                new AtomicReference<>();
 
         @Override
         public String responder(
                 String mensaje,
                 List<MensajeConversacion> historial,
-                String identificadorSeguridad
+                String identificadorSeguridad,
+                String contextoAplicacion
         ) throws IOException {
             llamadas.incrementAndGet();
             identificador.set(identificadorSeguridad);
+            contexto.set(contextoAplicacion);
             return "respuesta de prueba";
+        }
+    }
+
+    private static final class ContextoFalso
+            extends SoraContextoPublicoService {
+
+        @Override
+        public ContextoPublico consultar() {
+            return new ContextoPublico("Contexto de prueba");
         }
     }
 
