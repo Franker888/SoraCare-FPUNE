@@ -254,7 +254,7 @@
         var controlador = new AbortController();
         var tiempoLimite = window.setTimeout(function () {
             controlador.abort();
-        }, 22000);
+        }, 40000);
 
         fetch(contextPath + "/api/sora/chat", {
             method: "POST",

@@ -11,7 +11,12 @@ import py.fpune.soracare.service.SoraOpenAIService;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 /**
  * Puerta de enlace pública entre el asistente visual Sora y OpenAI.
@@ -25,13 +30,18 @@ public class SoraAsistenteServlet extends HttpServlet {
     private static final long VENTANA_MILISEGUNDOS = 60_000L;
     private static final int MAXIMO_CONSULTAS_POR_VENTANA = 8;
     private static final int ESTADO_DEMASIADAS_SOLICITUDES = 429;
+    private static final int ESTADO_CUERPO_DEMASIADO_GRANDE = 413;
+    private static final int MAXIMO_CUERPO_CARACTERES = 8_192;
 
     private final Gson gson = new Gson();
-    private SoraOpenAIService soraService;
+    private final SoraOpenAIService soraService;
 
-    @Override
-    public void init() {
-        soraService = new SoraOpenAIService();
+    public SoraAsistenteServlet() {
+        this(new SoraOpenAIService());
+    }
+
+    SoraAsistenteServlet(SoraOpenAIService soraService) {
+        this.soraService = Objects.requireNonNull(soraService);
     }
 
     @Override
@@ -41,7 +51,58 @@ public class SoraAsistenteServlet extends HttpServlet {
     ) throws IOException {
         configurarRespuesta(response);
 
-        if (!admitirConsulta(request.getSession(true))) {
+        if (!esContenidoJson(request.getContentType())) {
+            responderError(
+                    response,
+                    HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    "La consulta debe enviarse en formato JSON."
+            );
+            return;
+        }
+
+        if (request.getContentLengthLong() > MAXIMO_CUERPO_CARACTERES) {
+            responderError(
+                    response,
+                    ESTADO_CUERPO_DEMASIADO_GRANDE,
+                    "La consulta enviada es demasiado grande."
+            );
+            return;
+        }
+
+        request.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        SolicitudChat solicitud;
+        try {
+            solicitud = gson.fromJson(
+                    leerCuerpoLimitado(request),
+                    SolicitudChat.class
+            );
+            if (solicitud == null) {
+                throw new IllegalArgumentException(
+                        "Escribí una consulta para Sora."
+                );
+            }
+            solicitud.mensaje = SoraOpenAIService.validarMensaje(
+                    solicitud.mensaje
+            );
+        } catch (CuerpoDemasiadoGrandeException error) {
+            responderError(
+                    response,
+                    ESTADO_CUERPO_DEMASIADO_GRANDE,
+                    "La consulta enviada es demasiado grande."
+            );
+            return;
+        } catch (JsonSyntaxException | IllegalArgumentException error) {
+            responderError(
+                    response,
+                    HttpServletResponse.SC_BAD_REQUEST,
+                    error.getMessage()
+            );
+            return;
+        }
+
+        HttpSession sesion = request.getSession(true);
+        if (!admitirConsulta(sesion)) {
+            response.setHeader("Retry-After", "60");
             responderError(
                     response,
                     ESTADO_DEMASIADAS_SOLICITUDES,
@@ -51,25 +112,17 @@ public class SoraAsistenteServlet extends HttpServlet {
         }
 
         try {
-            SolicitudChat solicitud = gson.fromJson(
-                    request.getReader(),
-                    SolicitudChat.class
-            );
-            if (solicitud == null) {
-                throw new IllegalArgumentException(
-                        "Escribí una consulta para Sora."
-                );
-            }
             String respuestaSora = soraService.responder(
                     solicitud.mensaje,
-                    solicitud.historial
+                    solicitud.historial,
+                    crearIdentificadorSeguridad(sesion)
             );
             escribirJson(
                     response,
                     HttpServletResponse.SC_OK,
                     new RespuestaChat(respuestaSora, "ia")
             );
-        } catch (JsonSyntaxException | IllegalArgumentException error) {
+        } catch (IllegalArgumentException error) {
             responderError(
                     response,
                     HttpServletResponse.SC_BAD_REQUEST,
@@ -129,6 +182,41 @@ public class SoraAsistenteServlet extends HttpServlet {
         }
     }
 
+    private static boolean esContenidoJson(String tipoContenido) {
+        if (tipoContenido == null) return false;
+        String tipo = tipoContenido.toLowerCase(Locale.ROOT);
+        return tipo.equals("application/json")
+                || tipo.startsWith("application/json;");
+    }
+
+    private static String leerCuerpoLimitado(HttpServletRequest request)
+            throws IOException {
+        StringBuilder cuerpo = new StringBuilder();
+        char[] bloque = new char[1_024];
+        var lector = request.getReader();
+        int leidos;
+        while ((leidos = lector.read(bloque)) != -1) {
+            if (cuerpo.length() + leidos > MAXIMO_CUERPO_CARACTERES) {
+                throw new CuerpoDemasiadoGrandeException();
+            }
+            cuerpo.append(bloque, 0, leidos);
+        }
+        return cuerpo.toString();
+    }
+
+    static String crearIdentificadorSeguridad(HttpSession sesion) {
+        try {
+            byte[] resumen = MessageDigest.getInstance("SHA-256")
+                    .digest(sesion.getId().getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(resumen);
+        } catch (NoSuchAlgorithmException error) {
+            throw new IllegalStateException(
+                    "SHA-256 no está disponible en esta ejecución.",
+                    error
+            );
+        }
+    }
+
     private void responderError(
             HttpServletResponse response,
             int estado,
@@ -165,5 +253,9 @@ public class SoraAsistenteServlet extends HttpServlet {
     }
 
     private record LimiteConsultas(long inicioVentana, int cantidad) {
+    }
+
+    private static final class CuerpoDemasiadoGrandeException
+            extends IOException {
     }
 }

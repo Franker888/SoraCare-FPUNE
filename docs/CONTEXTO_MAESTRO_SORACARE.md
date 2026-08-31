@@ -201,7 +201,9 @@ El acceso con una cuenta existente fue probado. El alta nueva posee su formulari
 - Posee respuestas locales seguras cuando OpenAI no está configurado o no está disponible.
 - El conector opcional usa la Responses API desde el servidor, nunca desde el navegador.
 - Variables: `SORACARE_OPENAI_API_KEY` y `SORACARE_OPENAI_MODEL`.
-- La activación remota quedó pendiente de crédito o facturación en la cuenta de API.
+- El modelo predeterminado validado es `gpt-5.6-terra`; las consultas se envían con historial estructurado, almacenamiento remoto desactivado y un identificador de sesión anonimizado mediante SHA-256.
+- El endpoint acepta sólo JSON limitado, aplica ocho consultas por sesión y minuto y mantiene el modo local cuando la API falla.
+- La clave local está configurada, pero la verificación real del 30/08/2026 devolvió `credit_balance_exhausted`; la activación remota depende de cargar saldo en la organización asociada a esa clave.
 - Sora no diagnostica, no receta, no interpreta estudios y no solicita datos sensibles.
 
 ### Cloudflare Turnstile: operativo y probado
@@ -336,7 +338,7 @@ Directorios externos usados en la notebook actual:
 - Informes, auditoría, configuración, usuarios y roles administrativos.
 - Google Calendar: agregar y retirar cita.
 - Validación aislada de Turnstile: modo local, configuración incompleta, token aceptado, token inválido y acción incorrecta.
-- Sesenta y cinco pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA, configuración de la unidad de persistencia, mapeo JPA y autenticación, autorización, aislamiento por paciente y CSRF de la API REST con Spring MVC.
+- Setenta y tres pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, validación de horarios recurrentes, uso seguro del contexto JPA, configuración de la unidad de persistencia, mapeo JPA, Sora/OpenAI y autenticación, autorización, aislamiento por paciente y CSRF de la API REST con Spring MVC.
 - Rutas públicas y paneles en resoluciones móviles y de escritorio.
 
 El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar una cantidad mayor que cero; una compilación sin ese resumen no reemplaza la evidencia de pruebas. Las pruebas manuales, de integración con PostgreSQL y de servicios externos siguen documentándose por separado.
@@ -347,7 +349,7 @@ El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar 
 2. Configuración de producción para Google OAuth y Calendar, con dominio definitivo.
 3. Dominio verificado para Resend y remitente institucional.
 4. Activación y prueba extremo a extremo de Twilio SMS.
-5. Crédito de API y elección de un modelo público válido antes de activar OpenAI para Sora.
+5. Cargar saldo de API en la organización asociada a la clave configurada y repetir la prueba real de Sora.
 6. Integración con una pasarela de pago real sólo si el alcance académico cambia.
 7. Política de privacidad, términos, copias de seguridad y estrategia de recuperación.
 8. Ampliar las pruebas JUnit de integración con PostgreSQL, agregar integración continua y probar con más dispositivos reales.

@@ -84,7 +84,8 @@ public class SoraOpenAIService {
 
     public String responder(
             String mensaje,
-            List<MensajeConversacion> historial
+            List<MensajeConversacion> historial,
+            String identificadorSeguridad
     ) throws IOException {
         if (!estaConfigurado()) {
             throw new IllegalStateException(
@@ -97,7 +98,9 @@ public class SoraOpenAIService {
                 validarHistorial(historial);
         String cuerpo = construirCuerpoSolicitud(
                 modelo,
-                construirEntrada(mensajeValido, historialValido)
+                mensajeValido,
+                historialValido,
+                validarIdentificadorSeguridad(identificadorSeguridad)
         );
 
         HttpRequest solicitud = HttpRequest.newBuilder(endpoint)
@@ -142,7 +145,7 @@ public class SoraOpenAIService {
                 : texto.substring(0, MAXIMO_RESPUESTA).strip() + "…";
     }
 
-    static String validarMensaje(String valor) {
+    public static String validarMensaje(String valor) {
         String mensaje = limpiar(valor);
         if (mensaje.isBlank()) {
             throw new IllegalArgumentException("Escribí una consulta para Sora.");
@@ -156,38 +159,50 @@ public class SoraOpenAIService {
         return mensaje;
     }
 
-    static String construirEntrada(
-            String mensaje,
-            List<MensajeConversacion> historial
-    ) {
-        StringBuilder entrada = new StringBuilder(1_200);
-        if (historial != null && !historial.isEmpty()) {
-            entrada.append("Conversación reciente:\n");
-            for (MensajeConversacion item : historial) {
-                entrada.append("usuario".equals(item.rol())
-                                ? "Persona: "
-                                : "Sora: ")
-                        .append(item.contenido())
-                        .append('\n');
-            }
-            entrada.append('\n');
-        }
-        return entrada.append("Consulta actual: ")
-                .append(mensaje)
-                .toString();
-    }
-
     static String construirCuerpoSolicitud(
             String modelo,
-            String entrada
+            String mensaje,
+            List<MensajeConversacion> historial,
+            String identificadorSeguridad
     ) {
         JsonObject json = new JsonObject();
         json.addProperty("model", modelo);
         json.addProperty("instructions", INSTRUCCIONES);
-        json.addProperty("input", entrada);
+
+        JsonArray entrada = new JsonArray();
+        if (historial != null) {
+            for (MensajeConversacion item : historial) {
+                entrada.add(crearMensajeEntrada(item.rol(), item.contenido()));
+            }
+        }
+        entrada.add(crearMensajeEntrada("usuario", mensaje));
+        json.add("input", entrada);
+
+        JsonObject razonamiento = new JsonObject();
+        razonamiento.addProperty("effort", "none");
+        json.add("reasoning", razonamiento);
+
+        JsonObject texto = new JsonObject();
+        texto.addProperty("verbosity", "low");
+        json.add("text", texto);
+
         json.addProperty("max_output_tokens", 350);
         json.addProperty("store", false);
+        json.addProperty("safety_identifier", identificadorSeguridad);
         return json.toString();
+    }
+
+    private static JsonObject crearMensajeEntrada(
+            String rol,
+            String contenido
+    ) {
+        JsonObject mensaje = new JsonObject();
+        mensaje.addProperty(
+                "role",
+                "asistente".equals(rol) ? "assistant" : "user"
+        );
+        mensaje.addProperty("content", contenido);
+        return mensaje;
     }
 
     static String extraerTextoRespuesta(String cuerpo) throws IOException {
@@ -252,6 +267,16 @@ public class SoraOpenAIService {
             return contenido.substring(0, MAXIMO_MENSAJE);
         }
         return contenido;
+    }
+
+    private static String validarIdentificadorSeguridad(String valor) {
+        String identificador = limpiar(valor);
+        if (identificador.isBlank() || identificador.length() > 64) {
+            throw new IllegalArgumentException(
+                    "No fue posible identificar esta sesión de Sora."
+            );
+        }
+        return identificador;
     }
 
     private static String valorCadena(JsonObject objeto, String propiedad) {

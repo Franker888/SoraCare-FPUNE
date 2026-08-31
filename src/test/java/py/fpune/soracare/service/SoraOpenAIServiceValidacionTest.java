@@ -1,27 +1,26 @@
 package py.fpune.soracare.service;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.util.List;
 
-public final class SoraOpenAIServiceValidacionTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-    private SoraOpenAIServiceValidacionTest() {
-    }
+class SoraOpenAIServiceValidacionTest {
 
-    public static void main(String[] args) throws Exception {
-        debeValidarYConstruirLaSolicitud();
-        debeExtraerLaRespuestaDeLaApi();
-        debeRechazarConsultasVacias();
-        debeMantenerDisponibleElModoLocalSinClave();
-        System.out.println("Validaciones de SoraOpenAIService: OK");
-    }
-
-    private static void debeValidarYConstruirLaSolicitud() {
-        String entrada = SoraOpenAIService.construirEntrada(
+    @Test
+    void construyeUnaSolicitudPrivadaBreveYEstructurada() {
+        String cuerpo = SoraOpenAIService.construirCuerpoSolicitud(
+                "modelo-prueba",
                 "¿Cómo reprogramo mi cita?",
                 List.of(
                         new SoraOpenAIService.MensajeConversacion(
@@ -30,23 +29,31 @@ public final class SoraOpenAIServiceValidacionTest {
                         new SoraOpenAIService.MensajeConversacion(
                                 "asistente", "Podés verla en Mis citas."
                         )
-                )
-        );
-        String cuerpo = SoraOpenAIService.construirCuerpoSolicitud(
-                "modelo-prueba",
-                entrada
+                ),
+                "identificador-anonimo"
         );
         JsonObject json = JsonParser.parseString(cuerpo).getAsJsonObject();
+        JsonArray entrada = json.getAsJsonArray("input");
 
-        verificar("modelo-prueba".equals(json.get("model").getAsString()),
-                "La solicitud debe incluir el modelo configurado.");
-        verificar(!json.get("store").getAsBoolean(),
-                "La conversación no debe almacenarse mediante la API.");
-        verificar(json.get("input").getAsString().contains("reprogramo"),
-                "La solicitud debe incluir la consulta actual.");
+        assertEquals("modelo-prueba", json.get("model").getAsString());
+        assertFalse(json.get("store").getAsBoolean());
+        assertEquals("none", json.getAsJsonObject("reasoning")
+                .get("effort").getAsString());
+        assertEquals("low", json.getAsJsonObject("text")
+                .get("verbosity").getAsString());
+        assertEquals("identificador-anonimo",
+                json.get("safety_identifier").getAsString());
+        assertEquals(3, entrada.size());
+        assertEquals("user", entrada.get(0).getAsJsonObject()
+                .get("role").getAsString());
+        assertEquals("assistant", entrada.get(1).getAsJsonObject()
+                .get("role").getAsString());
+        assertTrue(entrada.get(2).getAsJsonObject()
+                .get("content").getAsString().contains("reprogramo"));
     }
 
-    private static void debeExtraerLaRespuestaDeLaApi() throws Exception {
+    @Test
+    void extraeLaRespuestaAnidadaDeLaApi() throws Exception {
         String respuesta = """
                 {
                   "output": [{
@@ -58,36 +65,39 @@ public final class SoraOpenAIServiceValidacionTest {
                   }]
                 }
                 """;
-        verificar(
-                "Abrí Mis citas y elegí Reprogramar cita.".equals(
-                        SoraOpenAIService.extraerTextoRespuesta(respuesta)
-                ),
-                "No se extrajo correctamente el texto de la respuesta."
+
+        assertEquals(
+                "Abrí Mis citas y elegí Reprogramar cita.",
+                SoraOpenAIService.extraerTextoRespuesta(respuesta)
         );
     }
 
-    private static void debeRechazarConsultasVacias() {
-        boolean rechazada = false;
-        try {
-            SoraOpenAIService.validarMensaje("   ");
-        } catch (IllegalArgumentException esperado) {
-            rechazada = true;
-        }
-        verificar(rechazada, "Sora no debe aceptar una consulta vacía.");
+    @Test
+    void rechazaConsultasVaciasYRespuestasInvalidas() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> SoraOpenAIService.validarMensaje("   ")
+        );
+        assertThrows(
+                IOException.class,
+                () -> SoraOpenAIService.extraerTextoRespuesta("no-es-json")
+        );
     }
 
-    private static void debeMantenerDisponibleElModoLocalSinClave() {
+    @Test
+    void mantieneDisponibleElModoLocalSinClave() {
         SoraOpenAIService servicio = new SoraOpenAIService(
                 HttpClient.newHttpClient(),
                 URI.create("https://example.test/responses"),
                 "",
                 null
         );
-        verificar(!servicio.estaConfigurado(),
-                "Sin clave, el cliente debe informar que la IA no está configurada.");
-    }
 
-    private static void verificar(boolean condicion, String mensaje) {
-        if (!condicion) throw new AssertionError(mensaje);
+        assertFalse(servicio.estaConfigurado());
+        assertEquals("gpt-5.6-terra", servicio.modeloConfigurado());
+        assertThrows(
+                IllegalStateException.class,
+                () -> servicio.responder("Hola", List.of(), "sesion-prueba")
+        );
     }
 }
