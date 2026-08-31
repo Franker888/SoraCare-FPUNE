@@ -196,11 +196,13 @@ public class DisponibilidadService {
         return List.copyOf(intervalos);
     }
 
-    private static boolean estaBloqueado(
+    static boolean estaBloqueado(
             SlotDisponibleDTO slot,
             List<ExcepcionHorarioMedico> excepciones
     ) {
         for (ExcepcionHorarioMedico excepcion : excepciones) {
+            if (!excepcion.isActivo()
+                    || !slot.fecha().equals(excepcion.getFecha())) continue;
             if (excepcion.getTipo() == TipoExcepcionHorario.DISPONIBILIDAD_EXTRA) continue;
             if (excepcion.getIdMedico() != slot.idMedico()) continue;
             if (excepcion.getIdEspecialidad() != null
@@ -214,7 +216,7 @@ public class DisponibilidadService {
         return false;
     }
 
-    private static boolean estaOcupado(SlotDisponibleDTO slot, List<Cita> citas) {
+    static boolean estaOcupado(SlotDisponibleDTO slot, List<Cita> citas) {
         OffsetDateTime inicio = slot.fecha().atTime(slot.horaInicio())
                 .atZone(ZONA_HORARIA).toOffsetDateTime();
         OffsetDateTime fin = slot.fecha().atTime(slot.horaFin())

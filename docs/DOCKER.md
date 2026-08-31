@@ -73,7 +73,7 @@ se publica exclusivamente en `127.0.0.1` para el entorno local.
 El 31 de agosto de 2026 se comprobó la instalación completa en Windows con
 WSL 2:
 
-- construcción reproducible del WAR con 79 pruebas aprobadas y cero fallos;
+- construcción reproducible del WAR con 86 pruebas aprobadas y cero fallos;
 - PostgreSQL y SoraCare en estado saludable;
 - Flyway finalizado correctamente, con 32 versiones aplicadas (`V001` a
   `V032`);
