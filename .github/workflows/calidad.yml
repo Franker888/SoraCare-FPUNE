@@ -1,0 +1,96 @@
+name: Calidad continua
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: calidad-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MAVEN_OPTS: -Dfile.encoding=UTF-8 -Duser.timezone=America/Asuncion
+
+jobs:
+  pruebas:
+    name: Pruebas y WAR
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Configurar Java 21 y caché Maven
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: pom.xml
+
+      - name: Ejecutar pruebas y generar el WAR
+        run: mvn --batch-mode --no-transfer-progress clean verify
+
+      - name: Comprobar el WAR generado
+        run: test -s target/SoraCare-FPUNE.war
+
+      - name: Publicar reportes JUnit
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: reportes-junit-${{ github.run_id }}
+          path: target/surefire-reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publicar WAR verificable
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: soracare-war-${{ github.sha }}
+          path: target/SoraCare-FPUNE.war
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Resumir la validación
+        run: |
+          {
+            echo "## Calidad de SoraCare"
+            echo "- Java 21 y Maven: correctos"
+            echo "- Pruebas JUnit: aprobadas"
+            echo "- WAR: target/SoraCare-FPUNE.war"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  imagen-docker:
+    name: Imagen Docker
+    needs: pruebas
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Construir la imagen reproducible
+        run: docker build --tag soracare-fpune:ci .
+
+      - name: Comprobar seguridad y healthcheck de la imagen
+        run: |
+          usuario="$(docker image inspect --format '{{.Config.User}}' soracare-fpune:ci)"
+          healthcheck="$(docker image inspect --format '{{json .Config.Healthcheck.Test}}' soracare-fpune:ci)"
+          test "$usuario" = "soracare"
+          test "$healthcheck" != "null"
+          {
+            echo "## Imagen Docker"
+            echo "- Construcción: correcta"
+            echo "- Usuario de ejecución: soracare"
+            echo "- Healthcheck: configurado"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -17,6 +17,13 @@ en [docs/DOCKER.md](docs/DOCKER.md).
 El cierre técnico de las mejoras solicitadas por el profesor está resumido en
 [docs/MEJORAS_PROFESOR.md](docs/MEJORAS_PROFESOR.md).
 
+## Calidad automatizada
+
+GitHub Actions compila el proyecto con Java 21, ejecuta las pruebas JUnit,
+publica el WAR verificable y construye la imagen Docker. El funcionamiento y
+los controles de seguridad están explicados en
+[docs/INTEGRACION_CONTINUA.md](docs/INTEGRACION_CONTINUA.md).
+
 ## 👥 Equipo
 * Gerardo Adrián González Brizuela
 * Tobías Fabián Sánchez Florentín
