@@ -9,6 +9,7 @@ vendor/
 dist/
 build/
 outputs/
+output/
 
 # Entorno y credenciales
 .env
