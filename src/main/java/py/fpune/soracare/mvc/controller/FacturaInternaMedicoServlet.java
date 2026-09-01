@@ -10,6 +10,7 @@ import py.fpune.soracare.dto.FacturaInternaCreadaDTO;
 import py.fpune.soracare.dto.ResumenFacturacionMedicoDTO;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 import py.fpune.soracare.security.ProteccionCsrf;
+import py.fpune.soracare.service.ConfiguracionSifenService;
 import py.fpune.soracare.service.FacturaInternaService;
 
 import java.io.IOException;
@@ -20,10 +21,12 @@ public class FacturaInternaMedicoServlet extends HttpServlet {
 
     private static final String VISTA = "/WEB-INF/views/medico/facturas.jsp";
     private FacturaInternaService facturaService;
+    private ConfiguracionSifenService configuracionSifenService;
 
     @Override
     public void init() {
         facturaService = new FacturaInternaService();
+        configuracionSifenService = new ConfiguracionSifenService();
     }
 
     @Override
@@ -82,6 +85,10 @@ public class FacturaInternaMedicoServlet extends HttpServlet {
 
     private void mostrarVista(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        request.setAttribute(
+                "estadoSifen",
+                configuracionSifenService.consultarEstado()
+        );
         try {
             UsuarioAutenticadoDTO usuario = usuario(request);
             request.setAttribute(

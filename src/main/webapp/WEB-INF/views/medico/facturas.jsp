@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ page import="py.fpune.soracare.dto.PagoResumenDTO" %>
 <%@ page import="py.fpune.soracare.dto.ResumenFacturacionMedicoDTO" %>
+<%@ page import="py.fpune.soracare.dto.EstadoPreparacionSifenDTO" %>
 <%@ page import="py.fpune.soracare.service.DisponibilidadService" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.text.NumberFormat" %>
@@ -19,6 +20,14 @@
                     ? valor
                     : ResumenFacturacionMedicoDTO.vacio();
     List<PagoResumenDTO> pagos = resumen.pagos();
+    EstadoPreparacionSifenDTO estadoSifen =
+            request.getAttribute("estadoSifen") instanceof EstadoPreparacionSifenDTO valorSifen
+                    ? valorSifen
+                    : new EstadoPreparacionSifenDTO(
+                            EstadoPreparacionSifenDTO.Ambiente.DESHABILITADO,
+                            true,
+                            List.of()
+                    );
     String csrfToken = (String) request.getAttribute("csrfToken");
     DateTimeFormatter fechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     NumberFormat guaranies = NumberFormat.getIntegerInstance(
@@ -72,6 +81,61 @@
         <strong>Alcance actual:</strong> estos documentos son registros internos sin validez tributaria.
         No reemplazan una factura electrónica de e-Kuatia/SIFEN ni incluyen timbrado o CDC.
     </div>
+
+    <section class="card billing-table-card mb-4" aria-labelledby="tituloSifen">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-lg-row align-items-lg-start justify-content-between gap-3">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-shield-check text-primary fs-4" aria-hidden="true"></i>
+                        <h2 class="h5 mb-0" id="tituloSifen">Preparación e-Kuatia / SIFEN</h2>
+                    </div>
+                    <% if (!estadoSifen.ambienteValido()) { %>
+                    <p class="text-danger mb-2">La variable del ambiente SIFEN tiene un valor no reconocido.</p>
+                    <% } else if (!estadoSifen.habilitada()) { %>
+                    <p class="text-secondary mb-2">
+                        La integración fiscal está deshabilitada. Las facturas internas continúan funcionando con normalidad.
+                    </p>
+                    <% } else if (estadoSifen.configuracionCompleta()) { %>
+                    <p class="text-success mb-2">
+                        La configuración local del ambiente está completa. Esto todavía no autoriza envíos reales hasta terminar firma, XML y homologación.
+                    </p>
+                    <% } else { %>
+                    <p class="text-secondary mb-2">
+                        El ambiente está seleccionado, pero faltan <strong><%= estadoSifen.requisitosPendientes().size() %></strong>
+                        requisitos de configuración.
+                    </p>
+                    <% } %>
+
+                    <% if (!estadoSifen.requisitosPendientes().isEmpty()) { %>
+                    <ul class="small text-secondary mb-2">
+                        <% for (String requisito : estadoSifen.requisitosPendientes()) { %>
+                        <li><%= h(requisito) %></li>
+                        <% } %>
+                    </ul>
+                    <% } %>
+                    <p class="small text-secondary mb-0">
+                        La habilitación como facturador electrónico, el timbrado, el certificado cualificado y el CSC se gestionan ante la DNIT.
+                    </p>
+                </div>
+                <div class="d-flex flex-column align-items-lg-end gap-2">
+                    <% if (!estadoSifen.ambienteValido()) { %>
+                    <span class="badge text-bg-danger">Configuración inválida</span>
+                    <% } else if (!estadoSifen.habilitada()) { %>
+                    <span class="badge text-bg-secondary">Deshabilitado</span>
+                    <% } else if (estadoSifen.configuracionCompleta()) { %>
+                    <span class="badge text-bg-success"><%= h(estadoSifen.ambiente().name()) %> configurado</span>
+                    <% } else { %>
+                    <span class="badge text-bg-warning"><%= h(estadoSifen.ambiente().name()) %> incompleto</span>
+                    <% } %>
+                    <a class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer"
+                       href="https://www.dnit.gov.py/web/e-kuatia/documentacion-tecnica">
+                        Documentación oficial DNIT
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <% if (request.getAttribute("mensajeExito") != null) { %>
     <div class="alert alert-success"><%= h((String) request.getAttribute("mensajeExito")) %></div>
@@ -151,11 +215,7 @@
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead class="table-light">
-                    <tr class="billing-row"
-                        data-estado="<%= pago.idFacturaInterna() == null ? "PENDIENTE" : "EMITIDA" %>"
-                        data-busqueda="<%= h((pago.nombrePaciente() + " "
-                                + pago.cedulaPaciente() + " " + pago.nombreEspecialidad() + " "
-                                + (pago.numeroFacturaInterna() == null ? "" : pago.numeroFacturaInterna()))) %>">
+                    <tr>
                         <th class="ps-4">Paciente y consulta</th>
                         <th>Fecha</th>
                         <th>Importe</th>
@@ -165,7 +225,11 @@
                     </thead>
                     <tbody>
                     <% for (PagoResumenDTO pago : pagos) { %>
-                    <tr>
+                    <tr class="billing-row"
+                        data-estado="<%= pago.idFacturaInterna() == null ? "PENDIENTE" : "EMITIDA" %>"
+                        data-busqueda="<%= h((pago.nombrePaciente() + " "
+                                + pago.cedulaPaciente() + " " + pago.nombreEspecialidad() + " "
+                                + (pago.numeroFacturaInterna() == null ? "" : pago.numeroFacturaInterna()))) %>">
                         <td class="ps-4">
                             <strong><%= h(pago.nombrePaciente()) %></strong>
                             <div class="text-secondary small"><%= h(pago.nombreEspecialidad()) %> · CI <%= h(pago.cedulaPaciente()) %></div>
