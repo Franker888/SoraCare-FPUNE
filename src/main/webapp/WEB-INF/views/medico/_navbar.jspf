@@ -6,7 +6,7 @@
         <div class="d-flex align-items-center gap-2 gap-md-3">
             <a class="btn btn-outline-primary btn-sm d-none d-lg-inline-flex align-items-center gap-1"
                href="${pageContext.request.contextPath}/medico/facturas">
-                <i class="bi bi-receipt"></i> Facturación
+                <i class="bi bi-receipt"></i> Facturaci&oacute;n
             </a>
             <a class="btn btn-outline-primary btn-sm d-none d-lg-inline-flex align-items-center gap-1"
                href="${pageContext.request.contextPath}/medico/mi-disponibilidad">

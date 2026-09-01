@@ -7,13 +7,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import py.fpune.soracare.dto.FacturaInternaCreadaDTO;
+import py.fpune.soracare.dto.ResumenFacturacionMedicoDTO;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 import py.fpune.soracare.security.ProteccionCsrf;
 import py.fpune.soracare.service.FacturaInternaService;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.List;
 
 @WebServlet("/medico/facturas")
 public class FacturaInternaMedicoServlet extends HttpServlet {
@@ -85,8 +85,8 @@ public class FacturaInternaMedicoServlet extends HttpServlet {
         try {
             UsuarioAutenticadoDTO usuario = usuario(request);
             request.setAttribute(
-                    "pagosConfirmados",
-                    facturaService.listarParaMedico(usuario.getIdPersona())
+                    "resumenFacturacion",
+                    facturaService.consultarResumen(usuario.getIdPersona())
             );
             request.setAttribute(
                     "csrfToken",
@@ -97,7 +97,10 @@ public class FacturaInternaMedicoServlet extends HttpServlet {
             if (request.getAttribute("error") == null) {
                 request.setAttribute("error", error.getMessage());
             }
-            request.setAttribute("pagosConfirmados", List.of());
+            request.setAttribute(
+                    "resumenFacturacion",
+                    ResumenFacturacionMedicoDTO.vacio()
+            );
         } catch (SQLException error) {
             log("No fue posible cargar la facturación interna.", error);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -107,7 +110,10 @@ public class FacturaInternaMedicoServlet extends HttpServlet {
                         "No fue posible cargar la facturación interna."
                 );
             }
-            request.setAttribute("pagosConfirmados", List.of());
+            request.setAttribute(
+                    "resumenFacturacion",
+                    ResumenFacturacionMedicoDTO.vacio()
+            );
         }
         request.getRequestDispatcher(VISTA).forward(request, response);
     }

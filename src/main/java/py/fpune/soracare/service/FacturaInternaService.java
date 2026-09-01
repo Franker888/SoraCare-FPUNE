@@ -8,6 +8,7 @@ import py.fpune.soracare.dto.DatosFacturacionDTO;
 import py.fpune.soracare.dto.FacturaInternaArchivoDTO;
 import py.fpune.soracare.dto.FacturaInternaCreadaDTO;
 import py.fpune.soracare.dto.PagoResumenDTO;
+import py.fpune.soracare.dto.ResumenFacturacionMedicoDTO;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 
 import java.sql.Connection;
@@ -36,6 +37,14 @@ public class FacturaInternaService {
                         "Tu cuenta no posee una ficha médica asociada."
                 ));
         return pagoDAO.listarConfirmadosPorMedicoPersona(idPersonaMedico);
+    }
+
+    public ResumenFacturacionMedicoDTO consultarResumen(
+            long idPersonaMedico
+    ) throws SQLException {
+        return ResumenFacturacionMedicoDTO.desde(
+                listarParaMedico(idPersonaMedico)
+        );
     }
 
     public FacturaInternaCreadaDTO emitir(

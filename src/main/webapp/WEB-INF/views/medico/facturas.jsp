@@ -1,8 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ page import="py.fpune.soracare.dto.PagoResumenDTO" %>
+<%@ page import="py.fpune.soracare.dto.ResumenFacturacionMedicoDTO" %>
 <%@ page import="py.fpune.soracare.service.DisponibilidadService" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
+<%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Locale" %>
 <%!
     private String h(String valor) {
         if (valor == null) return "";
@@ -11,13 +14,16 @@
     }
 %>
 <%
-    List<PagoResumenDTO> pagos = request.getAttribute("pagosConfirmados") instanceof List<?>
-            ? (List<PagoResumenDTO>) request.getAttribute("pagosConfirmados")
-            : List.of();
+    ResumenFacturacionMedicoDTO resumen =
+            request.getAttribute("resumenFacturacion") instanceof ResumenFacturacionMedicoDTO valor
+                    ? valor
+                    : ResumenFacturacionMedicoDTO.vacio();
+    List<PagoResumenDTO> pagos = resumen.pagos();
     String csrfToken = (String) request.getAttribute("csrfToken");
-    long emitidas = pagos.stream().filter(p -> p.idFacturaInterna() != null).count();
-    long pendientes = pagos.size() - emitidas;
     DateTimeFormatter fechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    NumberFormat guaranies = NumberFormat.getIntegerInstance(
+            Locale.forLanguageTag("es-PY")
+    );
 %>
 <!doctype html>
 <html lang="es">
@@ -25,7 +31,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
-    <title>Facturación interna | SoraCare-FPUNE</title>
+    <title>Facturaci&oacute;n interna | SoraCare-FPUNE</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/libs/bootstrap-icons/bootstrap-icons.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260831a">
@@ -35,6 +41,10 @@
         .billing-table-card { border:0; border-radius:1.2rem; box-shadow:0 12px 36px rgba(25,55,95,.08); overflow:hidden; }
         .billing-warning { border-left:.3rem solid #e0a800; }
         .billing-number { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+        .billing-filter { border:1px solid #dce6f2; border-radius:1rem; background:#fff; }
+        .billing-filter .form-control, .billing-filter .form-select { min-height:2.8rem; }
+        .billing-amount { white-space:nowrap; }
+        .billing-no-results { display:none; }
     </style>
 </head>
 <body class="app-shell">
@@ -44,11 +54,16 @@
         <div class="row align-items-center g-3">
             <div class="col">
                 <p class="text-white-50 fw-semibold mb-2">Gestión comercial del profesional</p>
-                <h1 class="h2 mb-2">Facturación interna</h1>
+                <h1 class="h2 mb-2">Facturaci&oacute;n interna</h1>
                 <p class="mb-0">Emití el documento comercial de una consulta con pago confirmado y compartilo en PDF con el paciente.</p>
             </div>
-            <div class="col-auto d-none d-md-block">
-                <i class="bi bi-receipt-cutoff display-3" aria-hidden="true"></i>
+            <div class="col-md-auto d-flex align-items-center gap-3">
+                <a class="btn btn-light fw-semibold <%= pagos.isEmpty() ? "disabled" : "" %>"
+                   href="${pageContext.request.contextPath}/medico/facturas/exportar"
+                   <%= pagos.isEmpty() ? "aria-disabled=\"true\" tabindex=\"-1\"" : "" %>>
+                    <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i>Exportar CSV
+                </a>
+                <i class="bi bi-receipt-cutoff display-3 d-none d-lg-block" aria-hidden="true"></i>
             </div>
         </div>
     </section>
@@ -66,25 +81,60 @@
     <% } %>
 
     <section class="row g-3 mb-4" aria-label="Resumen de facturación">
-        <div class="col-md-4">
+        <div class="col-sm-6 col-xl-3">
             <article class="card billing-stat h-100"><div class="card-body p-4">
                 <div class="text-secondary small">Pagos confirmados</div>
                 <div class="display-6 fw-bold"><%= pagos.size() %></div>
             </div></article>
         </div>
-        <div class="col-md-4">
+        <div class="col-sm-6 col-xl-3">
             <article class="card billing-stat h-100"><div class="card-body p-4">
                 <div class="text-secondary small">Facturas emitidas</div>
-                <div class="display-6 fw-bold text-success"><%= emitidas %></div>
+                <div class="display-6 fw-bold text-success"><%= resumen.facturasEmitidas() %></div>
             </div></article>
         </div>
-        <div class="col-md-4">
+        <div class="col-sm-6 col-xl-3">
             <article class="card billing-stat h-100"><div class="card-body p-4">
                 <div class="text-secondary small">Pendientes de emisión</div>
-                <div class="display-6 fw-bold text-primary"><%= pendientes %></div>
+                <div class="display-6 fw-bold text-primary"><%= resumen.pendientesEmision() %></div>
+            </div></article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="card billing-stat h-100"><div class="card-body p-4">
+                <div class="text-secondary small">Total facturado</div>
+                <div class="h3 fw-bold text-primary billing-amount mb-0">
+                    Gs. <%= guaranies.format(resumen.totalFacturado()) %>
+                </div>
+                <div class="text-secondary small mt-1">
+                    de Gs. <%= guaranies.format(resumen.totalCobrado()) %> cobrados
+                </div>
             </div></article>
         </div>
     </section>
+
+    <% if (!pagos.isEmpty()) { %>
+    <section class="billing-filter p-3 p-lg-4 mb-4" aria-label="Filtros de facturación">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-8">
+                <label class="form-label fw-semibold" for="filtroFacturacion">Buscar</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search" aria-hidden="true"></i></span>
+                    <input class="form-control" id="filtroFacturacion" type="search"
+                           placeholder="Paciente, cédula, especialidad o número de factura">
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <label class="form-label fw-semibold" for="estadoFacturacion">Estado</label>
+                <select class="form-select" id="estadoFacturacion">
+                    <option value="TODAS">Todas</option>
+                    <option value="PENDIENTE">Pendientes</option>
+                    <option value="EMITIDA">Emitidas</option>
+                </select>
+            </div>
+        </div>
+        <div class="small text-secondary mt-3" aria-live="polite" id="resultadoFiltro"></div>
+    </section>
+    <% } %>
 
     <section class="card billing-table-card">
         <div class="card-body p-0">
@@ -101,7 +151,11 @@
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead class="table-light">
-                    <tr>
+                    <tr class="billing-row"
+                        data-estado="<%= pago.idFacturaInterna() == null ? "PENDIENTE" : "EMITIDA" %>"
+                        data-busqueda="<%= h((pago.nombrePaciente() + " "
+                                + pago.cedulaPaciente() + " " + pago.nombreEspecialidad() + " "
+                                + (pago.numeroFacturaInterna() == null ? "" : pago.numeroFacturaInterna()))) %>">
                         <th class="ps-4">Paciente y consulta</th>
                         <th>Fecha</th>
                         <th>Importe</th>
@@ -117,7 +171,7 @@
                             <div class="text-secondary small"><%= h(pago.nombreEspecialidad()) %> · CI <%= h(pago.cedulaPaciente()) %></div>
                         </td>
                         <td><%= pago.fechaCita().atZoneSameInstant(DisponibilidadService.ZONA_HORARIA).format(fechaHora) %></td>
-                        <td>Gs. <strong><%= pago.monto().setScale(0).toPlainString() %></strong></td>
+                        <td>Gs. <strong><%= guaranies.format(pago.monto()) %></strong></td>
                         <td>
                             <% if (pago.idFacturaInterna() == null) { %>
                             <span class="badge text-bg-warning">Pendiente</span>
@@ -140,7 +194,7 @@
                             <form method="post" action="${pageContext.request.contextPath}/medico/facturas" class="d-inline">
                                 <input type="hidden" name="csrfToken" value="<%= h(csrfToken) %>">
                                 <input type="hidden" name="idPago" value="<%= pago.idPago() %>">
-                                <button class="btn btn-primary btn-sm">
+                                <button class="btn btn-primary btn-sm" type="submit">
                                     <i class="bi bi-file-earmark-plus me-1"></i>Emitir factura
                                 </button>
                             </form>
@@ -156,10 +210,47 @@
                     </tbody>
                 </table>
             </div>
+            <div class="billing-no-results p-5 text-center text-secondary" id="sinResultados">
+                <i class="bi bi-search display-6 d-block mb-2" aria-hidden="true"></i>
+                No hay registros que coincidan con los filtros seleccionados.
+            </div>
             <% } %>
         </div>
     </section>
 </main>
 <script src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js"></script>
+<script>
+    (() => {
+        const buscador = document.getElementById('filtroFacturacion');
+        const estado = document.getElementById('estadoFacturacion');
+        const filas = Array.from(document.querySelectorAll('.billing-row'));
+        const resultado = document.getElementById('resultadoFiltro');
+        const sinResultados = document.getElementById('sinResultados');
+        if (!buscador || !estado || filas.length === 0) return;
+
+        const normalizar = valor => (valor || '')
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        const filtrar = () => {
+            const texto = normalizar(buscador.value);
+            const estadoElegido = estado.value;
+            let visibles = 0;
+            filas.forEach(fila => {
+                const coincideTexto = !texto
+                    || normalizar(fila.dataset.busqueda).includes(texto);
+                const coincideEstado = estadoElegido === 'TODAS'
+                    || fila.dataset.estado === estadoElegido;
+                const visible = coincideTexto && coincideEstado;
+                fila.hidden = !visible;
+                if (visible) visibles++;
+            });
+            resultado.textContent = visibles + (visibles === 1
+                ? ' registro visible' : ' registros visibles');
+            sinResultados.style.display = visibles === 0 ? 'block' : 'none';
+        };
+        buscador.addEventListener('input', filtrar);
+        estado.addEventListener('change', filtrar);
+        filtrar();
+    })();
+</script>
 </body>
 </html>
