@@ -18,6 +18,7 @@ import java.io.IOException;
         urlPatterns = {
                 "/dashboard",
                 "/comprobantes/*",
+                "/facturas/*",
                 "/cuenta/*",
                 "/perfil",
                 "/perfil/*"

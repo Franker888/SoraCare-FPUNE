@@ -55,6 +55,11 @@ $migraciones = @(
         Nombre = 'suscripciones web de Firebase Cloud Messaging'
         Archivo = Join-Path $proyecto 'src\main\resources\db\migration\V032__crear_suscripciones_push.sql'
         Verificacion = "SELECT to_regclass('soracare.suscripciones_push') IS NOT NULL;"
+    },
+    @{
+        Nombre = 'facturacion comercial interna'
+        Archivo = Join-Path $proyecto 'src\main\resources\db\migration\V033__crear_facturacion_interna.sql'
+        Verificacion = "SELECT to_regclass('soracare.facturas_internas') IS NOT NULL AND to_regclass('soracare.facturas_internas_detalles') IS NOT NULL;"
     }
 )
 

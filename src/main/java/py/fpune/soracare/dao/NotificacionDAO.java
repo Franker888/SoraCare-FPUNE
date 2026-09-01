@@ -102,6 +102,49 @@ public class NotificacionDAO {
         }
     }
 
+    public void registrarFacturaInternaEmitida(
+            Connection conexion,
+            long idCita,
+            long idPago,
+            String numeroFactura
+    ) throws SQLException {
+        String sql = """
+                INSERT INTO soracare.notificaciones (
+                    id_persona, id_cita, id_pago,
+                    id_canal_notificacion, id_estado_notificacion,
+                    destinatario, asunto, contenido, clave_idempotencia,
+                    fecha_envio, fecha_entrega, proveedor, referencia_proveedor
+                )
+                SELECT paciente.id_persona, cita.id_cita, ?,
+                       canal.id_canal_notificacion, estado.id_estado_notificacion,
+                       'PORTAL:' || paciente.id_persona,
+                       'Factura interna disponible',
+                       'La factura interna ' || ?
+                           || ' ya está disponible en Mis citas. '
+                           || 'Es un documento comercial interno sin validez tributaria.',
+                       ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
+                       'SORACARE_INTERNO', ?
+                  FROM soracare.citas cita
+                  INNER JOIN soracare.pacientes paciente
+                          ON paciente.id_paciente = cita.id_paciente
+                  CROSS JOIN soracare.canales_notificacion canal
+                  CROSS JOIN soracare.estados_notificacion estado
+                 WHERE cita.id_cita = ?
+                   AND canal.codigo = 'SISTEMA'
+                   AND estado.codigo = 'ENTREGADA'
+                ON CONFLICT (clave_idempotencia) DO NOTHING
+                """;
+        String clave = "FACTURA-INTERNA-" + idPago + "-SISTEMA-1";
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setLong(1, idPago);
+            sentencia.setString(2, numeroFactura);
+            sentencia.setString(3, clave);
+            sentencia.setString(4, numeroFactura);
+            sentencia.setLong(5, idCita);
+            sentencia.executeUpdate();
+        }
+    }
+
     public void registrarRecetaEmitida(
             Connection conexion, RecetaMedicaDTO receta
     ) throws SQLException {

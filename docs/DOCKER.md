@@ -9,7 +9,7 @@ Windows.
 | Servicio | Función |
 | --- | --- |
 | `postgres` | PostgreSQL 18 con volumen persistente y usuario de aplicación sin privilegios administrativos. |
-| `migraciones` | Flyway valida y aplica en orden las migraciones `V001` a `V032`. |
+| `migraciones` | Flyway valida y aplica en orden las migraciones `V001` a `V033`. |
 | `aplicacion` | Compila con Maven y Java 21, y ejecuta el WAR en Tomcat 10.1 como usuario no administrador. |
 
 Los documentos clínicos, las fotografías y PostgreSQL usan volúmenes Docker
@@ -76,7 +76,7 @@ WSL 2:
 - construcción reproducible del WAR con 86 pruebas aprobadas y cero fallos;
 - PostgreSQL y SoraCare en estado saludable;
 - Flyway finalizado correctamente, con 32 versiones aplicadas (`V001` a
-  `V032`);
+  `V033`);
 - portada, conexión a base de datos y API REST respondiendo correctamente;
 - Sora conectada con OpenAI y consultando el catálogo público real;
 - apagado y recreación de los contenedores sin pérdida del historial de la

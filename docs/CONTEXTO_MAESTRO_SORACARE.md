@@ -42,7 +42,7 @@ src/main/java/py/fpune/soracare/
   service/      reglas de negocio e integraciones
 
 src/main/resources/db/migration/
-  V001 ... V032 migraciones SQL acumulativas
+  V001 ... V033 migraciones SQL acumulativas
 
 src/main/resources/META-INF/
   persistence.xml unidad de persistencia SoraCarePU
@@ -273,7 +273,7 @@ Este proyecto no debe publicar contraseñas de prueba, claves API, tokens OAuth 
 
 ## 10. Base de datos
 
-El esquema se llama `soracare` y evoluciona mediante migraciones SQL numeradas de `V001` a `V032`. Entre ellas se encuentran:
+El esquema se llama `soracare` y evoluciona mediante migraciones SQL numeradas de `V001` a `V033`. Entre ellas se encuentran:
 
 - Personas, pacientes, usuarios y roles.
 - Auditoría.
@@ -285,7 +285,7 @@ El esquema se llama `soracare` y evoluciona mediante migraciones SQL numeradas d
 - Reprogramaciones, presentación de médicos y estudios solicitados.
 - Analítica de disponibilidad, perfiles visuales, estados de correo e identidades Google.
 
-Las nuevas migraciones de este avance son `V027` a `V032`. `V032` crea las suscripciones web de Firebase. No se deben editar migraciones ya aplicadas; los cambios futuros se agregan con el siguiente número disponible.
+Las migraciones `V027` a `V032` completan este avance de integraciones y `V032` crea las suscripciones web de Firebase. `V033` agrega facturación comercial interna, separada explícitamente de e-Kuatia/SIFEN y sin validez tributaria. No se deben editar migraciones ya aplicadas; los cambios futuros se agregan con el siguiente número disponible.
 
 ## 11. Cómo iniciar el proyecto en la notebook actual
 

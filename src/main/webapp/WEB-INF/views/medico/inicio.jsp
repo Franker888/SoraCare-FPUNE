@@ -131,7 +131,7 @@
         </div>
 
         <div class="row g-4">
-            <div class="col-12 col-lg-6">
+            <div class="col-12 col-xl-6">
                 <article class="card doctor-work-card doctor-agenda-card h-100">
                     <div class="row align-items-center g-4">
                         <div class="col-md">
@@ -151,7 +151,7 @@
                     </div>
                 </article>
             </div>
-            <div class="col-12 col-md-6 col-lg-3">
+            <div class="col-12 col-md-4 col-xl-2">
                 <article class="card doctor-work-card h-100 d-flex flex-column">
                     <span class="doctor-work-icon availability-icon"><i class="bi bi-calendar2-range"></i></span>
                     <h3>Mi disponibilidad</h3>
@@ -162,7 +162,18 @@
                     </a>
                 </article>
             </div>
-            <div class="col-12 col-md-6 col-lg-3">
+            <div class="col-12 col-md-4 col-xl-2">
+                <article class="card doctor-work-card h-100 d-flex flex-column">
+                    <span class="doctor-work-icon"><i class="bi bi-receipt-cutoff"></i></span>
+                    <h3>Facturación interna</h3>
+                    <p>Emití el documento interno en PDF de las consultas con pago confirmado.</p>
+                    <a class="btn btn-outline-primary align-self-start mt-auto"
+                       href="${pageContext.request.contextPath}/medico/facturas">
+                        Gestionar facturas <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </article>
+            </div>
+            <div class="col-12 col-md-4 col-xl-2">
                 <article class="card doctor-work-card h-100 d-flex flex-column">
                     <span class="doctor-work-icon profile-icon"><i class="bi bi-person-bounding-box"></i></span>
                     <h3>Mi perfil</h3>

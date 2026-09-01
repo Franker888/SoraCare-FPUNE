@@ -472,6 +472,9 @@
                                     <% if (pago.idComprobante() != null) { %>
                                     <a class="btn btn-sm btn-outline-success" target="_blank" href="${pageContext.request.contextPath}/comprobantes/pago?id=<%= pago.idComprobante() %>">Ver comprobante PDF</a>
                                     <% } %>
+                                    <% if (pago.idFacturaInterna() != null) { %>
+                                    <a class="btn btn-sm btn-outline-primary" target="_blank" href="${pageContext.request.contextPath}/facturas/interna?id=<%= pago.idFacturaInterna() %>">Ver factura interna PDF</a>
+                                    <% } %>
                                 </div>
                                 <% } %>
                             </div>

@@ -25,8 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 class PostgreSqlFlywayIT {
 
-    private static final int CANTIDAD_MIGRACIONES_ESPERADA = 32;
-    private static final String ULTIMA_VERSION_ESPERADA = "032";
+    private static final int CANTIDAD_MIGRACIONES_ESPERADA = 33;
+    private static final String ULTIMA_VERSION_ESPERADA = "033";
     private static final String BASE_TEMPORAL = "soracare_pruebas";
     private static final String USUARIO_TEMPORAL = "soracare_app";
 
@@ -80,6 +80,8 @@ class PostgreSqlFlywayIT {
                             current_database() AS base_actual,
                             to_regclass('soracare.especialidades') AS especialidades,
                             to_regclass('soracare.citas') AS citas,
+                            to_regclass('soracare.facturas_internas') AS facturas_internas,
+                            to_regclass('soracare.facturas_internas_detalles') AS detalles_factura,
                             (
                                 SELECT COUNT(*)
                                 FROM soracare.flyway_schema_history
@@ -92,6 +94,8 @@ class PostgreSqlFlywayIT {
             assertEquals(BASE_TEMPORAL, resultado.getString("base_actual"));
             assertNotNull(resultado.getString("especialidades"));
             assertNotNull(resultado.getString("citas"));
+            assertNotNull(resultado.getString("facturas_internas"));
+            assertNotNull(resultado.getString("detalles_factura"));
             assertEquals(
                     CANTIDAD_MIGRACIONES_ESPERADA,
                     resultado.getInt("migraciones")

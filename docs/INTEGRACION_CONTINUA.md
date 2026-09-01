@@ -12,7 +12,7 @@ también puede iniciarse manualmente desde la pestaña **Actions**.
 2. configura Eclipse Temurin 21 y la caché de dependencias Maven;
 3. ejecuta las pruebas unitarias de JUnit;
 4. levanta un PostgreSQL temporal con Testcontainers;
-5. aplica y valida las migraciones `V001` a `V032` mediante Flyway;
+5. aplica y valida las migraciones `V001` a `V033` mediante Flyway;
 6. comprueba el esquema y una operación real de `EspecialidadDAO`;
 7. elimina automáticamente el contenedor y sus datos de prueba;
 8. exige que exista `target/SoraCare-FPUNE.war`;

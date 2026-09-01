@@ -52,8 +52,16 @@ public class ComprobantePdfService {
                 "El pago fue procesado por el simulador academico de SoraCare-FPUNE."
         );
 
-        byte[] contenido = crearPdf(lineas);
         String nombreArchivo = "comprobante-" + numeroComprobante + ".pdf";
+        return crearDocumento(nombreArchivo, lineas);
+    }
+
+    static DocumentoPdf crearDocumento(String nombreArchivo, List<String> lineas) {
+        if (nombreArchivo == null || nombreArchivo.isBlank()
+                || lineas == null || lineas.isEmpty()) {
+            throw new IllegalArgumentException("El nombre y el contenido del PDF son obligatorios.");
+        }
+        byte[] contenido = crearPdf(lineas);
         return new DocumentoPdf(nombreArchivo, contenido, sha256(contenido));
     }
 

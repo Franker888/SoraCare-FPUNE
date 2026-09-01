@@ -47,6 +47,8 @@ public class PagoDAO {
                      ON datos.id_pago = p.id_pago
               LEFT JOIN soracare.comprobantes_pago comprobante
                      ON comprobante.id_pago = p.id_pago
+              LEFT JOIN soracare.facturas_internas factura
+                     ON factura.id_pago = p.id_pago
             """;
 
     private static final String RESUMEN_SELECT = """
@@ -61,7 +63,10 @@ public class PagoDAO {
                    especialidad.nombre AS nombre_especialidad,
                    datos.correo AS correo_facturacion,
                    comprobante.id_comprobante, comprobante.numero_comprobante,
-                   comprobante.estado_envio_email
+                   comprobante.estado_envio_email,
+                   factura.id_factura AS id_factura_interna,
+                   factura.numero_factura AS numero_factura_interna,
+                   factura.estado_envio_email AS estado_envio_factura_interna
             """ + RESUMEN_FROM;
 
     public List<MetodoPago> listarMetodosActivos() throws SQLException {
@@ -276,6 +281,17 @@ public class PagoDAO {
                  LIMIT 300
                 """;
         return listar(sql, null);
+    }
+
+    public List<PagoResumenDTO> listarConfirmadosPorMedicoPersona(long idPersona)
+            throws SQLException {
+        String sql = RESUMEN_SELECT + """
+                 WHERE medico.id_persona = ?
+                   AND ep.codigo = 'CONFIRMADO'
+                 ORDER BY c.fecha_hora_inicio DESC, p.id_pago DESC
+                 LIMIT 150
+                """;
+        return listar(sql, idPersona);
     }
 
     public ResultadoAgendaPagosDTO buscarParaAgenda(FiltroAgendaPagosDTO filtro)
@@ -668,11 +684,11 @@ public class PagoDAO {
         }
     }
 
-    private List<PagoResumenDTO> listar(String sql, Long idPaciente) throws SQLException {
+    private List<PagoResumenDTO> listar(String sql, Long parametro) throws SQLException {
         List<PagoResumenDTO> pagos = new ArrayList<>();
         try (Connection conexion = ConexionBD.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(sql)) {
-            if (idPaciente != null) sentencia.setLong(1, idPaciente);
+            if (parametro != null) sentencia.setLong(1, parametro);
             try (ResultSet resultado = sentencia.executeQuery()) {
                 while (resultado.next()) pagos.add(mapear(resultado));
             }
@@ -682,6 +698,7 @@ public class PagoDAO {
 
     private static PagoResumenDTO mapear(ResultSet resultado) throws SQLException {
         Object idComprobante = resultado.getObject("id_comprobante");
+        Object idFacturaInterna = resultado.getObject("id_factura_interna");
         return new PagoResumenDTO(
                 resultado.getLong("id_pago"),
                 resultado.getLong("id_cita"),
@@ -702,7 +719,12 @@ public class PagoDAO {
                 resultado.getString("correo_facturacion"),
                 idComprobante == null ? null : ((Number) idComprobante).longValue(),
                 resultado.getString("numero_comprobante"),
-                resultado.getString("estado_envio_email")
+                resultado.getString("estado_envio_email"),
+                idFacturaInterna == null
+                        ? null
+                        : ((Number) idFacturaInterna).longValue(),
+                resultado.getString("numero_factura_interna"),
+                resultado.getString("estado_envio_factura_interna")
         );
     }
 

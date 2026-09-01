@@ -23,7 +23,10 @@ public record PagoResumenDTO(
         String correoFacturacion,
         Long idComprobante,
         String numeroComprobante,
-        String estadoEnvioEmail
+        String estadoEnvioEmail,
+        Long idFacturaInterna,
+        String numeroFacturaInterna,
+        String estadoEnvioFacturaInterna
 ) {
 
     public boolean estaConfirmado() {
