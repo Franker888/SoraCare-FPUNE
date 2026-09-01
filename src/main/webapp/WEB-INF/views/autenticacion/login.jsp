@@ -75,7 +75,10 @@
           href="${pageContext.request.contextPath}/assets/home/img/logo/SoraCare1.png">
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
+          href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260901">
+    <% if (googleHabilitado) { %>
+    <script src="https://accounts.google.com/gsi/client?hl=es" async></script>
+    <% } %>
 </head>
 
 <body class="soracare-auth">
@@ -165,7 +168,7 @@
 
             <% if (googleHabilitado) { %>
 
-            <div class="auth-google-provider">
+            <div class="auth-google-provider" data-google-signin-provider>
                 <p class="auth-google-title">Acceso rápido para pacientes</p>
 
                 <div id="g_id_onload"
@@ -184,6 +187,14 @@
                      data-logo_alignment="left"
                      data-width="300">
                 </div>
+
+                <p class="auth-google-status" data-google-signin-status role="status">
+                    Cargando acceso con Google…
+                </p>
+                <button class="btn btn-outline-primary btn-sm" type="button"
+                        data-google-signin-retry hidden>
+                    Reintentar carga
+                </button>
 
                 <p class="auth-google-help">
                     Ingresá o creá tu perfil de paciente con Google.
@@ -292,10 +303,7 @@
 </script>
 
 <% if (googleHabilitado) { %>
-<script src="https://accounts.google.com/gsi/client"
-        async
-        defer>
-</script>
+<script src="${pageContext.request.contextPath}/assets/app/js/google-signin-estado.js?v=20260901"></script>
 <% } %>
 
 <% if (turnstileHabilitado) { %>

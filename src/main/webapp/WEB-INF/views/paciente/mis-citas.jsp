@@ -63,6 +63,7 @@
     boolean busquedaRealizada = Boolean.TRUE.equals(request.getAttribute("busquedaRealizada"));
     boolean agendandoNuevaCita = Boolean.TRUE.equals(request.getAttribute("agendandoNuevaCita"));
     String googleCalendarClientId = (String) request.getAttribute("googleCalendarClientId");
+    String googleCalendarLoginHint = (String) request.getAttribute("googleCalendarLoginHint");
     boolean googleCalendarHabilitado = googleCalendarClientId != null
             && !googleCalendarClientId.isBlank();
     DateTimeFormatter formatoFechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -483,6 +484,7 @@
                                 <div class="calendar-appointment-actions mb-3"
                                      data-google-calendar
                                      data-client-id="<%= h(googleCalendarClientId) %>"
+                                     data-login-hint="<%= h(googleCalendarLoginHint) %>"
                                      data-cita-id="<%= cita.getIdCita() %>"
                                      data-summary="Cita médica · <%= h(nombreEspecialidad) %>"
                                      data-professional="<%= h(nombreProfesional) %>"
@@ -495,7 +497,7 @@
                                         </span>
                                         <div>
                                             <strong>Google Calendar</strong>
-                                            <small>Recordatorio personal, sin información clínica.</small>
+                                            <small>La primera vez autoriza el permiso; después se reutiliza sin almacenar el token de forma permanente.</small>
                                         </div>
                                     </div>
                                     <div class="calendar-appointment-buttons">
@@ -547,7 +549,7 @@
 <script src="${pageContext.request.contextPath}/assets/app/js/filtro-medicos-especialidad.js"></script>
 <% if (googleCalendarHabilitado) { %>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="${pageContext.request.contextPath}/assets/app/js/google-calendar-citas.js?v=20260821b"></script>
+<script src="${pageContext.request.contextPath}/assets/app/js/google-calendar-citas.js?v=20260901"></script>
 <% } %>
 </body>
 </html>

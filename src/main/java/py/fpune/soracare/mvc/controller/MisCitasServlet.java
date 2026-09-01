@@ -137,6 +137,15 @@ public class MisCitasServlet extends HttpServlet {
                 "googleCalendarClientId",
                 configuracionGoogleService.obtenerClientId()
         );
+        HttpSession sesion = request.getSession(false);
+        Object googleLoginHint = sesion == null
+                ? null
+                : sesion.getAttribute(
+                        AutenticacionGoogleServlet.ATRIBUTO_GOOGLE_LOGIN_HINT
+                );
+        if (googleLoginHint instanceof String correo && !correo.isBlank()) {
+            request.setAttribute("googleCalendarLoginHint", correo);
+        }
         try {
             UsuarioAutenticadoDTO usuario = usuarioAutenticado(request);
             Paciente paciente = pacienteService.buscarPorIdPersona(usuario.getIdPersona())

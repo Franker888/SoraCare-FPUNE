@@ -28,6 +28,8 @@ public class AutenticacionGoogleServlet extends HttpServlet {
             "idUsuarioGooglePendiente";
     public static final String ATRIBUTO_ERROR_GOOGLE =
             "errorGoogle";
+    public static final String ATRIBUTO_GOOGLE_LOGIN_HINT =
+            "googleLoginHint";
 
     private static final int DURACION_SESION_SEGUNDOS = 30 * 60;
 
@@ -58,7 +60,11 @@ public class AutenticacionGoogleServlet extends HttpServlet {
 
             switch (resultado.estado()) {
                 case AUTENTICADO -> {
-                    iniciarSesion(request, resultado.usuarioAutenticado());
+                    iniciarSesion(
+                            request,
+                            resultado.usuarioAutenticado(),
+                            perfil
+                    );
                     response.sendRedirect(
                             request.getContextPath() + "/paciente/inicio"
                     );
@@ -167,6 +173,22 @@ public class AutenticacionGoogleServlet extends HttpServlet {
         HttpSession nueva = request.getSession(true);
         nueva.setMaxInactiveInterval(DURACION_SESION_SEGUNDOS);
         nueva.setAttribute("usuarioAutenticado", usuario);
+    }
+
+    public static void iniciarSesion(
+            HttpServletRequest request,
+            UsuarioAutenticadoDTO usuario,
+            PerfilGoogleDTO perfil
+    ) {
+        iniciarSesion(request, usuario);
+        if (perfil != null
+                && perfil.correo() != null
+                && !perfil.correo().isBlank()) {
+            request.getSession(false).setAttribute(
+                    ATRIBUTO_GOOGLE_LOGIN_HINT,
+                    perfil.correo().strip()
+            );
+        }
     }
 
     private static void redirigirConError(

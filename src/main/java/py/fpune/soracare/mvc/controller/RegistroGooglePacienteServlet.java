@@ -75,7 +75,7 @@ public class RegistroGooglePacienteServlet extends HttpServlet {
                             perfil,
                             datos
                     );
-            AutenticacionGoogleServlet.iniciarSesion(request, usuario);
+            AutenticacionGoogleServlet.iniciarSesion(request, usuario, perfil);
             response.sendRedirect(
                     request.getContextPath() + "/paciente/inicio"
             );

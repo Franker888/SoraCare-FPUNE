@@ -5,6 +5,10 @@
     const API_EVENTOS = "https://www.googleapis.com/calendar/v3/calendars/primary/events";
     const ZONA_HORARIA = "America/Asuncion";
     const CLAVE_CONSENTIMIENTO = "soracare.googleCalendarConsent";
+    const MARGEN_EXPIRACION_MS = 60 * 1000;
+    let tokenActivo = null;
+    let tokenExpiraEn = 0;
+    let solicitudTokenEnCurso = null;
 
     function bibliotecaDisponible() {
         return Boolean(window.google
@@ -37,20 +41,32 @@
         });
     }
 
-    function solicitarAcceso(clientId) {
-        return new Promise(function (resolve, reject) {
+    function solicitarAcceso(clientId, loginHint) {
+        if (tokenActivo && Date.now() < tokenExpiraEn) {
+            return Promise.resolve(tokenActivo);
+        }
+        if (solicitudTokenEnCurso) {
+            return solicitudTokenEnCurso;
+        }
+
+        solicitudTokenEnCurso = new Promise(function (resolve, reject) {
             if (!bibliotecaDisponible()) {
                 reject(new Error("Google todavía no terminó de cargar. Esperá unos segundos e intentá nuevamente."));
                 return;
             }
 
-            const cliente = window.google.accounts.oauth2.initTokenClient({
+            const configuracion = {
                 client_id: clientId,
                 scope: ALCANCE_CALENDAR,
                 callback: function (respuesta) {
                     if (respuesta && respuesta.access_token) {
-                        window.sessionStorage.setItem(CLAVE_CONSENTIMIENTO, "1");
-                        resolve(respuesta.access_token);
+                        const duracionSegundos = Number(respuesta.expires_in) || 3600;
+                        tokenActivo = respuesta.access_token;
+                        tokenExpiraEn = Date.now()
+                            + duracionSegundos * 1000
+                            - MARGEN_EXPIRACION_MS;
+                        window.localStorage.setItem(CLAVE_CONSENTIMIENTO, "1");
+                        resolve(tokenActivo);
                         return;
                     }
                     reject(new Error("Google no autorizó el acceso al calendario."));
@@ -58,10 +74,17 @@
                 error_callback: function () {
                     reject(new Error("La autorización de Google se cerró o fue cancelada."));
                 }
-            });
+            };
+            if (loginHint) {
+                configuracion.login_hint = loginHint;
+            }
+            const cliente = window.google.accounts.oauth2.initTokenClient(configuracion);
 
-            const yaAutorizado = window.sessionStorage.getItem(CLAVE_CONSENTIMIENTO) === "1";
+            const yaAutorizado = window.localStorage.getItem(CLAVE_CONSENTIMIENTO) === "1";
             cliente.requestAccessToken({prompt: yaAutorizado ? "" : "consent"});
+        });
+        return solicitudTokenEnCurso.finally(function () {
+            solicitudTokenEnCurso = null;
         });
     }
 
@@ -101,7 +124,9 @@
             return "Google Calendar todavía no está habilitado para el proyecto o no concediste el permiso.";
         }
         if (respuesta.status === 401) {
-            window.sessionStorage.removeItem(CLAVE_CONSENTIMIENTO);
+            tokenActivo = null;
+            tokenExpiraEn = 0;
+            window.localStorage.removeItem(CLAVE_CONSENTIMIENTO);
             return "La autorización de Google venció. Volvé a intentarlo para renovarla.";
         }
         if (cuerpo && cuerpo.error) {
@@ -218,9 +243,19 @@
 
     async function ejecutar(contenedor, accion) {
         bloquearBotones(contenedor, true);
-        mostrarEstado(contenedor, "Conectando con tu cuenta de Google…", "info");
+        const reutilizando = tokenActivo && Date.now() < tokenExpiraEn;
+        mostrarEstado(
+            contenedor,
+            reutilizando
+                ? "Actualizando tu Google Calendar…"
+                : "Verificando el permiso de Google Calendar…",
+            "info"
+        );
         try {
-            const token = await solicitarAcceso(contenedor.dataset.clientId);
+            const token = await solicitarAcceso(
+                contenedor.dataset.clientId,
+                contenedor.dataset.loginHint
+            );
             if (accion === "guardar") {
                 await guardarEvento(contenedor, token);
                 const etiqueta = contenedor.querySelector("[data-calendar-save] span");
@@ -245,11 +280,14 @@
 
     document.querySelectorAll("[data-google-calendar]").forEach(function (contenedor) {
         const idGuardado = window.localStorage.getItem(claveGuardada(contenedor.dataset.citaId));
+        const consentimientoPrevio = window.localStorage.getItem(CLAVE_CONSENTIMIENTO) === "1";
         if (idGuardado && idGuardado !== "1") {
             contenedor.querySelector("[data-calendar-save] span").textContent = "Actualizar Calendar";
             mostrarEstado(contenedor, "Esta cita ya fue guardada desde este navegador.", "info");
         } else if (idGuardado === "1") {
             window.localStorage.removeItem(claveGuardada(contenedor.dataset.citaId));
+        } else if (!consentimientoPrevio) {
+            contenedor.querySelector("[data-calendar-save] span").textContent = "Conectar y guardar";
         }
 
         contenedor.querySelector("[data-calendar-save]").addEventListener("click", function () {

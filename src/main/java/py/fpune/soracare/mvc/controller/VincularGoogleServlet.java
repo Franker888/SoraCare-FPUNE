@@ -60,7 +60,7 @@ public class VincularGoogleServlet extends HttpServlet {
                             idUsuario,
                             request.getParameter("contrasena")
                     );
-            AutenticacionGoogleServlet.iniciarSesion(request, usuario);
+            AutenticacionGoogleServlet.iniciarSesion(request, usuario, perfil);
             response.sendRedirect(
                     request.getContextPath() + "/paciente/inicio"
             );

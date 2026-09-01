@@ -29,7 +29,10 @@
         .cabecera { background: linear-gradient(135deg, #0b5f49, #15956e); color: white; }
         .card { border: 0; border-radius: 1rem; }
     </style>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260815">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/app/css/soracare-app.css?v=20260901">
+<% if (googleHabilitado) { %>
+<script src="https://accounts.google.com/gsi/client?hl=es" async></script>
+<% } %>
 </head>
 <body class="app-shell app-registration">
 <nav class="navbar bg-white border-bottom"><div class="container py-2">
@@ -48,7 +51,8 @@
         <% } %>
 
         <% if (googleHabilitado) { %>
-        <section class="google-registration-entry shadow-sm" aria-label="Registro con Google">
+        <section class="google-registration-entry shadow-sm" aria-label="Registro con Google"
+                 data-google-signin-provider>
             <div>
                 <span class="google-registration-kicker">Acceso simplificado</span>
                 <h2>Crear la cuenta con Google</h2>
@@ -72,6 +76,13 @@
                      data-size="large"
                      data-logo_alignment="left">
                 </div>
+                <p class="auth-google-status" data-google-signin-status role="status">
+                    Cargando acceso con Google…
+                </p>
+                <button class="btn btn-outline-primary btn-sm" type="button"
+                        data-google-signin-retry hidden>
+                    Reintentar carga
+                </button>
             </div>
         </section>
 
@@ -127,7 +138,7 @@
     </div></div>
 </main>
 <% if (googleHabilitado) { %>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="${pageContext.request.contextPath}/assets/app/js/google-signin-estado.js?v=20260901"></script>
 <% } %>
 <% if (turnstileHabilitado) { %>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
