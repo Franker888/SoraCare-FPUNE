@@ -2,11 +2,13 @@
 <%@ page import="py.fpune.soracare.dto.PagoResumenDTO" %>
 <%@ page import="py.fpune.soracare.dto.ResumenFacturacionMedicoDTO" %>
 <%@ page import="py.fpune.soracare.dto.EstadoPreparacionSifenDTO" %>
+<%@ page import="py.fpune.soracare.dto.SolicitudSifenResumenDTO" %>
 <%@ page import="py.fpune.soracare.service.DisponibilidadService" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Locale" %>
+<%@ page import="java.util.Map" %>
 <%!
     private String h(String valor) {
         if (valor == null) return "";
@@ -29,6 +31,10 @@
                             List.of()
                     );
     String csrfToken = (String) request.getAttribute("csrfToken");
+    Map<Long, SolicitudSifenResumenDTO> solicitudesSifen =
+            request.getAttribute("solicitudesSifen") instanceof Map<?, ?> mapaSifen
+                    ? (Map<Long, SolicitudSifenResumenDTO>) mapaSifen
+                    : Map.of();
     DateTimeFormatter fechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     NumberFormat guaranies = NumberFormat.getIntegerInstance(
             Locale.forLanguageTag("es-PY")
@@ -54,6 +60,8 @@
         .billing-filter .form-control, .billing-filter .form-select { min-height:2.8rem; }
         .billing-amount { white-space:nowrap; }
         .billing-no-results { display:none; }
+        .sifen-form { min-width:18rem; text-align:left; }
+        .sifen-cdc { max-width:21rem; overflow-wrap:anywhere; }
     </style>
 </head>
 <body class="app-shell">
@@ -96,9 +104,13 @@
                     <p class="text-secondary mb-2">
                         La integración fiscal está deshabilitada. Las facturas internas continúan funcionando con normalidad.
                     </p>
+                    <% } else if (estadoSifen.configuracionCompleta() && estadoSifen.esProduccion()) { %>
+                    <p class="text-warning mb-2">
+                        La configuración de producción está completa, pero SoraCare mantiene bloqueadas la generación y transmisión fiscal desde este panel.
+                    </p>
                     <% } else if (estadoSifen.configuracionCompleta()) { %>
                     <p class="text-success mb-2">
-                        La configuración local del ambiente está completa. Esto todavía no autoriza envíos reales hasta terminar firma, XML y homologación.
+                        La configuración local está completa: SoraCare puede generar, firmar y validar el DE antes de transmitirlo.
                     </p>
                     <% } else { %>
                     <p class="text-secondary mb-2">
@@ -115,7 +127,7 @@
                     </ul>
                     <% } %>
                     <p class="small text-secondary mb-0">
-                        La habilitación como facturador electrónico, el timbrado, el certificado cualificado y el CSC se gestionan ante la DNIT.
+                        Validar localmente no convierte el DE en DTE. La validez tributaria comienza únicamente cuando SIFEN lo aprueba.
                     </p>
                 </div>
                 <div class="d-flex flex-column align-items-lg-end gap-2">
@@ -123,6 +135,8 @@
                     <span class="badge text-bg-danger">Configuración inválida</span>
                     <% } else if (!estadoSifen.habilitada()) { %>
                     <span class="badge text-bg-secondary">Deshabilitado</span>
+                    <% } else if (estadoSifen.configuracionCompleta() && estadoSifen.esProduccion()) { %>
+                    <span class="badge text-bg-warning">PRODUCCION protegida</span>
                     <% } else if (estadoSifen.configuracionCompleta()) { %>
                     <span class="badge text-bg-success"><%= h(estadoSifen.ambiente().name()) %> configurado</span>
                     <% } else { %>
@@ -225,6 +239,11 @@
                     </thead>
                     <tbody>
                     <% for (PagoResumenDTO pago : pagos) { %>
+                    <%
+                        SolicitudSifenResumenDTO solicitudSifen = pago.idFacturaInterna() == null
+                                ? null
+                                : solicitudesSifen.get(pago.idFacturaInterna());
+                    %>
                     <tr class="billing-row"
                         data-estado="<%= pago.idFacturaInterna() == null ? "PENDIENTE" : "EMITIDA" %>"
                         data-busqueda="<%= h((pago.nombrePaciente() + " "
@@ -252,6 +271,34 @@
                             <div class="small text-secondary mt-1"><i class="bi bi-hourglass-split"></i> Preparando correo</div>
                             <% } %>
                             <% } %>
+                            <% if (solicitudSifen != null) { %>
+                            <div class="mt-2">
+                                <% if (solicitudSifen.aprobada()) { %>
+                                <span class="badge text-bg-success">SIFEN aprobado</span>
+                                <% } else if (solicitudSifen.rechazada()) { %>
+                                <span class="badge text-bg-danger">SIFEN rechazado</span>
+                                <% } else if (solicitudSifen.validadaLocalmente()) { %>
+                                <span class="badge text-bg-primary">DE validado localmente</span>
+                                <% } else { %>
+                                <span class="badge text-bg-secondary"><%= h(solicitudSifen.estado()) %></span>
+                                <% } %>
+                                <div class="small text-secondary billing-number mt-1">
+                                    N.º fiscal <%= h(solicitudSifen.numeroDocumento()) %>
+                                </div>
+                                <div class="small text-secondary billing-number sifen-cdc mt-1"
+                                     title="CDC completo">
+                                    CDC <%= h(solicitudSifen.cdc()) %>
+                                </div>
+                                <% if (solicitudSifen.codigoRespuesta() != null) { %>
+                                <div class="small mt-1 <%= solicitudSifen.aprobada() ? "text-success" : "text-danger" %>">
+                                    Código <%= h(solicitudSifen.codigoRespuesta()) %>
+                                    <% if (solicitudSifen.mensajeRespuesta() != null) { %>
+                                    · <%= h(solicitudSifen.mensajeRespuesta()) %>
+                                    <% } %>
+                                </div>
+                                <% } %>
+                            </div>
+                            <% } %>
                         </td>
                         <td class="pe-4 text-end">
                             <% if (pago.idFacturaInterna() == null) { %>
@@ -263,10 +310,71 @@
                                 </button>
                             </form>
                             <% } else { %>
-                            <a class="btn btn-outline-primary btn-sm" target="_blank"
-                               href="${pageContext.request.contextPath}/facturas/interna?id=<%= pago.idFacturaInterna() %>">
-                                <i class="bi bi-file-earmark-pdf me-1"></i>Ver PDF
-                            </a>
+                            <div class="d-inline-flex flex-column align-items-end gap-2">
+                                <a class="btn btn-outline-primary btn-sm" target="_blank"
+                                   href="${pageContext.request.contextPath}/facturas/interna?id=<%= pago.idFacturaInterna() %>">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i>Ver PDF
+                                </a>
+                                <% if (solicitudSifen == null
+                                        && estadoSifen.configuracionCompleta()
+                                        && estadoSifen.ambiente() == EstadoPreparacionSifenDTO.Ambiente.PRUEBA) { %>
+                                <details class="sifen-form border rounded-3 p-2 bg-light">
+                                    <summary class="small fw-semibold text-primary">Preparar DE para SIFEN</summary>
+                                    <form method="post" action="${pageContext.request.contextPath}/medico/facturas"
+                                          class="mt-3">
+                                        <input type="hidden" name="csrfToken" value="<%= h(csrfToken) %>">
+                                        <input type="hidden" name="accion" value="prepararSifen">
+                                        <input type="hidden" name="idFactura" value="<%= pago.idFacturaInterna() %>">
+                                        <label class="form-label small fw-semibold" for="iva-<%= pago.idPago() %>">IVA</label>
+                                        <select class="form-select form-select-sm mb-2" id="iva-<%= pago.idPago() %>"
+                                                name="tratamientoIva" required>
+                                            <option value="" selected disabled>Seleccionar</option>
+                                            <option value="GRAVADO_10">Gravado 10 %</option>
+                                            <option value="GRAVADO_5">Gravado 5 %</option>
+                                            <option value="EXENTO">Exento</option>
+                                        </select>
+                                        <label class="form-label small fw-semibold" for="pago-<%= pago.idPago() %>">Forma de pago fiscal</label>
+                                        <select class="form-select form-select-sm mb-2" id="pago-<%= pago.idPago() %>"
+                                                name="tipoPagoSifen" required>
+                                            <option value="" selected disabled>Seleccionar</option>
+                                            <option value="1">Efectivo</option>
+                                            <option value="5">Transferencia</option>
+                                        </select>
+                                        <label class="form-label small fw-semibold" for="receptor-<%= pago.idPago() %>">Tipo de contribuyente</label>
+                                        <select class="form-select form-select-sm mb-3"
+                                                id="receptor-<%= pago.idPago() %>"
+                                                name="tipoContribuyenteReceptor">
+                                            <option value="1">Persona física</option>
+                                            <option value="2">Persona jurídica</option>
+                                        </select>
+                                        <p class="small text-secondary mt-n2 mb-2">
+                                            Solo se aplica cuando el paciente informó RUC.
+                                        </p>
+                                        <p class="small text-secondary mb-2">
+                                            Genera, firma y valida localmente. No envía a la DNIT.
+                                        </p>
+                                        <button class="btn btn-primary btn-sm w-100" type="submit">
+                                            <i class="bi bi-shield-check me-1"></i>Generar y validar DE
+                                        </button>
+                                    </form>
+                                </details>
+                                <% } %>
+                                <% if (solicitudSifen != null
+                                        && "PRUEBA".equals(solicitudSifen.ambiente())
+                                        && ("VALIDADO".equals(solicitudSifen.estado())
+                                            || "ERROR".equals(solicitudSifen.estado()))) { %>
+                                <form method="post" action="${pageContext.request.contextPath}/medico/facturas"
+                                      onsubmit="return confirm('¿Enviar este DE al ambiente de PRUEBA de SIFEN?');">
+                                    <input type="hidden" name="csrfToken" value="<%= h(csrfToken) %>">
+                                    <input type="hidden" name="accion" value="enviarSifenPrueba">
+                                    <input type="hidden" name="idSolicitud" value="<%= solicitudSifen.idSolicitud() %>">
+                                    <button class="btn btn-outline-success btn-sm" type="submit">
+                                        <i class="bi bi-cloud-arrow-up me-1"></i>
+                                        <%= "ERROR".equals(solicitudSifen.estado()) ? "Reintentar en SIFEN Prueba" : "Enviar a SIFEN Prueba" %>
+                                    </button>
+                                </form>
+                                <% } %>
+                            </div>
                             <% } %>
                         </td>
                     </tr>

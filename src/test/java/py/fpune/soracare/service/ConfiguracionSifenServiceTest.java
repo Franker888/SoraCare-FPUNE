@@ -27,7 +27,7 @@ class ConfiguracionSifenServiceTest {
         variables.put(ConfiguracionSifenService.VARIABLE_AMBIENTE, "PRUEBA");
         variables.put(ConfiguracionSifenService.VARIABLE_CERTIFICADO_PATH, "certificado.p12");
         variables.put(ConfiguracionSifenService.VARIABLE_CERTIFICADO_PASSWORD, "secreto-certificado");
-        variables.put(ConfiguracionSifenService.VARIABLE_CSC, "secreto-csc");
+        variables.put(ConfiguracionSifenService.VARIABLE_CSC, "12345678901234567890123456789012");
 
         EstadoPreparacionSifenDTO estado = servicio(variables, false).consultarEstado();
 
@@ -38,7 +38,7 @@ class ConfiguracionSifenServiceTest {
                 "certificado cualificado accesible para la aplicación"
         ));
         assertFalse(estado.toString().contains("secreto-certificado"));
-        assertFalse(estado.toString().contains("secreto-csc"));
+        assertFalse(estado.toString().contains("12345678901234567890123456789012"));
     }
 
     @Test
@@ -77,15 +77,28 @@ class ConfiguracionSifenServiceTest {
     private static Map<String, String> configuracionCompleta() {
         Map<String, String> variables = new HashMap<>();
         variables.put(ConfiguracionSifenService.VARIABLE_AMBIENTE, "PRUEBA");
-        variables.put(ConfiguracionSifenService.VARIABLE_RUC, "valor-prueba");
-        variables.put(ConfiguracionSifenService.VARIABLE_DV, "valor-prueba");
-        variables.put(ConfiguracionSifenService.VARIABLE_TIMBRADO, "valor-prueba");
-        variables.put(ConfiguracionSifenService.VARIABLE_ESTABLECIMIENTO, "valor-prueba");
-        variables.put(ConfiguracionSifenService.VARIABLE_PUNTO_EXPEDICION, "valor-prueba");
+        variables.put(ConfiguracionSifenService.VARIABLE_RUC, "80069563");
+        variables.put(ConfiguracionSifenService.VARIABLE_DV, "1");
+        variables.put(ConfiguracionSifenService.VARIABLE_TIMBRADO, "12345678");
+        variables.put(ConfiguracionSifenService.VARIABLE_ESTABLECIMIENTO, "1");
+        variables.put(ConfiguracionSifenService.VARIABLE_PUNTO_EXPEDICION, "1");
         variables.put(ConfiguracionSifenService.VARIABLE_CERTIFICADO_PATH, "certificado.p12");
         variables.put(ConfiguracionSifenService.VARIABLE_CERTIFICADO_PASSWORD, "secreto");
-        variables.put(ConfiguracionSifenService.VARIABLE_CSC_ID, "valor-prueba");
-        variables.put(ConfiguracionSifenService.VARIABLE_CSC, "secreto");
+        variables.put(ConfiguracionSifenService.VARIABLE_CSC_ID, "0001");
+        variables.put(ConfiguracionSifenService.VARIABLE_CSC, "12345678901234567890123456789012");
+        variables.put(ConfiguracionSifenService.VARIABLE_FECHA_INICIO_TIMBRADO, "2026-01-01");
+        variables.put(ConfiguracionSifenService.VARIABLE_TIPO_CONTRIBUYENTE, "1");
+        variables.put(ConfiguracionSifenService.VARIABLE_RAZON_SOCIAL, "SoraCare Pruebas");
+        variables.put(ConfiguracionSifenService.VARIABLE_DIRECCION, "Calle de prueba");
+        variables.put(ConfiguracionSifenService.VARIABLE_NUMERO_CASA, "123");
+        variables.put(ConfiguracionSifenService.VARIABLE_DEPARTAMENTO, "1");
+        variables.put(ConfiguracionSifenService.VARIABLE_DEPARTAMENTO_DESCRIPCION, "CAPITAL");
+        variables.put(ConfiguracionSifenService.VARIABLE_CIUDAD, "1");
+        variables.put(ConfiguracionSifenService.VARIABLE_CIUDAD_DESCRIPCION, "ASUNCION");
+        variables.put(ConfiguracionSifenService.VARIABLE_TELEFONO, "021000000");
+        variables.put(ConfiguracionSifenService.VARIABLE_EMAIL, "prueba@example.com");
+        variables.put(ConfiguracionSifenService.VARIABLE_ACTIVIDAD_CODIGO, "86200");
+        variables.put(ConfiguracionSifenService.VARIABLE_ACTIVIDAD_DESCRIPCION, "Servicios medicos");
         return variables;
     }
 }

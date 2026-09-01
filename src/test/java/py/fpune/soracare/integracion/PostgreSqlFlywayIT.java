@@ -9,6 +9,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 import py.fpune.soracare.dao.EspecialidadDAO;
+import py.fpune.soracare.dao.SolicitudSifenDAO;
 import py.fpune.soracare.mvc.model.Especialidad;
 
 import java.sql.Connection;
@@ -25,8 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 class PostgreSqlFlywayIT {
 
-    private static final int CANTIDAD_MIGRACIONES_ESPERADA = 34;
-    private static final String ULTIMA_VERSION_ESPERADA = "034";
+    private static final int CANTIDAD_MIGRACIONES_ESPERADA = 35;
+    private static final String ULTIMA_VERSION_ESPERADA = "035";
     private static final String BASE_TEMPORAL = "soracare_pruebas";
     private static final String USUARIO_TEMPORAL = "soracare_app";
 
@@ -83,6 +84,8 @@ class PostgreSqlFlywayIT {
                             to_regclass('soracare.facturas_internas') AS facturas_internas,
                             to_regclass('soracare.facturas_internas_detalles') AS detalles_factura,
                             to_regclass('soracare.solicitudes_sifen') AS solicitudes_sifen,
+                            to_regclass('soracare.numeraciones_sifen') AS numeraciones_sifen,
+                            to_regclass('soracare.sifen_identificador_envio_seq') AS secuencia_envio_sifen,
                             (
                                 SELECT COUNT(*)
                                 FROM soracare.flyway_schema_history
@@ -98,6 +101,8 @@ class PostgreSqlFlywayIT {
             assertNotNull(resultado.getString("facturas_internas"));
             assertNotNull(resultado.getString("detalles_factura"));
             assertNotNull(resultado.getString("solicitudes_sifen"));
+            assertNotNull(resultado.getString("numeraciones_sifen"));
+            assertNotNull(resultado.getString("secuencia_envio_sifen"));
             assertEquals(
                     CANTIDAD_MIGRACIONES_ESPERADA,
                     resultado.getInt("migraciones")
@@ -137,6 +142,29 @@ class PostgreSqlFlywayIT {
                     especialidadDAO.buscarPorNombre(conexion, nombreTemporal)
                             .isPresent()
             );
+        }
+    }
+
+    @Test
+    void reservaNumeracionSifenSecuencialDentroDeLaTransaccion() throws Exception {
+        SolicitudSifenDAO solicitudDAO = new SolicitudSifenDAO();
+        try (Connection conexion = abrirConexion()) {
+            conexion.setAutoCommit(false);
+
+            assertEquals(
+                    "0000001",
+                    solicitudDAO.reservarNumero(
+                            conexion, "PRUEBA", "1", "1", ""
+                    )
+            );
+            assertEquals(
+                    "0000002",
+                    solicitudDAO.reservarNumero(
+                            conexion, "PRUEBA", "1", "1", ""
+                    )
+            );
+
+            conexion.rollback();
         }
     }
 

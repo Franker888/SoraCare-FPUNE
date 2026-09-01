@@ -285,7 +285,7 @@ El esquema se llama `soracare` y evoluciona mediante migraciones SQL numeradas d
 - Reprogramaciones, presentación de médicos y estudios solicitados.
 - Analítica de disponibilidad, perfiles visuales, estados de correo e identidades Google.
 
-Las migraciones `V027` a `V032` completan este avance de integraciones y `V032` crea las suscripciones web de Firebase. `V033` agrega facturación comercial interna, separada explícitamente de e-Kuatia/SIFEN y sin validez tributaria. No se deben editar migraciones ya aplicadas; los cambios futuros se agregan con el siguiente número disponible.
+Las migraciones `V027` a `V032` completan este avance de integraciones y `V032` crea las suscripciones web de Firebase. `V033` agrega facturación comercial interna, separada explícitamente de e-Kuatia/SIFEN y sin validez tributaria. `V034` incorpora la trazabilidad inicial SIFEN y `V035` agrega numeración fiscal transaccional, XML firmado/validado y auditoría del envío sincrónico de pruebas. No se deben editar migraciones ya aplicadas; los cambios futuros se agregan con el siguiente número disponible.
 
 ## 11. Cómo iniciar el proyecto en la notebook actual
 
