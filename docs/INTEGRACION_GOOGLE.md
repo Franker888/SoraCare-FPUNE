@@ -2,6 +2,11 @@
 
 ## Estado implementado
 
+> Estado del producto: Google Identity permanece activo. La opción de Google
+> Calendar fue retirada de la interfaz del paciente y quedó aplazada para una
+> versión futura. La implementación técnica se conserva como referencia para
+> una eventual reactivación.
+
 SoraCare separa correctamente dos permisos diferentes:
 
 - Google Identity confirma quién es el paciente y entrega un ID token.

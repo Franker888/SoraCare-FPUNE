@@ -71,7 +71,7 @@ pagos actuales son simulados y sus comprobantes PDF no tienen validez fiscal.
 
 ### Etapa 6 - Integraciones y endurecimiento
 
-- acceso de pacientes con Google Identity y vínculo con Google Calendar;
+- acceso de pacientes con Google Identity; la sincronización con Google Calendar quedó aplazada;
 - Cloudflare Turnstile para formularios públicos;
 - Have I Been Pwned para rechazar contraseñas conocidas en filtraciones;
 - Sentry preparado para monitoreo técnico sin datos personales ni clínicos;
@@ -118,7 +118,8 @@ clínica y emitir indicaciones médicas en PDF.
 
 Puede registrarse o ingresar con Google, buscar disponibilidad real, administrar
 sus citas, elegir un medio de pago simulado, consultar comprobantes,
-indicaciones, documentos y notificaciones, y vincular citas con Google Calendar.
+indicaciones, documentos y notificaciones. La sincronización con Google Calendar
+se retiró del flujo activo y quedó anotada como mejora futura.
 
 ## 4. Arquitectura y persistencia
 
@@ -156,7 +157,7 @@ permitidos se bloquean por defecto.
 | --- | --- |
 | Resend | Correo real y PDF adjunto probados; falta dominio institucional para producción. |
 | Google Identity | Acceso de paciente existente probado; conviene repetir aceptación del alta nueva. |
-| Google Calendar | Alta, actualización y retiro de cita probados. |
+| Google Calendar | Implementación técnica conservada, retirada de la interfaz y aplazada para una versión futura. |
 | OpenAI | Conector servidor operativo y modo local de respaldo disponible. |
 | Turnstile | Integrado y probado en inicio de sesión y registro. |
 | Have I Been Pwned | Integrado sin enviar la contraseña ni su hash completo. |

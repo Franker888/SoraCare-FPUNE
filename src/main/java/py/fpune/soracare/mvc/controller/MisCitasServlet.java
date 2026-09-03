@@ -19,7 +19,6 @@ import py.fpune.soracare.mvc.model.Medico;
 import py.fpune.soracare.mvc.model.MedicoEspecialidad;
 import py.fpune.soracare.mvc.model.Paciente;
 import py.fpune.soracare.service.CitaService;
-import py.fpune.soracare.service.ConfiguracionGoogleService;
 import py.fpune.soracare.service.ConsultorioService;
 import py.fpune.soracare.service.DisponibilidadService;
 import py.fpune.soracare.service.EspecialidadService;
@@ -29,8 +28,6 @@ import py.fpune.soracare.service.MedicoService;
 import py.fpune.soracare.service.PacienteService;
 import py.fpune.soracare.service.PagoService;
 import py.fpune.soracare.service.ReservaPagoService;
-import py.fpune.soracare.service.GoogleCalendarService;
-import py.fpune.soracare.security.ProteccionCsrf;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -39,7 +36,6 @@ import java.time.format.DateTimeParseException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @WebServlet("/mis-citas")
 public class MisCitasServlet extends HttpServlet {
@@ -54,8 +50,6 @@ public class MisCitasServlet extends HttpServlet {
     private PagoService pagoService;
     private ReservaPagoService reservaPagoService;
     private InformeAdministrativoService informeAdministrativoService;
-    private ConfiguracionGoogleService configuracionGoogleService;
-    private GoogleCalendarService googleCalendarService;
 
     @Override
     public void init() {
@@ -69,8 +63,6 @@ public class MisCitasServlet extends HttpServlet {
         pagoService = new PagoService();
         reservaPagoService = new ReservaPagoService();
         informeAdministrativoService = new InformeAdministrativoService();
-        configuracionGoogleService = new ConfiguracionGoogleService();
-        googleCalendarService = new GoogleCalendarService();
     }
 
     @Override
@@ -87,7 +79,6 @@ public class MisCitasServlet extends HttpServlet {
             request.setAttribute("mensajeExito",
                     "Tu cita fue reprogramada correctamente. El pago y el comprobante se conservaron.");
         }
-        recuperarMensajesCalendar(request);
         mostrarVista(request, response, convertirFecha(request.getParameter("fecha")));
     }
 
@@ -139,22 +130,8 @@ public class MisCitasServlet extends HttpServlet {
 
     private void mostrarVista(HttpServletRequest request, HttpServletResponse response, LocalDate fecha)
             throws ServletException, IOException {
-        request.setAttribute(
-                "googleCalendarClientId",
-                configuracionGoogleService.obtenerClientId()
-        );
-        HttpSession sesion = request.getSession(false);
-        Object googleLoginHint = sesion == null
-                ? null
-                : sesion.getAttribute(
-                        AutenticacionGoogleServlet.ATRIBUTO_GOOGLE_LOGIN_HINT
-                );
-        if (googleLoginHint instanceof String correo && !correo.isBlank()) {
-            request.setAttribute("googleCalendarLoginHint", correo);
-        }
         try {
             UsuarioAutenticadoDTO usuario = usuarioAutenticado(request);
-            prepararGoogleCalendar(request, usuario);
             Paciente paciente = pacienteService.buscarPorIdPersona(usuario.getIdPersona())
                     .orElseThrow(() -> new IllegalArgumentException(
                             "Tu cuenta no posee una ficha de paciente asociada."));
@@ -250,83 +227,6 @@ public class MisCitasServlet extends HttpServlet {
             request.setAttribute("consultoriosPorId", Map.of());
         }
         request.getRequestDispatcher("/WEB-INF/views/paciente/mis-citas.jsp").forward(request, response);
-    }
-
-    private void prepararGoogleCalendar(
-            HttpServletRequest request,
-            UsuarioAutenticadoDTO usuario
-    ) {
-        boolean servidorHabilitado = googleCalendarService.estaDisponible();
-        request.setAttribute(
-                "googleCalendarServidorHabilitado",
-                servidorHabilitado
-        );
-        request.setAttribute("googleCalendarVinculado", false);
-        request.setAttribute("googleCalendarCitasVinculadas", Set.of());
-        if (!servidorHabilitado) {
-            return;
-        }
-
-        request.setAttribute(
-                "googleCalendarCsrf",
-                ProteccionCsrf.obtenerOCrear(
-                        request.getSession(false)
-                )
-        );
-        try {
-            request.setAttribute(
-                    "googleCalendarVinculado",
-                    googleCalendarService.estaVinculado(
-                            usuario.getIdUsuario()
-                    )
-            );
-            request.setAttribute(
-                    "googleCalendarCitasVinculadas",
-                    googleCalendarService.listarCitasVinculadas(
-                            usuario.getIdUsuario()
-                    )
-            );
-        } catch (SQLException error) {
-            log("No fue posible cargar el estado de Google Calendar.", error);
-            request.setAttribute(
-                    "avisoGoogleCalendar",
-                    "Google Calendar está configurado, pero no se pudo leer su vinculación."
-            );
-        }
-    }
-
-    private static void recuperarMensajesCalendar(
-            HttpServletRequest request
-    ) {
-        HttpSession sesion = request.getSession(false);
-        if (sesion == null) {
-            return;
-        }
-        copiarYEliminar(
-                sesion,
-                request,
-                GoogleCalendarOAuthServlet.ATRIBUTO_MENSAJE_CALENDAR,
-                "mensajeExito"
-        );
-        copiarYEliminar(
-                sesion,
-                request,
-                GoogleCalendarOAuthServlet.ATRIBUTO_ERROR_CALENDAR,
-                "error"
-        );
-    }
-
-    private static void copiarYEliminar(
-            HttpSession sesion,
-            HttpServletRequest request,
-            String atributoSesion,
-            String atributoRequest
-    ) {
-        Object valor = sesion.getAttribute(atributoSesion);
-        if (valor instanceof String mensaje && !mensaje.isBlank()) {
-            request.setAttribute(atributoRequest, mensaje);
-        }
-        sesion.removeAttribute(atributoSesion);
     }
 
     private static boolean atiendeEspecialidad(

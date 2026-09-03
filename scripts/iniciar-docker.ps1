@@ -117,29 +117,7 @@ function Cargar-IntegracionesUsuario {
 }
 
 function Mostrar-EstadoGoogleCalendar {
-    $requeridas = @(
-        'SORACARE_GOOGLE_CLIENT_ID',
-        'SORACARE_GOOGLE_CLIENT_SECRET',
-        'SORACARE_GOOGLE_CALENDAR_REDIRECT_URI',
-        'SORACARE_GOOGLE_TOKEN_ENCRYPTION_KEY'
-    )
-    $faltantes = @(
-        $requeridas | Where-Object {
-            [string]::IsNullOrWhiteSpace(
-                [Environment]::GetEnvironmentVariable($_, 'Process')
-            )
-        }
-    )
-    if ($faltantes.Count -eq 0) {
-        Write-Host 'Google Calendar: vinculación persistente habilitada.' -ForegroundColor Green
-        return
-    }
-    if ($faltantes.Count -lt $requeridas.Count) {
-        Write-Warning (
-            'Google Calendar seguirá en modo temporal. Faltan configurar: ' +
-            ($faltantes -join ', ')
-        )
-    }
+    Write-Host 'Google Calendar: interfaz deshabilitada; integración conservada para uso futuro.' -ForegroundColor DarkGray
 }
 
 function Obtener-Puerto {

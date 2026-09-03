@@ -118,7 +118,7 @@ La seguridad REST reutiliza la sesión local `HttpSession`; no crea otro login, 
 - Consulta de indicaciones médicas y descarga en PDF.
 - Carga y consulta de documentos clínicos PDF, JPG, JPEG o PNG.
 - Centro de notificaciones con contador de avisos no leídos.
-- Incorporación o retiro de una cita en Google Calendar.
+- La sincronización opcional con Google Calendar fue retirada de la interfaz y quedó aplazada para una versión futura.
 - Eliminación de la cuenta con confirmación explícita.
 
 ## 4. Agenda y disponibilidad
@@ -183,9 +183,10 @@ La prueba real de correo y la recepción de un comprobante PDF fueron verificada
 
 El acceso con una cuenta existente fue probado. El alta nueva posee su formulario, aunque conviene incluirla nuevamente en una prueba de aceptación antes de producción.
 
-### Google Calendar: operativo y probado
+### Google Calendar: implementación conservada y aplazada
 
-- El paciente puede agregar, actualizar o retirar su cita de su calendario personal.
+- La opción fue retirada de la interfaz del paciente por decisión de alcance; Google Identity continúa disponible para iniciar sesión.
+- El código de integración se conserva para una posible reactivación futura, pero no forma parte del flujo activo.
 - Solicita permiso limitado a eventos de Calendar.
 - No copia información clínica sensible al evento.
 - Requiere habilitar Google Calendar API y configurar los orígenes autorizados del dominio usado.
@@ -351,7 +352,7 @@ La instalación Docker usa `http://localhost:8081/SoraCare-FPUNE/`, una base de 
 - Carga y apertura de documentos clínicos.
 - Notificaciones y permisos 403.
 - Informes, auditoría, configuración, usuarios y roles administrativos.
-- Google Calendar: agregar y retirar cita.
+- Google Calendar: pruebas técnicas conservadas; función retirada del flujo activo.
 - Validación aislada de Turnstile: modo local, configuración incompleta, token aceptado, token inválido y acción incorrecta.
 - Ochenta y seis pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, bloqueos totales y parciales, liberación de citas canceladas, validación de horarios recurrentes, uso seguro del contexto JPA, configuración de la unidad de persistencia, mapeo JPA, Sora/OpenAI, configuración de PostgreSQL para Docker y autenticación, autorización, aislamiento por paciente y CSRF de la API REST con Spring MVC.
 - Rutas públicas y paneles en resoluciones móviles y de escritorio.
@@ -361,7 +362,7 @@ El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar 
 ## 13. Pendientes recomendados
 
 1. Hosting permanente con HTTPS y base de datos administrada.
-2. Configuración de producción para Google OAuth y Calendar, con dominio definitivo.
+2. Configuración de producción para Google Identity con dominio definitivo; reevaluar Google Calendar únicamente si vuelve al alcance.
 3. Dominio verificado para Resend y remitente institucional.
 4. Activación y prueba extremo a extremo de Twilio SMS.
 5. Integración con una pasarela de pago real sólo si el alcance académico cambia.

@@ -15,7 +15,6 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Locale" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="java.util.Set" %>
 <%!
     private String h(String valor) {
         if (valor == null) return "";
@@ -63,21 +62,6 @@
     Integer idEspecialidad = (Integer) request.getAttribute("idEspecialidadSeleccionada");
     boolean busquedaRealizada = Boolean.TRUE.equals(request.getAttribute("busquedaRealizada"));
     boolean agendandoNuevaCita = Boolean.TRUE.equals(request.getAttribute("agendandoNuevaCita"));
-    String googleCalendarClientId = (String) request.getAttribute("googleCalendarClientId");
-    String googleCalendarLoginHint = (String) request.getAttribute("googleCalendarLoginHint");
-    boolean googleCalendarHabilitado = googleCalendarClientId != null
-            && !googleCalendarClientId.isBlank();
-    boolean googleCalendarServidorHabilitado = Boolean.TRUE.equals(
-            request.getAttribute("googleCalendarServidorHabilitado"));
-    boolean googleCalendarVinculado = Boolean.TRUE.equals(
-            request.getAttribute("googleCalendarVinculado"));
-    Set<Long> googleCalendarCitasVinculadas =
-            request.getAttribute("googleCalendarCitasVinculadas") instanceof Set<?>
-                    ? (Set<Long>) request.getAttribute("googleCalendarCitasVinculadas")
-                    : Set.of();
-    String googleCalendarCsrf = (String) request.getAttribute("googleCalendarCsrf");
-    boolean googleCalendarClienteFallback = googleCalendarHabilitado
-            && !googleCalendarServidorHabilitado;
     DateTimeFormatter formatoFechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     DateTimeFormatter formatoFechaDisponible = DateTimeFormatter.ofPattern(
             "EEEE dd/MM/yyyy", new Locale("es", "PY"));
@@ -140,9 +124,6 @@
     <% } %>
     <% if (request.getAttribute("error") != null) { %>
     <div class="alert alert-danger"><%= h((String) request.getAttribute("error")) %></div>
-    <% } %>
-    <% if (request.getAttribute("avisoGoogleCalendar") != null) { %>
-    <div class="alert alert-warning"><%= h((String) request.getAttribute("avisoGoogleCalendar")) %></div>
     <% } %>
     <% if (request.getAttribute("mensajeDisponibilidad") != null) { %>
     <div class="alert alert-info"><%= h((String) request.getAttribute("mensajeDisponibilidad")) %></div>
@@ -450,20 +431,6 @@
                         .contains(cita.getCodigoEstado())
                         && cita.getFechaHoraInicio().isAfter(
                                 OffsetDateTime.now(DisponibilidadService.ZONA_HORARIA));
-                boolean sincronizableConCalendar = (googleCalendarServidorHabilitado
-                        || googleCalendarClienteFallback)
-                        && "CONFIRMADA".equals(cita.getCodigoEstado())
-                        && cita.getFechaHoraInicio().isAfter(
-                                OffsetDateTime.now(DisponibilidadService.ZONA_HORARIA));
-                String nombreEspecialidad = especialidad == null
-                        ? "Consulta médica"
-                        : especialidad.getNombre();
-                String nombreProfesional = medico == null
-                        ? "Profesional de SoraCare"
-                        : medico.getNombres() + " " + medico.getApellidos();
-                String nombreConsultorio = consultorio == null
-                        ? "SoraCare-FPUNE"
-                        : "SoraCare-FPUNE · " + consultorio.getNombre();
             %>
             <div class="col-12">
                 <article class="card tarjeta slot shadow-sm">
@@ -496,101 +463,6 @@
                                 <% } %>
                             </div>
                             <div class="col-lg-5">
-                                <% if (sincronizableConCalendar) { %>
-                                <% if (googleCalendarServidorHabilitado) {
-                                    boolean eventoCalendarGuardado =
-                                            googleCalendarCitasVinculadas.contains(cita.getIdCita());
-                                %>
-                                <div class="calendar-appointment-actions mb-3">
-                                    <div class="calendar-appointment-heading">
-                                        <span class="calendar-appointment-icon" aria-hidden="true">
-                                            <i class="bi bi-calendar2-check"></i>
-                                        </span>
-                                        <div>
-                                            <strong>Google Calendar</strong>
-                                            <small>
-                                                <%= googleCalendarVinculado
-                                                        ? "Cuenta vinculada de forma segura; no volveremos a pedir acceso para cada cita."
-                                                        : "Vinculá tu cuenta una sola vez para guardar citas sin reconectarte." %>
-                                            </small>
-                                        </div>
-                                    </div>
-                                    <% if (googleCalendarVinculado) { %>
-                                    <div class="calendar-appointment-buttons">
-                                        <form method="post"
-                                              action="${pageContext.request.contextPath}/google/calendar/evento"
-                                              class="m-0">
-                                            <input type="hidden" name="csrfToken" value="<%= h(googleCalendarCsrf) %>">
-                                            <input type="hidden" name="idCita" value="<%= cita.getIdCita() %>">
-                                            <input type="hidden" name="accion" value="guardar">
-                                            <button type="submit" class="btn btn-primary btn-sm">
-                                                <i class="bi bi-google" aria-hidden="true"></i>
-                                                <%= eventoCalendarGuardado ? "Actualizar Calendar" : "Guardar en Calendar" %>
-                                            </button>
-                                        </form>
-                                        <% if (eventoCalendarGuardado) { %>
-                                        <form method="post"
-                                              action="${pageContext.request.contextPath}/google/calendar/evento"
-                                              class="m-0">
-                                            <input type="hidden" name="csrfToken" value="<%= h(googleCalendarCsrf) %>">
-                                            <input type="hidden" name="idCita" value="<%= cita.getIdCita() %>">
-                                            <input type="hidden" name="accion" value="retirar">
-                                            <button type="submit" class="btn btn-outline-secondary btn-sm">
-                                                <i class="bi bi-calendar2-x" aria-hidden="true"></i>
-                                                Retirar
-                                            </button>
-                                        </form>
-                                        <% } %>
-                                    </div>
-                                    <% } else { %>
-                                    <form method="post"
-                                          action="${pageContext.request.contextPath}/google/calendar/conectar"
-                                          class="m-0">
-                                        <input type="hidden" name="csrfToken" value="<%= h(googleCalendarCsrf) %>">
-                                        <button type="submit" class="btn btn-primary btn-sm">
-                                            <i class="bi bi-google" aria-hidden="true"></i>
-                                            Vincular Google Calendar
-                                        </button>
-                                    </form>
-                                    <% } %>
-                                </div>
-                                <% } else { %>
-                                <div class="calendar-appointment-actions mb-3"
-                                     data-google-calendar
-                                     data-client-id="<%= h(googleCalendarClientId) %>"
-                                     data-login-hint="<%= h(googleCalendarLoginHint) %>"
-                                     data-cita-id="<%= cita.getIdCita() %>"
-                                     data-summary="Cita médica · <%= h(nombreEspecialidad) %>"
-                                     data-professional="<%= h(nombreProfesional) %>"
-                                     data-location="<%= h(nombreConsultorio) %>"
-                                     data-start="<%= h(cita.getFechaHoraInicio().toString()) %>"
-                                     data-end="<%= h(cita.getFechaHoraFin().toString()) %>">
-                                    <div class="calendar-appointment-heading">
-                                        <span class="calendar-appointment-icon" aria-hidden="true">
-                                            <i class="bi bi-calendar2-check"></i>
-                                        </span>
-                                        <div>
-                                            <strong>Google Calendar</strong>
-                                            <small>Modo local temporal: Google puede volver a pedir acceso después de recargar la página.</small>
-                                        </div>
-                                    </div>
-                                    <div class="calendar-appointment-buttons">
-                                        <button type="button" class="btn btn-primary btn-sm"
-                                                data-calendar-save>
-                                            <i class="bi bi-google" aria-hidden="true"></i>
-                                            <span>Guardar en Calendar</span>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm"
-                                                data-calendar-remove>
-                                            <i class="bi bi-calendar2-x" aria-hidden="true"></i>
-                                            Retirar
-                                        </button>
-                                    </div>
-                                    <small class="calendar-appointment-status" data-calendar-status
-                                           role="status" aria-live="polite"></small>
-                                </div>
-                                <% } %>
-                                <% } %>
                                 <% if (reprogramable) { %>
                                 <div class="d-flex justify-content-lg-end mb-2">
                                     <a class="btn btn-outline-primary btn-sm"
@@ -622,9 +494,5 @@
 </main>
 <script src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/assets/app/js/filtro-medicos-especialidad.js"></script>
-<% if (googleCalendarClienteFallback) { %>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="${pageContext.request.contextPath}/assets/app/js/google-calendar-citas.js?v=20260901"></script>
-<% } %>
 </body>
 </html>
