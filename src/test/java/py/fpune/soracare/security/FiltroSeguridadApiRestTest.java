@@ -136,6 +136,48 @@ class FiltroSeguridadApiRestTest {
     }
 
     @Test
+    void exigeRolMedicoParaConsultarSuDisponibilidad() throws Exception {
+        Resultado paciente = ejecutar(
+                "GET",
+                "/medicos/me/disponibilidad",
+                usuario("PACIENTE"),
+                false
+        );
+        Resultado medico = ejecutar(
+                "GET",
+                "/medicos/me/disponibilidad",
+                usuario("MEDICO"),
+                false
+        );
+
+        assertEquals(403, paciente.response().getStatus());
+        verificarCodigo(paciente, "ACCESO_DENEGADO");
+        assertNotNull(medico.cadena().getRequest());
+        assertEquals(200, medico.response().getStatus());
+    }
+
+    @Test
+    void protegeLaGestionDeDisponibilidadMedicaConCsrf() throws Exception {
+        Resultado sinToken = ejecutar(
+                "POST",
+                "/medicos/me/disponibilidad/bloqueos",
+                usuario("MEDICO"),
+                false
+        );
+        Resultado conToken = ejecutar(
+                "POST",
+                "/medicos/me/disponibilidad/bloqueos",
+                usuario("MEDICO"),
+                true
+        );
+
+        assertEquals(403, sinToken.response().getStatus());
+        verificarCodigo(sinToken, "CSRF_INVALIDO");
+        assertNotNull(conToken.cadena().getRequest());
+        assertEquals(200, conToken.response().getStatus());
+    }
+
+    @Test
     void permiteConsultarCitasSolamenteConRolPaciente() throws Exception {
         Resultado resultado = ejecutar(
                 "GET",

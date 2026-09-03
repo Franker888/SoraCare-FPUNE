@@ -95,10 +95,49 @@ operación conserva el médico y la especialidad originales, exige un turno
 diferente disponible y rechaza citas ajenas, iniciadas o con un estado no
 reprogramable.
 
+### Disponibilidad privada del médico
+
+- `GET /medicos/me/disponibilidad?fecha=AAAA-MM-DD`: devuelve los horarios
+  base, excepciones propias y citas que impiden bloquear la fecha consultada.
+- `POST /medicos/me/disponibilidad/bloqueos`: crea un bloqueo total o parcial.
+- `PATCH /medicos/me/disponibilidad/bloqueos/{idExcepcion}`: activa o desactiva
+  un bloqueo propio.
+- `PATCH /medicos/me/disponibilidad/citas/{idCita}/cancelacion`: cancela una
+  cita asignada al médico antes de bloquear el período.
+
+Ejemplo de bloqueo parcial:
+
+```json
+{
+  "fecha": "2026-09-10",
+  "horaInicio": "08:00",
+  "horaFin": "10:00",
+  "tipo": "BLOQUEO_PARCIAL",
+  "motivo": "Capacitación"
+}
+```
+
+Para un `BLOQUEO_TOTAL`, `horaInicio` y `horaFin` deben ser `null`. El servidor
+obtiene el médico desde la sesión y no acepta un `idMedico` enviado por el
+cliente. Si el período contiene citas activas, el bloqueo se rechaza hasta que
+el médico las cancele o sean reprogramadas.
+
+Ejemplo para desactivar un bloqueo:
+
+```json
+{
+  "activo": false
+}
+```
+
+Los horarios recurrentes se consultan desde esta API, pero continúan bajo
+administración para evitar cambios masivos accidentales en agendas futuras.
+
 ## Seguridad y errores
 
-Las operaciones de citas requieren el rol `PACIENTE`. `POST` y `PATCH` exigen
-además un token CSRF válido. Las rutas no declaradas se bloquean por defecto.
+Las operaciones de citas requieren el rol `PACIENTE` y la disponibilidad
+privada requiere `MEDICO`. `POST` y `PATCH` exigen además un token CSRF válido.
+Las rutas no declaradas se bloquean por defecto.
 Los errores se entregan en JSON con `estado`, `codigo` y `mensaje`, sin trazas ni
 detalles de la base de datos.
 

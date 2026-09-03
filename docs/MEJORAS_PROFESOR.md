@@ -55,13 +55,18 @@ Servlet ni las páginas JSP. La versión actual expone:
 - `POST /api/v1/citas`, para reservar una cita con su pago pendiente;
 - `PATCH /api/v1/citas/{idCita}/cancelacion`, para cancelar una cita propia;
 - `PATCH /api/v1/citas/{idCita}/reprogramacion`, para mover una cita propia a
-  otro turno disponible.
+  otro turno disponible;
+- `GET /api/v1/medicos/me/disponibilidad`, para consultar horarios, bloqueos y
+  citas afectadas del médico autenticado;
+- operaciones privadas para crear, activar y desactivar bloqueos propios, así
+  como cancelar citas asignadas antes de bloquear un período.
 
 Los controladores reutilizan los servicios existentes y responden mediante
 DTO que excluyen datos internos. La seguridad bloquea escrituras en catálogos,
 recursos no declarados y accesos a citas sin el rol `PACIENTE`. Las operaciones
 de escritura privadas presentan el token CSRF de la sesión y obtienen el
-paciente desde esa sesión, nunca desde un identificador enviado por el cliente.
+paciente o médico desde esa sesión, nunca desde un identificador enviado por el
+cliente.
 
 Esta API prepara a SoraCare para una aplicación móvil, otro frontend o una
 integración institucional sin duplicar las reglas del sistema.
@@ -69,7 +74,7 @@ integración institucional sin duplicar las reglas del sistema.
 ## 4. Evidencia de cierre
 
 - WAR compilado con Java 21 y Maven.
-- 120 pruebas JUnit aprobadas, sin fallos ni errores.
+- 128 pruebas JUnit aprobadas, sin fallos ni errores.
 - Pruebas directas de bloqueos totales, parciales, fecha, estado y citas
   canceladas.
 - Pruebas de configuración de `SoraCarePU`, mapeos JPA y transacciones.

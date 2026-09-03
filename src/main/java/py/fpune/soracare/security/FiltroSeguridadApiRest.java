@@ -26,6 +26,8 @@ public class FiltroSeguridadApiRest implements Filter {
     );
     private static final String RUTA_SESION = "/sesion";
     private static final String RUTA_CITAS = "/citas";
+    private static final String RUTA_DISPONIBILIDAD_MEDICO =
+            "/medicos/me/disponibilidad";
     private static final Gson JSON = new Gson();
 
     @Override
@@ -82,6 +84,17 @@ public class FiltroSeguridadApiRest implements Filter {
                     request,
                     response,
                     "PACIENTE",
+                    !esMetodoLectura(metodo),
+                    cadena
+            );
+            return;
+        }
+
+        if (esRutaODescendiente(ruta, RUTA_DISPONIBILIDAD_MEDICO)) {
+            autenticar(
+                    request,
+                    response,
+                    "MEDICO",
                     !esMetodoLectura(metodo),
                     cadena
             );

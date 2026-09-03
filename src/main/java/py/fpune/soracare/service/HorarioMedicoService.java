@@ -109,6 +109,16 @@ public class HorarioMedicoService {
         return horarioMedicoDAO.listarTodos();
     }
 
+    public List<HorarioMedico> listarPorMedico(long idMedico)
+            throws SQLException {
+        if (idMedico <= 0) {
+            throw new IllegalArgumentException(
+                    "El médico seleccionado no es válido."
+            );
+        }
+        return horarioMedicoDAO.listarPorMedico(idMedico);
+    }
+
     public List<HorarioMedico> listarVigentesEnFecha(
             LocalDate fecha
     ) throws SQLException {

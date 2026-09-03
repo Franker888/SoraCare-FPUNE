@@ -56,6 +56,37 @@ public class HorarioMedicoDAO {
         );
     }
 
+    public List<HorarioMedico> listarPorMedico(long idMedico)
+            throws SQLException {
+        if (idMedico <= 0) {
+            throw new SQLException("El médico seleccionado no es válido.");
+        }
+
+        try {
+            return JpaContexto.ejecutarConsulta(
+                    entityManager -> entityManager.createQuery(
+                                    """
+                                    SELECT h
+                                    FROM HorarioMedico h
+                                    WHERE h.idMedico = :idMedico
+                                    ORDER BY h.activo DESC,
+                                             h.diaSemana,
+                                             h.horaInicio,
+                                             h.idHorario
+                                    """,
+                                    HorarioMedico.class
+                            )
+                            .setParameter("idMedico", idMedico)
+                            .getResultList()
+            );
+        } catch (PersistenceException error) {
+            throw convertir(
+                    "No fue posible consultar los horarios del médico.",
+                    error
+            );
+        }
+    }
+
     public List<HorarioMedico> listarVigentesEnFecha(LocalDate fecha)
             throws SQLException {
         if (fecha == null) {

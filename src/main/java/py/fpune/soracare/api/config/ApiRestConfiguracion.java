@@ -6,6 +6,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import py.fpune.soracare.api.controller.ApiRestExcepciones;
 import py.fpune.soracare.api.controller.CitaRestController;
 import py.fpune.soracare.api.controller.DisponibilidadRestController;
+import py.fpune.soracare.api.controller.DisponibilidadMedicoRestController;
 import py.fpune.soracare.api.controller.EspecialidadRestController;
 import py.fpune.soracare.api.controller.MedicoRestController;
 import py.fpune.soracare.api.controller.SesionRestController;
@@ -14,6 +15,7 @@ import py.fpune.soracare.service.DisponibilidadService;
 import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
+import py.fpune.soracare.service.GestionDisponibilidadMedicoService;
 import py.fpune.soracare.service.PacienteService;
 import py.fpune.soracare.service.ReservaPagoService;
 
@@ -66,6 +68,20 @@ public class ApiRestConfiguracion {
             DisponibilidadService disponibilidadService
     ) {
         return new DisponibilidadRestController(disponibilidadService);
+    }
+
+    @Bean
+    public GestionDisponibilidadMedicoService gestionDisponibilidadMedicoService() {
+        return new GestionDisponibilidadMedicoService();
+    }
+
+    @Bean
+    public DisponibilidadMedicoRestController disponibilidadMedicoRestController(
+            GestionDisponibilidadMedicoService gestionDisponibilidadMedicoService
+    ) {
+        return new DisponibilidadMedicoRestController(
+                gestionDisponibilidadMedicoService
+        );
     }
 
     @Bean

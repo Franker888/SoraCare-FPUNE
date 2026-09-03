@@ -24,6 +24,8 @@ public class GestionDisponibilidadMedicoService {
 
     private final MedicoService medicoService = new MedicoService();
     private final AgendaMedicoService agendaService = new AgendaMedicoService();
+    private final HorarioMedicoService horarioService =
+            new HorarioMedicoService();
     private final ExcepcionHorarioMedicoService excepcionService =
             new ExcepcionHorarioMedicoService();
     private final CitaService citaService = new CitaService();
@@ -39,6 +41,7 @@ public class GestionDisponibilidadMedicoService {
         return new ResumenDisponibilidadMedicoDTO(
                 medico,
                 fecha,
+                horarioService.listarPorMedico(medico.getIdMedico()),
                 excepcionService.listarPorMedico(medico.getIdMedico()),
                 listarCitasAfectadas(idPersona, fecha, null, null)
         );

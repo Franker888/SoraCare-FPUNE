@@ -22,7 +22,7 @@ y los informes operativos.
 
 La versión actual se ejecuta de forma reproducible con Docker Compose sobre
 Java 21, Tomcat 10.1.57 y PostgreSQL 18.6. Flyway aplica 32 migraciones de base
-de datos y Maven ejecuta 120 pruebas JUnit sin fallos. La solución combina
+de datos y Maven ejecuta 128 pruebas JUnit sin fallos. La solución combina
 Jakarta Servlet y JSP para la aplicación web, Jakarta Persistence con Hibernate
 para una migración JPA controlada y Spring MVC para una primera API REST.
 
@@ -93,7 +93,7 @@ pagos actuales son simulados y sus comprobantes PDF no tienen validez fiscal.
 - el WAR se construye dentro de la imagen con las pruebas automatizadas;
 - se corrigió que un bloqueo de otra fecha o desactivado ocultara turnos;
 - la validación de disponibilidad pasó de una prueba manual a siete pruebas JUnit;
-- se comprobó el sistema completo con 120 pruebas, migración V032 y rutas HTTP reales.
+- se comprobó el sistema completo con 128 pruebas, migración V032 y rutas HTTP reales.
 
 ## 3. Estado funcional actual
 
@@ -150,14 +150,20 @@ La versión actual ofrece:
 - `POST /api/v1/citas`, para crear una cita y su pago pendiente;
 - `PATCH /api/v1/citas/{idCita}/cancelacion`, para cancelar una cita propia;
 - `PATCH /api/v1/citas/{idCita}/reprogramacion`, para mover una cita propia a
-  otro turno disponible.
+  otro turno disponible;
+- `GET /api/v1/medicos/me/disponibilidad`, para consultar la agenda base y sus
+  excepciones propias;
+- operaciones privadas para crear o cambiar bloqueos y cancelar citas
+  asignadas antes de bloquear el período.
 
 Los datos personales internos no forman parte de los DTO públicos. Las citas
 se obtienen desde la identidad de la sesión y no desde un identificador de
 paciente enviado por el navegador. Las rutas desconocidas y los métodos no
 permitidos se bloquean por defecto. Las escrituras exigen token CSRF y reutilizan
 las mismas reglas transaccionales de disponibilidad, pagos, cancelación y
-reprogramación del sistema web.
+reprogramación del sistema web. La gestión médica obtiene el profesional desde
+la sesión, limita cada cambio a su agenda y no publica datos clínicos
+innecesarios de las citas afectadas.
 
 ## 6. Integraciones: situación real
 
@@ -189,7 +195,7 @@ reprogramación del sistema web.
 ## 8. Evidencia de validación
 
 - compilación y empaquetado WAR con Java 21 y Maven;
-- 120 pruebas JUnit, sin fallos, errores ni pruebas omitidas;
+- 128 pruebas JUnit, sin fallos, errores ni pruebas omitidas;
 - pruebas específicas de disponibilidad total, parcial, fecha, estado y citas canceladas;
 - pruebas de persistencia JPA, configuración, transacciones y mapeos;
 - pruebas de autenticación, permisos, aislamiento por paciente y CSRF de la API REST;
@@ -216,9 +222,8 @@ reprogramación del sistema web.
 
 ### Ampliaciones previstas de la API REST
 
-1. administrar disponibilidad del médico mediante recursos autenticados;
-2. consultar indicaciones y documentos propios desde otro frontend o aplicación móvil;
-3. exponer estados operativos estrictamente necesarios sin publicar datos internos.
+1. consultar indicaciones y documentos propios desde otro frontend o aplicación móvil;
+2. exponer estados operativos estrictamente necesarios sin publicar datos internos.
 
 Estas ampliaciones reutilizarán los servicios actuales, validarán roles y CSRF,
 y evitarán duplicar las reglas de negocio en los controladores REST.
