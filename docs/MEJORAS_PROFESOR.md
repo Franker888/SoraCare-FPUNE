@@ -53,7 +53,9 @@ Servlet ni las páginas JSP. La versión actual expone:
 - `GET /api/v1/sesion`, para una sesión autenticada;
 - `GET /api/v1/citas`, limitado a las citas del paciente autenticado;
 - `POST /api/v1/citas`, para reservar una cita con su pago pendiente;
-- `PATCH /api/v1/citas/{idCita}/cancelacion`, para cancelar una cita propia.
+- `PATCH /api/v1/citas/{idCita}/cancelacion`, para cancelar una cita propia;
+- `PATCH /api/v1/citas/{idCita}/reprogramacion`, para mover una cita propia a
+  otro turno disponible.
 
 Los controladores reutilizan los servicios existentes y responden mediante
 DTO que excluyen datos internos. La seguridad bloquea escrituras en catálogos,
@@ -67,7 +69,7 @@ integración institucional sin duplicar las reglas del sistema.
 ## 4. Evidencia de cierre
 
 - WAR compilado con Java 21 y Maven.
-- 118 pruebas JUnit aprobadas, sin fallos ni errores.
+- 120 pruebas JUnit aprobadas, sin fallos ni errores.
 - Pruebas directas de bloqueos totales, parciales, fecha, estado y citas
   canceladas.
 - Pruebas de configuración de `SoraCarePU`, mapeos JPA y transacciones.

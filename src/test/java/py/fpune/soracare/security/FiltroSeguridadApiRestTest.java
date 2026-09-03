@@ -115,6 +115,27 @@ class FiltroSeguridadApiRestTest {
     }
 
     @Test
+    void protegeTambienLaReprogramacionConCsrf() throws Exception {
+        Resultado sinToken = ejecutar(
+                "PATCH",
+                "/citas/41/reprogramacion",
+                usuario("PACIENTE"),
+                false
+        );
+        Resultado conToken = ejecutar(
+                "PATCH",
+                "/citas/41/reprogramacion",
+                usuario("PACIENTE"),
+                true
+        );
+
+        assertEquals(403, sinToken.response().getStatus());
+        verificarCodigo(sinToken, "CSRF_INVALIDO");
+        assertNotNull(conToken.cadena().getRequest());
+        assertEquals(200, conToken.response().getStatus());
+    }
+
+    @Test
     void permiteConsultarCitasSolamenteConRolPaciente() throws Exception {
         Resultado resultado = ejecutar(
                 "GET",

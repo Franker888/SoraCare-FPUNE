@@ -33,6 +33,8 @@ en la cabecera `X-CSRF-Token` para cualquier escritura.
 - `POST /citas`: crea una cita y su pago pendiente en una sola transacción.
 - `PATCH /citas/{idCita}/cancelacion`: cancela una cita propia y resuelve su
   pago según las reglas existentes.
+- `PATCH /citas/{idCita}/reprogramacion`: mueve una cita propia a otro turno y
+  conserva su pago y comprobante.
 
 Ejemplo de creación:
 
@@ -72,6 +74,26 @@ Ejemplo de cancelación:
 
 La cancelación correcta responde `204 No Content`. No es posible cancelar una
 cita perteneciente a otro paciente, una ya cancelada o una ya atendida.
+
+Ejemplo de reprogramación:
+
+```json
+{
+  "idHorario": "14",
+  "idExcepcion": null,
+  "idMedico": "9",
+  "idEspecialidad": "3",
+  "idConsultorio": "6",
+  "fecha": "2026-09-11",
+  "horaInicio": "09:30",
+  "motivo": "Cambio de horario laboral"
+}
+```
+
+La respuesta correcta usa HTTP `200 OK` y devuelve la cita actualizada. La
+operación conserva el médico y la especialidad originales, exige un turno
+diferente disponible y rechaza citas ajenas, iniciadas o con un estado no
+reprogramable.
 
 ## Seguridad y errores
 

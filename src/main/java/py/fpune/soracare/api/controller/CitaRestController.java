@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import py.fpune.soracare.api.dto.CancelarCitaApiRequest;
 import py.fpune.soracare.api.dto.CitaPacienteApiDTO;
 import py.fpune.soracare.api.dto.CrearCitaApiRequest;
+import py.fpune.soracare.api.dto.ReprogramarCitaApiRequest;
 import py.fpune.soracare.api.dto.ReservaCitaApiDTO;
 import py.fpune.soracare.api.security.ApiAccesoDenegadoException;
 import py.fpune.soracare.api.security.SeguridadApiRest;
@@ -101,6 +102,30 @@ public class CitaRestController {
                 cuerpo.motivo()
         );
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping(
+            path = "/{idCita}/reprogramacion",
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    public CitaPacienteApiDTO reprogramar(
+            @PathVariable("idCita") long idCita,
+            @RequestBody ReprogramarCitaApiRequest cuerpo,
+            HttpServletRequest request
+    ) throws SQLException {
+        if (cuerpo == null) {
+            throw new IllegalArgumentException(
+                    "Los datos para reprogramar la cita son obligatorios."
+            );
+        }
+        ContextoPaciente contexto = obtenerContextoPaciente(request);
+        return CitaPacienteApiDTO.desde(
+                citaService.reprogramarPorPaciente(
+                        cuerpo.aSolicitudInterna(idCita),
+                        contexto.idPaciente(),
+                        contexto.usuario().getIdUsuario()
+                )
+        );
     }
 
     private ContextoPaciente obtenerContextoPaciente(

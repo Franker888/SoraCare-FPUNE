@@ -13,6 +13,7 @@ import py.fpune.soracare.dto.PagoResumenDTO;
 import py.fpune.soracare.dto.ResultadoReservaDTO;
 import py.fpune.soracare.dto.SolicitudCitaDTO;
 import py.fpune.soracare.dto.SolicitudPagoDTO;
+import py.fpune.soracare.dto.SolicitudReprogramacionCitaDTO;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 import py.fpune.soracare.mvc.model.Cita;
 import py.fpune.soracare.mvc.model.Paciente;
@@ -193,6 +194,53 @@ class CitaRestControllerTest {
         verificarCodigo(resultado, "SOLICITUD_INVALIDA");
     }
 
+    @Test
+    void reprogramaLaCitaConLaIdentidadDelPacienteAutenticado()
+            throws Exception {
+        Paciente paciente = new Paciente();
+        paciente.setIdPaciente(22L);
+        CitaServicePrueba citas = new CitaServicePrueba(List.of());
+        citas.resultadoReprogramacion = citaReprogramada();
+
+        MvcResult resultado = crearMockMvc(
+                citas,
+                new PacienteServicePrueba(paciente)
+        ).perform(patch("/citas/41/reprogramacion")
+                        .session(sesion(usuario("PACIENTE")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "idPaciente": "999",
+                                  "idHorario": "14",
+                                  "idExcepcion": null,
+                                  "idMedico": "9",
+                                  "idEspecialidad": "3",
+                                  "idConsultorio": "6",
+                                  "fecha": "2026-09-11",
+                                  "horaInicio": "09:30",
+                                  "motivo": "Cambio de horario laboral"
+                                }
+                                """))
+                .andReturn();
+
+        assertEquals(200, resultado.getResponse().getStatus());
+        assertEquals("41", citas.solicitudReprogramacion.idCita());
+        assertEquals("14", citas.solicitudReprogramacion.idHorario());
+        assertEquals(22L, citas.ultimoPacienteReprogramacion);
+        assertEquals(5L, citas.ultimoUsuarioReprogramacion);
+
+        JsonObject respuesta = JsonParser.parseString(
+                resultado.getResponse().getContentAsString()
+        ).getAsJsonObject();
+        assertEquals(41L, respuesta.get("idCita").getAsLong());
+        assertEquals(
+                "2026-09-11T09:30-03:00",
+                respuesta.get("fechaHoraInicio").getAsString()
+        );
+        assertFalse(respuesta.has("idPaciente"));
+        assertFalse(respuesta.has("idUsuarioCreador"));
+    }
+
     private static MockMvc crearMockMvc(
             CitaService citaService,
             PacienteService pacienteService
@@ -284,6 +332,18 @@ class CitaRestControllerTest {
         );
     }
 
+    private static Cita citaReprogramada() {
+        Cita cita = cita();
+        cita.setIdConsultorio(6L);
+        cita.setFechaHoraInicio(
+                OffsetDateTime.parse("2026-09-11T09:30:00-03:00")
+        );
+        cita.setFechaHoraFin(
+                OffsetDateTime.parse("2026-09-11T10:00:00-03:00")
+        );
+        return cita;
+    }
+
     private static void verificarCodigo(
             MvcResult resultado,
             String codigo
@@ -320,6 +380,10 @@ class CitaRestControllerTest {
         private long ultimoPacienteCancelacion;
         private long ultimoUsuarioCancelacion;
         private String ultimoMotivoCancelacion;
+        private SolicitudReprogramacionCitaDTO solicitudReprogramacion;
+        private long ultimoPacienteReprogramacion;
+        private long ultimoUsuarioReprogramacion;
+        private Cita resultadoReprogramacion;
 
         private CitaServicePrueba(List<Cita> citas) {
             this.citas = citas;
@@ -343,6 +407,18 @@ class CitaRestControllerTest {
             ultimoPacienteCancelacion = idPaciente;
             ultimoUsuarioCancelacion = idUsuario;
             ultimoMotivoCancelacion = motivo;
+        }
+
+        @Override
+        public Cita reprogramarPorPaciente(
+                SolicitudReprogramacionCitaDTO datos,
+                long idPaciente,
+                long idUsuario
+        ) {
+            solicitudReprogramacion = datos;
+            ultimoPacienteReprogramacion = idPaciente;
+            ultimoUsuarioReprogramacion = idUsuario;
+            return resultadoReprogramacion;
         }
     }
 
