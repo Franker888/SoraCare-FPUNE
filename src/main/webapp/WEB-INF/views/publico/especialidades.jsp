@@ -1,4 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
+<%@ page import="py.fpune.soracare.mvc.util.SesionNavegacionPublica" %>
 <%@ page import="py.fpune.soracare.mvc.model.Especialidad" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
@@ -48,6 +49,7 @@
     List<Especialidad> especialidades = request.getAttribute("especialidades") instanceof List<?>
             ? (List<Especialidad>) request.getAttribute("especialidades") : List.of();
     String error = (String) request.getAttribute("error");
+    SesionNavegacionPublica navegacion = SesionNavegacionPublica.desde(session);
 %>
 <!doctype html>
 <html lang="es">
@@ -190,7 +192,9 @@
                    aria-current="page">Especialidades</a>
                 <a class="nav-link enlace-publico" href="${pageContext.request.contextPath}/medicos">Médicos</a>
                 <a class="btn btn-primary boton-principal ms-lg-2"
-                   href="${pageContext.request.contextPath}/login">Iniciar sesión</a>
+                   href="<%= h(request.getContextPath() + navegacion.rutaAcceso()) %>">
+                    <%= h(navegacion.textoAcceso()) %>
+                </a>
             </div>
         </div>
     </div>
@@ -319,13 +323,13 @@
                     <p class="small text-uppercase fw-bold opacity-75 mb-2">Tu próxima consulta</p>
                     <h2 class="h3 mb-2">¿Ya sabés con qué especialista querés atenderte?</h2>
                     <p class="mb-0 opacity-75">
-                        Iniciá sesión para consultar fechas, horarios y reservar tu cita.
+                        <%= h(navegacion.mensajeAgenda()) %>
                     </p>
                 </div>
                 <div class="col-lg-4 text-lg-end">
-                    <a href="${pageContext.request.contextPath}/login"
+                    <a href="<%= h(request.getContextPath() + navegacion.rutaAgenda()) %>"
                        class="btn btn-light text-primary fw-bold px-4 py-2">
-                        Iniciar sesión y agendar
+                        <%= h(navegacion.textoAgenda()) %>
                     </a>
                 </div>
             </div>

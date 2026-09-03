@@ -120,6 +120,8 @@ Puede registrarse o ingresar con Google, buscar disponibilidad real, administrar
 sus citas, elegir un medio de pago simulado, consultar comprobantes,
 indicaciones, documentos y notificaciones. La sincronización con Google Calendar
 se retiró del flujo activo y quedó anotada como mejora futura.
+La sesión continúa visible al recorrer los catálogos públicos de especialidades,
+médicos y disponibilidad, desde donde puede volver al panel o seguir a la agenda.
 
 ## 4. Arquitectura y persistencia
 

@@ -1,4 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
+<%@ page import="py.fpune.soracare.mvc.util.SesionNavegacionPublica" %>
 <%@ page import="py.fpune.soracare.mvc.model.Especialidad" %>
 <%@ page import="py.fpune.soracare.mvc.model.HorarioMedico" %>
 <%@ page import="py.fpune.soracare.mvc.model.Medico" %>
@@ -67,6 +68,7 @@
                     : Map.of();
     String error = (String) request.getAttribute("error");
     String especialidadSeleccionada = request.getParameter("especialidad");
+    SesionNavegacionPublica navegacion = SesionNavegacionPublica.desde(session);
 %>
 <!doctype html>
 <html lang="es">
@@ -193,7 +195,9 @@
                 <a class="nav-link enlace-publico activo" href="${pageContext.request.contextPath}/medicos"
                    aria-current="page">Médicos</a>
                 <a class="btn btn-primary boton-principal ms-lg-2"
-                   href="${pageContext.request.contextPath}/login">Iniciar sesión</a>
+                   href="<%= h(request.getContextPath() + navegacion.rutaAcceso()) %>">
+                    <%= h(navegacion.textoAcceso()) %>
+                </a>
             </div>
         </div>
     </div>
@@ -293,6 +297,15 @@
             boolean tieneFoto = !imagen.isBlank();
             List<HorarioMedico> horarios = horariosPorMedico.getOrDefault(
                     medico.getIdMedico(), List.of());
+            String rutaAgendaMedico = request.getContextPath()
+                    + navegacion.rutaAgenda();
+            if (navegacion.paciente()) {
+                rutaAgendaMedico += "&idMedico=" + medico.getIdMedico();
+                if (especialidadPrincipal != null) {
+                    rutaAgendaMedico += "&idEspecialidad="
+                            + especialidadPrincipal.getIdEspecialidad();
+                }
+            }
         %>
         <div class="col-12 medico-item" data-busqueda="<%= h(textoBusqueda) %>">
             <article class="card tarjeta-medico shadow-sm">
@@ -409,8 +422,8 @@
                                    href="${pageContext.request.contextPath}/disponibilidad?idMedico=<%= medico.getIdMedico() %><%= especialidadPrincipal == null ? "" : "&idEspecialidad=" + especialidadPrincipal.getIdEspecialidad() %>">
                                     Consultar disponibilidad
                                 </a>
-                                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/login">
-                                    Ingresar para agendar
+                                <a class="btn btn-outline-primary" href="<%= h(rutaAgendaMedico) %>">
+                                    <%= h(navegacion.textoAgenda()) %>
                                 </a>
                             </div>
                         </div>

@@ -119,6 +119,7 @@ La seguridad REST reutiliza la sesión local `HttpSession`; no crea otro login, 
 - Carga y consulta de documentos clínicos PDF, JPG, JPEG o PNG.
 - Centro de notificaciones con contador de avisos no leídos.
 - La sincronización opcional con Google Calendar fue retirada de la interfaz y quedó aplazada para una versión futura.
+- Los catálogos públicos de especialidades, médicos y disponibilidad reconocen la sesión activa y permiten volver al panel o continuar a la agenda sin solicitar otro inicio de sesión.
 - Eliminación de la cuenta con confirmación explícita.
 
 ## 4. Agenda y disponibilidad
