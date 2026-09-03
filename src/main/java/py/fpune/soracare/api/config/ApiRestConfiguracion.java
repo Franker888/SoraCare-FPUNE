@@ -15,6 +15,7 @@ import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
 import py.fpune.soracare.service.PacienteService;
+import py.fpune.soracare.service.ReservaPagoService;
 
 @Configuration
 @EnableWebMvc
@@ -83,11 +84,21 @@ public class ApiRestConfiguracion {
     }
 
     @Bean
+    public ReservaPagoService reservaPagoService() {
+        return new ReservaPagoService();
+    }
+
+    @Bean
     public CitaRestController citaRestController(
             CitaService citaService,
-            PacienteService pacienteService
+            PacienteService pacienteService,
+            ReservaPagoService reservaPagoService
     ) {
-        return new CitaRestController(citaService, pacienteService);
+        return new CitaRestController(
+                citaService,
+                pacienteService,
+                reservaPagoService
+        );
     }
 
     @Bean

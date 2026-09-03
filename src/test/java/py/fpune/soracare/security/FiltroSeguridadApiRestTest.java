@@ -94,6 +94,27 @@ class FiltroSeguridadApiRestTest {
     }
 
     @Test
+    void protegeTambienLaCancelacionConCsrf() throws Exception {
+        Resultado sinToken = ejecutar(
+                "PATCH",
+                "/citas/41/cancelacion",
+                usuario("PACIENTE"),
+                false
+        );
+        Resultado conToken = ejecutar(
+                "PATCH",
+                "/citas/41/cancelacion",
+                usuario("PACIENTE"),
+                true
+        );
+
+        assertEquals(403, sinToken.response().getStatus());
+        verificarCodigo(sinToken, "CSRF_INVALIDO");
+        assertNotNull(conToken.cadena().getRequest());
+        assertEquals(200, conToken.response().getStatus());
+    }
+
+    @Test
     void permiteConsultarCitasSolamenteConRolPaciente() throws Exception {
         Resultado resultado = ejecutar(
                 "GET",
