@@ -189,6 +189,8 @@ El acceso con una cuenta existente fue probado. El alta nueva posee su formulari
 - Solicita permiso limitado a eventos de Calendar.
 - No copia información clínica sensible al evento.
 - Requiere habilitar Google Calendar API y configurar los orígenes autorizados del dominio usado.
+- Incluye OAuth de servidor con refresh token cifrado para evitar reconectar la cuenta en cada cita.
+- La migración V036 registra la vinculación y la relación entre citas y eventos; requiere Client Secret y redirect URI fuera de Git.
 
 ### Twilio SMS: preparado, pendiente de activación completa
 

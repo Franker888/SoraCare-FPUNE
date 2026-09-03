@@ -10,6 +10,7 @@ import py.fpune.soracare.dto.CredencialesAutenticacionDTO;
 import py.fpune.soracare.dto.UsuarioAutenticadoDTO;
 import py.fpune.soracare.mvc.util.UrlPublicaRequest;
 import py.fpune.soracare.service.AutenticacionService;
+import py.fpune.soracare.service.AutenticacionGoogleService;
 import py.fpune.soracare.service.ConfiguracionGoogleService;
 import py.fpune.soracare.service.TurnstileService;
 
@@ -47,6 +48,7 @@ public class LoginServlet extends HttpServlet {
             30 * 60;
 
     private AutenticacionService autenticacionService;
+    private AutenticacionGoogleService autenticacionGoogleService;
     private ConfiguracionGoogleService configuracionGoogleService;
     private TurnstileService turnstileService;
 
@@ -54,6 +56,8 @@ public class LoginServlet extends HttpServlet {
     public void init() {
         autenticacionService =
                 new AutenticacionService();
+        autenticacionGoogleService =
+                new AutenticacionGoogleService();
         configuracionGoogleService =
                 new ConfiguracionGoogleService();
         turnstileService = new TurnstileService();
@@ -164,6 +168,11 @@ public class LoginServlet extends HttpServlet {
             nuevaSesion.setAttribute(
                     ATRIBUTO_USUARIO_AUTENTICADO,
                     usuarioAutenticado
+            );
+
+            cargarPistaCuentaGoogle(
+                    nuevaSesion,
+                    usuarioAutenticado.getIdUsuario()
             );
 
             redirigirSegunEstadoContrasena(
@@ -320,6 +329,25 @@ public class LoginServlet extends HttpServlet {
                 "Expires",
                 0
         );
+    }
+
+    private void cargarPistaCuentaGoogle(
+            HttpSession sesion,
+            long idUsuario
+    ) {
+        try {
+            autenticacionGoogleService.buscarCorreoVinculado(idUsuario)
+                    .ifPresent(correo -> sesion.setAttribute(
+                            AutenticacionGoogleServlet
+                                    .ATRIBUTO_GOOGLE_LOGIN_HINT,
+                            correo
+                    ));
+        } catch (SQLException error) {
+            log(
+                    "El inicio de sesión continuará sin la pista opcional de Google.",
+                    error
+            );
+        }
     }
 
     private void prepararAccesoGoogle(HttpServletRequest request) {

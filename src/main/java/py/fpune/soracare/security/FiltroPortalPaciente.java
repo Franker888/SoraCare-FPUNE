@@ -18,7 +18,7 @@ import java.io.IOException;
         urlPatterns = {
                 "/paciente/inicio", "/mis-citas", "/mis-citas/*", "/mis-documentos",
                 "/mis-recetas", "/mis-recetas/*", "/mis-notificaciones",
-                "/mis-notificaciones/*", "/pagos/*"
+                "/mis-notificaciones/*", "/pagos/*", "/google/calendar/*"
         }
 )
 public class FiltroPortalPaciente implements Filter {

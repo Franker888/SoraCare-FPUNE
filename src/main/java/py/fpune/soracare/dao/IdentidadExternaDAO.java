@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 public class IdentidadExternaDAO {
@@ -41,6 +42,14 @@ public class IdentidadExternaDAO {
                 ultimo_acceso = CURRENT_TIMESTAMP
             WHERE proveedor = ?
               AND identificador_externo = ?
+            """;
+
+    private static final String SQL_BUSCAR_CORREO_USUARIO = """
+            SELECT correo_proveedor
+            FROM soracare.identidades_externas
+            WHERE id_usuario = ?
+              AND proveedor = ?
+              AND correo_verificado = TRUE
             """;
 
     public OptionalLong buscarIdUsuarioGoogle(
@@ -108,6 +117,31 @@ public class IdentidadExternaDAO {
             sentencia.setString(5, PROVEEDOR_GOOGLE);
             sentencia.setString(6, perfil.identificadorGoogle().strip());
             sentencia.executeUpdate();
+        }
+    }
+
+    public Optional<String> buscarCorreoGoogle(
+            Connection conexion,
+            long idUsuario
+    ) throws SQLException {
+        validarConexion(conexion);
+        if (idUsuario <= 0) {
+            throw new SQLException("El usuario vinculado no es válido.");
+        }
+
+        try (PreparedStatement sentencia = conexion.prepareStatement(
+                SQL_BUSCAR_CORREO_USUARIO)) {
+            sentencia.setLong(1, idUsuario);
+            sentencia.setString(2, PROVEEDOR_GOOGLE);
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                if (!resultado.next()) {
+                    return Optional.empty();
+                }
+                String correo = resultado.getString("correo_proveedor");
+                return correo == null || correo.isBlank()
+                        ? Optional.empty()
+                        : Optional.of(correo.strip().toLowerCase());
+            }
         }
     }
 

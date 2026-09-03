@@ -63,6 +63,9 @@ function Cargar-IntegracionesUsuario {
         'SORACARE_TWILIO_AUTH_TOKEN',
         'SORACARE_TWILIO_FROM',
         'SORACARE_GOOGLE_CLIENT_ID',
+        'SORACARE_GOOGLE_CLIENT_SECRET',
+        'SORACARE_GOOGLE_CALENDAR_REDIRECT_URI',
+        'SORACARE_GOOGLE_TOKEN_ENCRYPTION_KEY',
         'SORACARE_TURNSTILE_SITE_KEY',
         'SORACARE_TURNSTILE_SECRET_KEY',
         'SORACARE_SENTRY_DSN',
@@ -113,6 +116,32 @@ function Cargar-IntegracionesUsuario {
     }
 }
 
+function Mostrar-EstadoGoogleCalendar {
+    $requeridas = @(
+        'SORACARE_GOOGLE_CLIENT_ID',
+        'SORACARE_GOOGLE_CLIENT_SECRET',
+        'SORACARE_GOOGLE_CALENDAR_REDIRECT_URI',
+        'SORACARE_GOOGLE_TOKEN_ENCRYPTION_KEY'
+    )
+    $faltantes = @(
+        $requeridas | Where-Object {
+            [string]::IsNullOrWhiteSpace(
+                [Environment]::GetEnvironmentVariable($_, 'Process')
+            )
+        }
+    )
+    if ($faltantes.Count -eq 0) {
+        Write-Host 'Google Calendar: vinculación persistente habilitada.' -ForegroundColor Green
+        return
+    }
+    if ($faltantes.Count -lt $requeridas.Count) {
+        Write-Warning (
+            'Google Calendar seguirá en modo temporal. Faltan configurar: ' +
+            ($faltantes -join ', ')
+        )
+    }
+}
+
 function Obtener-Puerto {
     $linea = Get-Content -LiteralPath $archivoEntorno |
         Where-Object { $_ -match '^SORACARE_HTTP_PORT=' } |
@@ -146,6 +175,7 @@ if ($LASTEXITCODE -ne 0) {
     throw 'Docker Desktop está instalado, pero su motor no está activo. Abrilo y esperá a que termine de iniciar.'
 }
 
+Mostrar-EstadoGoogleCalendar
 Write-Host 'Construyendo y levantando SoraCare con Docker...' -ForegroundColor Cyan
 & $docker compose --env-file $archivoEntorno -f $compose up --build --detach --remove-orphans
 if ($LASTEXITCODE -ne 0) {

@@ -60,6 +60,11 @@ $migraciones = @(
         Nombre = 'facturacion comercial interna'
         Archivo = Join-Path $proyecto 'src\main\resources\db\migration\V033__crear_facturacion_interna.sql'
         Verificacion = "SELECT to_regclass('soracare.facturas_internas') IS NOT NULL AND to_regclass('soracare.facturas_internas_detalles') IS NOT NULL;"
+    },
+    @{
+        Nombre = 'vinculacion segura con Google Calendar'
+        Archivo = Join-Path $proyecto 'src\main\resources\db\migration\V036__vincular_google_calendar.sql'
+        Verificacion = "SELECT to_regclass('soracare.google_calendar_vinculos') IS NOT NULL AND to_regclass('soracare.google_calendar_eventos') IS NOT NULL;"
     }
 )
 
@@ -102,10 +107,29 @@ try {
     } else {
         Write-Host 'Twilio SMS aun no esta configurado; el resto de SoraCare funcionara normalmente.' -ForegroundColor Yellow
     }
-    $googleClientIdUsuario = [Environment]::GetEnvironmentVariable('SORACARE_GOOGLE_CLIENT_ID', 'User')
-    if (-not [string]::IsNullOrWhiteSpace($googleClientIdUsuario)) {
-        $env:SORACARE_GOOGLE_CLIENT_ID = $googleClientIdUsuario
-        Write-Host 'Acceso con Google y sincronizacion opcional de Calendar disponibles.' -ForegroundColor Green
+    $variablesGoogle = @(
+        'SORACARE_GOOGLE_CLIENT_ID',
+        'SORACARE_GOOGLE_CLIENT_SECRET',
+        'SORACARE_GOOGLE_CALENDAR_REDIRECT_URI',
+        'SORACARE_GOOGLE_TOKEN_ENCRYPTION_KEY'
+    )
+    foreach ($nombreGoogle in $variablesGoogle) {
+        $valorGoogle = [Environment]::GetEnvironmentVariable($nombreGoogle, 'User')
+        if (-not [string]::IsNullOrWhiteSpace($valorGoogle)) {
+            Set-Item -Path "Env:$nombreGoogle" -Value $valorGoogle
+        }
+    }
+    $googleConfiguradas = @(
+        $variablesGoogle | Where-Object {
+            -not [string]::IsNullOrWhiteSpace(
+                [Environment]::GetEnvironmentVariable($_, 'Process')
+            )
+        }
+    )
+    if ($googleConfiguradas.Count -eq $variablesGoogle.Count) {
+        Write-Host 'Acceso con Google y Calendar persistente disponibles.' -ForegroundColor Green
+    } elseif ($googleConfiguradas -contains 'SORACARE_GOOGLE_CLIENT_ID') {
+        Write-Host 'Acceso con Google disponible; Calendar seguira en modo temporal.' -ForegroundColor Yellow
     } else {
         Write-Host 'Google aun no esta configurado; el acceso tradicional funcionara normalmente.' -ForegroundColor Yellow
     }
@@ -281,6 +305,9 @@ try {
     Remove-Item Env:SORACARE_TWILIO_AUTH_TOKEN -ErrorAction SilentlyContinue
     Remove-Item Env:SORACARE_TWILIO_FROM -ErrorAction SilentlyContinue
     Remove-Item Env:SORACARE_GOOGLE_CLIENT_ID -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_GOOGLE_CLIENT_SECRET -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_GOOGLE_CALENDAR_REDIRECT_URI -ErrorAction SilentlyContinue
+    Remove-Item Env:SORACARE_GOOGLE_TOKEN_ENCRYPTION_KEY -ErrorAction SilentlyContinue
     Remove-Item Env:SORACARE_TURNSTILE_SITE_KEY -ErrorAction SilentlyContinue
     Remove-Item Env:SORACARE_TURNSTILE_SECRET_KEY -ErrorAction SilentlyContinue
     Remove-Item Env:SORACARE_SENTRY_DSN -ErrorAction SilentlyContinue

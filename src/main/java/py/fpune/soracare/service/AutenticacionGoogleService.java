@@ -182,6 +182,16 @@ public class AutenticacionGoogleService {
         return autenticarPacienteExterno(cuenta.idUsuario());
     }
 
+    public Optional<String> buscarCorreoVinculado(long idUsuario)
+            throws SQLException {
+        if (idUsuario <= 0) {
+            return Optional.empty();
+        }
+        try (Connection conexion = ConexionBD.obtenerConexion()) {
+            return identidadDAO.buscarCorreoGoogle(conexion, idUsuario);
+        }
+    }
+
     private UsuarioAutenticadoDTO autenticarPacienteExterno(
             long idUsuario
     ) throws SQLException {
