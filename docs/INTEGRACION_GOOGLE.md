@@ -51,6 +51,16 @@ SORACARE_GOOGLE_CALENDAR_REDIRECT_URI
 SORACARE_GOOGLE_TOKEN_ENCRYPTION_KEY
 ```
 
+En Windows, el configurador local solicita las credenciales sin mostrar el
+Client Secret y genera la clave de cifrado cuando todavia no existe:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\scripts\configurar-google-local.ps1"
+```
+
+El puerto predeterminado es `8081`, utilizado por Docker. Para un Tomcat local
+en el puerto `8080`, se puede ejecutar el mismo script con `-Puerto 8080`.
+
 El Client Secret y la clave de cifrado deben configurarse fuera del repositorio.
 La clave de cifrado es Base64 de 32 bytes aleatorios. Perder esa clave impide
 descifrar autorizaciones ya guardadas y obliga a volver a vincular Calendar.
