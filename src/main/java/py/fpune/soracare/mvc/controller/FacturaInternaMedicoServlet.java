@@ -26,12 +26,14 @@ public class FacturaInternaMedicoServlet extends HttpServlet {
     private FacturaInternaService facturaService;
     private ConfiguracionSifenService configuracionSifenService;
     private IntegracionSifenService integracionSifenService;
+    private py.fpune.soracare.service.ConsultaSifenService consultaSifenService;
 
     @Override
     public void init() {
         facturaService = new FacturaInternaService();
         configuracionSifenService = new ConfiguracionSifenService();
         integracionSifenService = new IntegracionSifenService();
+        consultaSifenService = new py.fpune.soracare.service.ConsultaSifenService();
     }
 
     @Override
@@ -73,7 +75,11 @@ public class FacturaInternaMedicoServlet extends HttpServlet {
 
         try {
             UsuarioAutenticadoDTO usuario = usuario(request);
-            if ("enviarSifenPrueba".equals(request.getParameter("accion"))) {
+            if ("consultarSifenPrueba".equals(request.getParameter("accion"))) {
+                request.setAttribute("consultaSifen", consultaSifenService.consultar(
+                        convertirIdSolicitud(request.getParameter("idSolicitud")), usuario));
+                mostrarVista(request, response);
+            } else if ("enviarSifenPrueba".equals(request.getParameter("accion"))) {
                 SolicitudSifenResumenDTO solicitud = integracionSifenService
                         .enviarAPruebas(
                                 convertirIdSolicitud(

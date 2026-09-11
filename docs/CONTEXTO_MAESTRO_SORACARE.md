@@ -390,6 +390,13 @@ ejecuta respaldo y verificación diariamente a las 21:00 (America/Asuncion).
 
 ## 14. Instrucciones para continuar en otro chat
 
+Consulta diagnóstica SIFEN agregada el 11 de septiembre: botón POST con CSRF en
+facturas del médico, CDC tomado del documento propio, solo PRUEBA. Distingue
+encontrado/inexistente/sin permiso/error; no sobrescribe estados fiscales ni
+interpreta efectos de eventos. Resultado transitorio; historial y conciliación
+persistente pendientes. Suite local actual: 161 unitarias + 3 de integración.
+No se realizaron consultas oficiales reales; requiere certificado y CDC propios.
+
 Actualización del 11 de septiembre: KuDE de prueba implementado para el médico
 propietario en `/facturas/kude?id=ID_SOLICITUD`, desde XML firmado persistido.
 Solo PRUEBA y estados VALIDADO/APROBADO; sin validez fiscal, sin habilitar

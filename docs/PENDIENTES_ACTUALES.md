@@ -19,7 +19,9 @@ validacion local y habilitaciones externas; no declara produccion terminada.
    atencion, indicaciones, documentos, pagos, facturacion y reportes. Las pruebas
    unitarias y HTTP anonimas no reemplazan este recorrido autenticado.
 2. **Fiscal**: validar formalmente y habilitar la entrega del KuDE al paciente;
-   completar consultas/eventos necesarios. La descarga de KuDE de prueba para el
+   completar conciliación persistente y análisis/gestión de eventos. La consulta
+   diagnóstica por CDC está implementada, sin alterar el estado fiscal guardado.
+   Falta probarla con certificado y CDC oficiales. La descarga de KuDE de prueba para el
    médico está implementada, siempre sin validez fiscal. El motor
    tecnico SIFEN ya existe; la homologacion y autorizacion real requieren los
    datos, certificados y habilitacion del contribuyente. No emitir facturas

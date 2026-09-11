@@ -151,6 +151,19 @@
         </div>
     </section>
 
+    <% if (request.getAttribute("consultaSifen") instanceof py.fpune.soracare.sifen.ResultadoConsultaSifen consulta) { %>
+    <div class="alert alert-info" role="status">
+        <strong>Consulta SIFEN Prueba: <%= h(consulta.estado().name().replace('_', ' ')) %></strong>
+        <div class="text-break">CDC: <%= h(consulta.cdc()) %></div>
+        <div>Código <%= h(consulta.codigo()) %>: <%= h(consulta.mensaje()) %></div>
+        <% if (consulta.protocolo() != null) { %>
+        <div>Protocolo: <%= h(consulta.protocolo()) %>. Contenedores de eventos: <%= consulta.eventos() %>.</div>
+        <% } %>
+        <div class="small mt-2">Esta consulta no cambia el estado local ni reenvía la factura.
+            Encontrar el CDC no confirma por sí solo su vigencia: los eventos requieren revisión.
+            Un CDC no encontrado no equivale a rechazo ni autoriza un reenvío automático.</div>
+    </div>
+    <% } %>
     <% if (request.getAttribute("mensajeExito") != null) { %>
     <div class="alert alert-success"><%= h((String) request.getAttribute("mensajeExito")) %></div>
     <% } %>
@@ -367,6 +380,17 @@
                                         </button>
                                     </form>
                                 </details>
+                                <% } %>
+                                <% if (solicitudSifen != null && solicitudSifen.cdc() != null
+                                        && "PRUEBA".equals(solicitudSifen.ambiente())) { %>
+                                <form method="post" action="${pageContext.request.contextPath}/medico/facturas">
+                                    <input type="hidden" name="csrfToken" value="<%= h(csrfToken) %>">
+                                    <input type="hidden" name="accion" value="consultarSifenPrueba">
+                                    <input type="hidden" name="idSolicitud" value="<%= solicitudSifen.idSolicitud() %>">
+                                    <button class="btn btn-outline-primary btn-sm" type="submit">
+                                        <i class="bi bi-search me-1"></i>Consultar CDC en SIFEN Prueba
+                                    </button>
+                                </form>
                                 <% } %>
                                 <% if (solicitudSifen != null
                                         && "PRUEBA".equals(solicitudSifen.ambiente())

@@ -91,7 +91,8 @@ mvn -P integracion-postgresql verify
 - completar los escenarios formales de pruebas y homologación con credenciales
   reales de la entidad;
 - habilitar el KuDE fiscal y su entrega al paciente después de la validación formal;
-- implementar consulta por CDC, eventos de cancelación e inutilización;
+- completar conciliación persistente y análisis de eventos a partir de la consulta
+  por CDC; implementar eventos de cancelación e inutilización;
 - agregar recepción asíncrona por lotes si el volumen real lo justifica;
 - habilitar producción solo mediante una decisión operativa auditada.
 
@@ -140,7 +141,50 @@ Referencias del KuDE:
 - [Apache PDFBox](https://pdfbox.apache.org/download.html).
 - [ZXing](https://github.com/zxing/zxing/releases).
 
-Documentación general:
+## Consulta diagnóstica por CDC (11 de septiembre de 2026)
+
+El botón **Consultar CDC en SIFEN Prueba** realiza `siConsDE` mediante SOAP 1.2
+y autenticación mutua. Solo el médico propietario puede consultar su solicitud;
+el CDC se toma de PostgreSQL, no de un campo editable ni de la URL del navegador.
+Se exige sesión, rol MEDICO, cambio de contraseña completado y token CSRF válido.
+Se reutiliza la configuración fiscal existente (que exige los datos completos).
+No se habilitan consultas a producción ni se realizan llamadas al entrar al panel.
+
+La respuesta se muestra separadamente del estado fiscal guardado:
+
+- `0422`: encontrado, únicamente si el contenedor incluye el mismo CDC y protocolo;
+- `0420`: no encontrado; no implica rechazo ni autorización para reenviar;
+- `0421`: certificado sin permiso; no implica rechazo del documento;
+- fallos HTTP, SOAP, estructura, transporte o CDC distinto: error de consulta.
+
+La consulta informa cuántos contenedores de eventos llegaron, pero **no interpreta
+todavía sus efectos fiscales**. Encontrado no equivale a vigencia confirmada.
+No modifica estado, XML, respuesta de emisión, numeración fiscal ni intentos de
+envío. Solo consume un identificador técnico de la secuencia existente para la
+petición. El resultado es transitorio en la pantalla: no hay historial persistente
+de consultas ni conciliación automática en esta etapa. Refrescar el POST puede
+pedir confirmación del navegador y volver a consultar.
+
+Las respuestas tienen límite de 2 MB durante su recepción, tiempo máximo de
+solicitud de 40 segundos y redirecciones deshabilitadas. El parser desactiva
+entidades externas y verifica namespaces, estructura y campos únicos; la vista
+escapa los mensajes antes de mostrarlos. No expone el XML devuelto ni secretos.
+
+Referencia: [Manual técnico SIFEN v150, secciones 7.10 y 9.4](https://www.dnit.gov.py/documents/20123/420592/Manual%2BT%C3%A9cnico%2BVersi%C3%B3n%2B150.pdf/e706f7c7-6d93-21d4-b45b-5d22d07b2d22?t=1687351495907).
+La prueba real de extremo a extremo requiere certificado y CDC de la entidad en
+el ambiente oficial; los tests del cliente usan respuestas sintéticas, sin llamadas
+fiscales reales. La habilitación y homologación siguen pendientes.
+
+Verificación local: `mvn -Pintegracion-postgresql clean verify`, con 161 pruebas
+unitarias y 3 de integración aprobadas, sin omisiones. Diez pruebas nuevas cubren
+sobre SOAP, clasificación, CDC distinto, respuestas ambiguas y excesivas,
+contención de entidades XML, permisos, CSRF y borrado de la contraseña temporal.
+
+Despliegue Docker verificado: aplicación y PostgreSQL saludables, inicio y
+conexión a BD con HTTP 200; facturas y consulta sin sesión redirigen al login,
+y la API privada responde 401. Pendiente prueba autenticada con SIFEN real.
+
+Enlaces generales:
 
 - https://www.dnit.gov.py/web/e-kuatia/documentacion-tecnica
 - https://www.dnit.gov.py/web/e-kuatia/desarrollo-de-software

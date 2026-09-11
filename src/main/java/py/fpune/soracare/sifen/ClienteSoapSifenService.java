@@ -149,7 +149,7 @@ public class ClienteSoapSifenService {
         }
     }
 
-    private static SSLContext contextoTls(Path archivo, char[] password)
+    static SSLContext contextoTls(Path archivo, char[] password)
             throws Exception {
         if (archivo == null || !Files.isRegularFile(archivo)
                 || !Files.isReadable(archivo)) {
