@@ -218,9 +218,9 @@ clientes de la API.
 ### Prioridad de producción
 
 1. desplegar en infraestructura permanente con HTTPS y PostgreSQL administrado;
-2. establecer copias de seguridad, recuperación, privacidad y términos de uso;
+2. completar cifrado y copia externa de los respaldos locales, recuperación integral, privacidad y términos de uso;
 3. completar una revisión final de seguridad y accesibilidad antes de usar datos reales;
-4. agregar integración continua y pruebas de integración contra PostgreSQL;
+4. mantener la integración continua y las pruebas PostgreSQL/Flyway ya implementadas, y completar aceptación por roles;
 5. configurar dominios definitivos para Google, Resend y demás servicios externos.
 
 ### Integraciones pendientes
@@ -238,14 +238,16 @@ clientes de la API.
 Estas ampliaciones reutilizarán los servicios actuales, validarán roles y CSRF,
 y evitarán duplicar las reglas de negocio en los controladores REST.
 
-## 10. Módulo futuro de facturación electrónica
+## 10. Facturación electrónica: implementación técnica y pendientes
 
 El nombre correcto del sistema paraguayo es **e-Kuatia**, integrado con el
 Sistema Integrado de Facturación Electrónica Nacional (SIFEN) de la DNIT. Este
-módulo todavía no está implementado. El comprobante PDF actual de SoraCare es
+módulo cuenta con implementación técnica de XML, firma, validación XSD y cliente
+SOAP, documentada en `INTEGRACION_SIFEN.md`; su homologación real sigue pendiente.
+El comprobante PDF actual de SoraCare es
 académico y debe mantenerse claramente separado de una factura tributaria.
 
-Una implementación responsable requiere:
+El cierre fiscal debe comprobar:
 
 1. definir quién será el contribuyente emisor y confirmar su habilitación;
 2. modelar establecimientos, puntos de expedición, timbrado, impuestos, ítems y eventos;
@@ -256,7 +258,7 @@ Una implementación responsable requiere:
 7. generar el KuDE PDF del DTE aprobado y enviarlo al paciente por correo;
 8. auditar el proceso y proteger certificados, claves y datos tributarios.
 
-Antes de programarlo debe decidirse si corresponde e-Kuatia, orientado a
+Antes de desplegarlo debe confirmarse si corresponde e-Kuatia, orientado a
 software propio, o e-Kuatia'i, el sistema gratuito para contribuyentes de menor
 volumen. La decisión depende de la situación tributaria y operativa del
 consultorio u organización destinataria.
@@ -289,5 +291,7 @@ agenda clínica, atención médica, documentación, informes, integraciones y un
 entorno Docker reproducible. Las recomendaciones del profesor sobre
 disponibilidad, Jakarta Persistence y API REST quedaron implementadas y
 comprobadas. El siguiente salto no consiste en agregar funciones aisladas,
-sino en completar la preparación para producción y diseñar la facturación
-electrónica contra SIFEN como un módulo formal, probado y auditable.
+sino en completar la preparación para producción y validar la facturación
+electrónica contra SIFEN en el ambiente autorizado. El orden actualizado se
+encuentra en `PENDIENTES_ACTUALES.md`; los respaldos locales y su restauración
+de prueba están documentados en `RESPALDOS.md`. El rediseño visual queda al final.

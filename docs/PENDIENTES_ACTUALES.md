@@ -1,0 +1,38 @@
+# Pendientes actuales de SoraCare
+
+Actualizado: 10 de septiembre de 2026. Este listado distingue codigo existente,
+validacion local y habilitaciones externas; no declara produccion terminada.
+
+## Base implementada
+
+- Disponibilidad medica y bloqueo/reprogramacion de citas.
+- Persistencia Jakarta/JPA en el alcance migrado y API REST con permisos.
+- Docker, flujo de calidad CI y pruebas PostgreSQL/Flyway aisladas.
+- API de consultas clinicas propias y descargas privadas.
+- Copia local de base, documentos y fotos, con restauracion aislada comprobada.
+- Respaldo diario a las 21:00 configurado en Codex en este equipo.
+
+## Orden de cierre
+
+1. **Prueba funcional integral por roles**: paciente, medico, recepcion y
+   administracion; registro, Google Identity, continuidad de sesion, agenda,
+   atencion, indicaciones, documentos, pagos, facturacion y reportes. Las pruebas
+   unitarias y HTTP anonimas no reemplazan este recorrido autenticado.
+2. **Fiscal**: generar KuDE y completar consultas/eventos necesarios. El motor
+   tecnico SIFEN ya existe; la homologacion y autorizacion real requieren los
+   datos, certificados y habilitacion del contribuyente. No emitir facturas
+   fiscales reales hasta completar esos requisitos.
+3. **Integraciones externas**: verificar correo y notificaciones extremo a extremo,
+   Twilio, envio servidor Firebase y decidir si corresponde pasarela de pagos.
+   Google Calendar permanece oculto y aplazado por decision del usuario.
+4. **Produccion**: infraestructura, dominio/HTTPS, permisos, revision de seguridad,
+   monitoreo, cifrado y copia externa de respaldos, retencion y simulacro completo
+   de recuperacion. El respaldo local no protege ante perdida del equipo.
+5. **Visual, al final**: incorporar las referencias que traiga el usuario;
+   unificar botones, tipografia, espaciados y estados; revisar todos los paneles
+   en escritorio/movil y accesibilidad. No iniciar un rediseno antes de cerrar
+   el funcionamiento acordado. Repetir pruebas de regresion tras cambios visuales.
+
+Las ampliaciones de API REST se priorizaran por un consumidor o caso concreto;
+no es necesario exponer cada DAO para considerar cumplida la recomendacion del
+profesor. No se marca una integracion como cerrada solo por tener credenciales.

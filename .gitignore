@@ -26,6 +26,7 @@ application-local.properties
 # Base de datos local
 *.sqlite
 *.db
+respaldos/
 
 # Archivos del sistema operativo
 Thumbs.db

@@ -377,9 +377,16 @@ El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar 
 3. Dominio verificado para Resend y remitente institucional.
 4. Activación y prueba extremo a extremo de Twilio SMS.
 5. Integración con una pasarela de pago real sólo si el alcance académico cambia.
-6. Política de privacidad, términos, copias de seguridad y estrategia de recuperación.
-7. Ampliar las pruebas JUnit de integración con PostgreSQL, agregar integración continua y probar con más dispositivos reales.
+6. Política de privacidad, términos, cifrado/copia externa de respaldos y recuperación integral. El respaldo local y su restauración aislada están implementados; consultar `RESPALDOS.md`.
+7. Mantener las pruebas de integración PostgreSQL/Flyway y la integración continua ya implementadas; completar aceptación por roles y dispositivos reales.
 8. Revisión final de accesibilidad y seguridad antes de exponer datos reales.
+9. Mejorar el aspecto visual al final, usando las referencias del usuario y revisando botones y consistencia de todos los paneles.
+
+El orden de cierre actualizado está en `PENDIENTES_ACTUALES.md`. El 10 de
+septiembre de 2026 pasaron 142 pruebas unitarias y 3 de integración PostgreSQL.
+Se comprobó una restauración aislada de la base V036 y los archivos, sin
+sobrescribir los volúmenes originales. La automatización de Codex del equipo
+ejecuta respaldo y verificación diariamente a las 21:00 (America/Asuncion).
 
 ## 14. Instrucciones para continuar en otro chat
 
