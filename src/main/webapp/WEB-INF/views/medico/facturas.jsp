@@ -315,6 +315,15 @@
                                    href="${pageContext.request.contextPath}/facturas/interna?id=<%= pago.idFacturaInterna() %>">
                                     <i class="bi bi-file-earmark-pdf me-1"></i>Ver PDF
                                 </a>
+                                <% if (solicitudSifen != null
+                                        && "PRUEBA".equals(solicitudSifen.ambiente())
+                                        && (solicitudSifen.aprobada() || "VALIDADO".equals(solicitudSifen.estado()))) { %>
+                                <a class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener"
+                                   href="${pageContext.request.contextPath}/facturas/kude?id=<%= solicitudSifen.idSolicitud() %>">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i>KuDE de prueba
+                                </a>
+                                <span class="small text-secondary">Sin validez fiscal</span>
+                                <% } %>
                                 <% if (solicitudSifen == null
                                         && estadoSifen.configuracionCompleta()
                                         && estadoSifen.ambiente() == EstadoPreparacionSifenDTO.Ambiente.PRUEBA) { %>

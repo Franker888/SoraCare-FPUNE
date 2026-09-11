@@ -79,7 +79,7 @@ services:
 
 La suite cubre el vector de CDC, cálculo fiscal, firma criptográfica, QR,
 validación XSD, sobre SOAP 1.2, interpretación de aprobación/rechazo/error,
-configuración sin exposición de secretos y las 35 migraciones sobre PostgreSQL
+configuración sin exposición de secretos y las 36 migraciones sobre PostgreSQL
 real mediante Testcontainers.
 
 ```powershell
@@ -90,12 +90,57 @@ mvn -P integracion-postgresql verify
 
 - completar los escenarios formales de pruebas y homologación con credenciales
   reales de la entidad;
-- generar la representación gráfica KuDE fiscal y entregarla al paciente;
+- habilitar el KuDE fiscal y su entrega al paciente después de la validación formal;
 - implementar consulta por CDC, eventos de cancelación e inutilización;
 - agregar recepción asíncrona por lotes si el volumen real lo justifica;
 - habilitar producción solo mediante una decisión operativa auditada.
 
-Documentación oficial:
+## KuDE de prueba (11 de septiembre de 2026)
+
+El médico propietario puede abrir `/facturas/kude?id=ID_SOLICITUD` desde
+**KuDE de prueba** en su listado de facturas. Solo admite solicitudes de ambiente
+`PRUEBA`, estado `VALIDADO` o `APROBADO`, con XSD validado. Incluso cuando una
+solicitud fue aprobada en pruebas, el PDF conserva **SIN VALIDEZ FISCAL**.
+No se habilita ninguna operación de producción ni se envía correo al descargar.
+
+El PDF se construye desde el XML firmado almacenado, no desde perfiles o tarifas
+actuales. Comprueba SHA-256, XSD, CDC y correspondencia del destino QR con el
+ambiente de pruebas. Conserva datos de emisor/receptor, timbrado, fecha, detalle,
+afectación IVA, importes, totales y CDC agrupado; el QR se repite en cada página.
+Los totales se mantienen juntos al final y los textos se ajustan al ancho.
+
+Alcance: factura electrónica de servicios, contado, PYG; IVA gravado, exento o
+exonerado. No admite crédito, otras monedas ni afectación mixta. La tipografía
+admite caracteres latinos habituales; rechaza caracteres no representables sin
+sustituir silenciosamente nombres fiscales. No se revalida aquí la cadena de
+confianza del certificado: la firma pertenece al flujo de emisión existente.
+
+Esta es una representación **para validar el módulo en pruebas**, no una
+certificación de cumplimiento normativo. Antes de habilitar su uso fiscal deben
+revisarse las notas técnicas/reglamentaciones vigentes y casos de homologación,
+completar la entrega autorizada al paciente y los eventos/consultas pendientes.
+
+Se usan PDFBox 3.0.8 para maquetación y ZXing 3.5.4 para el QR. Los ejemplos
+sintéticos generados por las pruebas están en `target/kude-qa/`, fuera de Git y
+del WAR. La base y los archivos originales no se modifican.
+
+Validación local: 151 pruebas unitarias y 3 de integración PostgreSQL/Flyway
+aprobadas. Incluye nueve pruebas nuevas de KuDE: permiso y propiedad, sesión,
+cabeceras de descarga, integridad, estados/ambientes, lectura del QR y paginación.
+Se revisaron visualmente un ejemplo de una página y otro de cuatro páginas.
+La autorización de propiedad se prueba con DAO simulado; sigue pendiente el
+recorrido autenticado completo con un DE real del ambiente oficial de pruebas.
+Docker reconstruido con `clean package`: 151 pruebas aprobadas nuevamente.
+Aplicación y PostgreSQL saludables; `/facturas/kude?id=1` sin sesión redirige al
+login (302), mientras la API clínica privada devuelve 401. Sin migraciones nuevas.
+
+Referencias del KuDE:
+
+- [Manual técnico SIFEN v150, capítulo 13](https://www.dnit.gov.py/documents/20123/420592/Manual%2BT%C3%A9cnico%2BVersi%C3%B3n%2B150.pdf/e706f7c7-6d93-21d4-b45b-5d22d07b2d22?t=1687351495907).
+- [Apache PDFBox](https://pdfbox.apache.org/download.html).
+- [ZXing](https://github.com/zxing/zxing/releases).
+
+Documentación general:
 
 - https://www.dnit.gov.py/web/e-kuatia/documentacion-tecnica
 - https://www.dnit.gov.py/web/e-kuatia/desarrollo-de-software

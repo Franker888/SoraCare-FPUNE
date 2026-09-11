@@ -46,7 +46,7 @@ class FlujoXmlSifenTest {
         assertTrue(firmaValida(conQr.contenido(), certificado));
     }
 
-    private static DocumentoElectronicoSifen documento() {
+    static DocumentoElectronicoSifen documento() {
         EmisorSifen emisor = new EmisorSifen(
                 "80069563", 1, 2, 8,
                 "DE generado en ambiente de prueba - sin valor comercial ni fiscal",
@@ -77,13 +77,13 @@ class FlujoXmlSifenTest {
         );
     }
 
-    private static KeyPair claves() throws Exception {
+    static KeyPair claves() throws Exception {
         KeyPairGenerator generador = KeyPairGenerator.getInstance("RSA");
         generador.initialize(2048);
         return generador.generateKeyPair();
     }
 
-    private static X509Certificate certificado(KeyPair claves) throws Exception {
+    static X509Certificate certificado(KeyPair claves) throws Exception {
         Instant ahora = Instant.now();
         X500Name nombre = new X500Name("CN=SoraCare Test,O=FPUNE,C=PY");
         var constructor = new JcaX509v3CertificateBuilder(

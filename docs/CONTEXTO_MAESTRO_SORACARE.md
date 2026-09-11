@@ -390,6 +390,14 @@ ejecuta respaldo y verificación diariamente a las 21:00 (America/Asuncion).
 
 ## 14. Instrucciones para continuar en otro chat
 
+Actualización del 11 de septiembre: KuDE de prueba implementado para el médico
+propietario en `/facturas/kude?id=ID_SOLICITUD`, desde XML firmado persistido.
+Solo PRUEBA y estados VALIDADO/APROBADO; sin validez fiscal, sin habilitar
+producción ni enviar correos. Suite local: 151 unitarias y 3 de integración
+aprobadas. Detalles y limitaciones en `INTEGRACION_SIFEN.md`. La evaluación
+general de mejoras de código, visual, rendimiento y seguridad solicitada por el
+usuario debe entregarse al finalizar el proyecto, no en esta etapa.
+
 Entregar este archivo al nuevo asistente y usar un mensaje inicial parecido a este:
 
 > Leé completo el archivo `CONTEXTO_MAESTRO_SORACARE.md`. Trabajamos sobre SoraCare-FPUNE. Antes de cambiar código, verificá la rama actual, `git status`, las migraciones y las rutas relacionadas. Conservá la arquitectura Java/JSP/PostgreSQL existente, hacé una modificación coherente por vez, compilá y validá el flujo. No publiques claves ni contraseñas y no hagas commit o push sin mi autorización explícita.

@@ -21,6 +21,32 @@ import java.util.Optional;
 
 public class SolicitudSifenDAO {
 
+    public Optional<py.fpune.soracare.dto.DocumentoKudeDTO> buscarKudeDelMedico(
+            long idSolicitud, long idPersonaMedico) throws SQLException {
+        String sql = """
+                SELECT s.ambiente, s.estado, s.cdc, s.xml_firmado,
+                       s.hash_xml_sha256, s.xsd_validado
+                  FROM soracare.solicitudes_sifen s
+                  JOIN soracare.facturas_internas f ON f.id_factura = s.id_factura_interna
+                  JOIN soracare.pagos p ON p.id_pago = f.id_pago
+                  JOIN soracare.citas c ON c.id_cita = p.id_cita
+                  JOIN soracare.medicos m ON m.id_medico = c.id_medico
+                 WHERE s.id_solicitud = ? AND m.id_persona = ?
+                """;
+        try (Connection conexion = ConexionBD.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setLong(1, idSolicitud);
+            sentencia.setLong(2, idPersonaMedico);
+            try (ResultSet r = sentencia.executeQuery()) {
+                if (!r.next()) return Optional.empty();
+                return Optional.of(new py.fpune.soracare.dto.DocumentoKudeDTO(
+                        r.getString("ambiente"), r.getString("estado"), r.getString("cdc"),
+                        r.getBytes("xml_firmado"), r.getString("hash_xml_sha256"),
+                        r.getBoolean("xsd_validado")));
+            }
+        }
+    }
+
     public Optional<FacturaParaSifenDTO> buscarFacturaDelMedico(
             Connection conexion,
             long idFactura,

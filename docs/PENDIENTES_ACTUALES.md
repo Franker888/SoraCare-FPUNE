@@ -1,6 +1,6 @@
 # Pendientes actuales de SoraCare
 
-Actualizado: 10 de septiembre de 2026. Este listado distingue codigo existente,
+Actualizado: 11 de septiembre de 2026. Este listado distingue codigo existente,
 validacion local y habilitaciones externas; no declara produccion terminada.
 
 ## Base implementada
@@ -18,7 +18,9 @@ validacion local y habilitaciones externas; no declara produccion terminada.
    administracion; registro, Google Identity, continuidad de sesion, agenda,
    atencion, indicaciones, documentos, pagos, facturacion y reportes. Las pruebas
    unitarias y HTTP anonimas no reemplazan este recorrido autenticado.
-2. **Fiscal**: generar KuDE y completar consultas/eventos necesarios. El motor
+2. **Fiscal**: validar formalmente y habilitar la entrega del KuDE al paciente;
+   completar consultas/eventos necesarios. La descarga de KuDE de prueba para el
+   médico está implementada, siempre sin validez fiscal. El motor
    tecnico SIFEN ya existe; la homologacion y autorizacion real requieren los
    datos, certificados y habilitacion del contribuyente. No emitir facturas
    fiscales reales hasta completar esos requisitos.
@@ -32,6 +34,10 @@ validacion local y habilitaciones externas; no declara produccion terminada.
    unificar botones, tipografia, espaciados y estados; revisar todos los paneles
    en escritorio/movil y accesibilidad. No iniciar un rediseno antes de cerrar
    el funcionamiento acordado. Repetir pruebas de regresion tras cambios visuales.
+6. **Evaluacion final solicitada por el usuario**: al terminar el proyecto,
+   entregar recomendaciones priorizadas sobre codigo, arquitectura, rendimiento,
+   experiencia visual y seguridad. Reservar esa evaluacion para el cierre;
+   no adelantar ahora un rediseño o una refactorizacion general.
 
 Las ampliaciones de API REST se priorizaran por un consumidor o caso concreto;
 no es necesario exponer cada DAO para considerar cumplida la recomendacion del
