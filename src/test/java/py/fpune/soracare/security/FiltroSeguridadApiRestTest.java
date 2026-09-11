@@ -178,6 +178,55 @@ class FiltroSeguridadApiRestTest {
     }
 
     @Test
+    void protegeLaInformacionClinicaSinSesion() throws Exception {
+        Resultado resultado = ejecutar(
+                "GET",
+                "/pacientes/me/indicaciones",
+                null,
+                false
+        );
+
+        assertEquals(401, resultado.response().getStatus());
+        verificarCodigo(resultado, "NO_AUTENTICADO");
+    }
+
+    @Test
+    void limitaLaInformacionClinicaAlPacienteAutenticado()
+            throws Exception {
+        Resultado medico = ejecutar(
+                "GET",
+                "/pacientes/me/documentos",
+                usuario("MEDICO"),
+                false
+        );
+        Resultado paciente = ejecutar(
+                "GET",
+                "/pacientes/me/documentos",
+                usuario("PACIENTE"),
+                false
+        );
+
+        assertEquals(403, medico.response().getStatus());
+        verificarCodigo(medico, "ACCESO_DENEGADO");
+        assertNotNull(paciente.cadena().getRequest());
+        assertEquals(200, paciente.response().getStatus());
+    }
+
+    @Test
+    void bloqueaEscriturasSobreInformacionClinica() throws Exception {
+        Resultado resultado = ejecutar(
+                "POST",
+                "/pacientes/me/documentos",
+                usuario("PACIENTE"),
+                true
+        );
+
+        assertEquals(405, resultado.response().getStatus());
+        verificarCodigo(resultado, "METODO_NO_PERMITIDO");
+        assertNull(resultado.cadena().getRequest());
+    }
+
+    @Test
     void permiteConsultarCitasSolamenteConRolPaciente() throws Exception {
         Resultado resultado = ejecutar(
                 "GET",

@@ -10,15 +10,19 @@ import py.fpune.soracare.api.controller.CitaRestController;
 import py.fpune.soracare.api.controller.DisponibilidadRestController;
 import py.fpune.soracare.api.controller.DisponibilidadMedicoRestController;
 import py.fpune.soracare.api.controller.EspecialidadRestController;
+import py.fpune.soracare.api.controller.InformacionClinicaPacienteRestController;
 import py.fpune.soracare.api.controller.MedicoRestController;
 import py.fpune.soracare.api.controller.SesionRestController;
 import py.fpune.soracare.service.CitaService;
 import py.fpune.soracare.service.DisponibilidadService;
+import py.fpune.soracare.service.DocumentoClinicoService;
 import py.fpune.soracare.service.GestionDisponibilidadMedicoService;
 import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
 import py.fpune.soracare.service.PacienteService;
+import py.fpune.soracare.service.RecetaMedicaService;
+import py.fpune.soracare.service.RecetaPdfService;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.nio.file.Path;
@@ -94,6 +98,12 @@ class ApiRestConfiguracionTest {
             assertNotNull(contexto.getBean(CitaService.class));
             assertNotNull(contexto.getBean(PacienteService.class));
             assertNotNull(contexto.getBean(CitaRestController.class));
+            assertNotNull(contexto.getBean(RecetaMedicaService.class));
+            assertNotNull(contexto.getBean(RecetaPdfService.class));
+            assertNotNull(contexto.getBean(DocumentoClinicoService.class));
+            assertNotNull(contexto.getBean(
+                    InformacionClinicaPacienteRestController.class
+            ));
             assertNotNull(contexto.getBean(ApiRestExcepciones.class));
         }
     }

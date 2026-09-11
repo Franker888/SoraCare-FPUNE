@@ -22,7 +22,7 @@ y los informes operativos.
 
 La versión actual se ejecuta de forma reproducible con Docker Compose sobre
 Java 21, Tomcat 10.1.57 y PostgreSQL 18.6. Flyway aplica 32 migraciones de base
-de datos y Maven ejecuta 128 pruebas JUnit sin fallos. La solución combina
+de datos y Maven ejecuta 142 pruebas JUnit sin fallos. La solución combina
 Jakarta Servlet y JSP para la aplicación web, Jakarta Persistence con Hibernate
 para una migración JPA controlada y Spring MVC para una primera API REST.
 
@@ -154,7 +154,10 @@ La versión actual ofrece:
 - `GET /api/v1/medicos/me/disponibilidad`, para consultar la agenda base y sus
   excepciones propias;
 - operaciones privadas para crear o cambiar bloqueos y cancelar citas
-  asignadas antes de bloquear el período.
+  asignadas antes de bloquear el período;
+- consultas privadas bajo `/api/v1/pacientes/me` para listar y consultar
+  indicaciones médicas propias, abrir su PDF y listar o abrir documentos
+  clínicos del paciente autenticado.
 
 Los datos personales internos no forman parte de los DTO públicos. Las citas
 se obtienen desde la identidad de la sesión y no desde un identificador de
@@ -164,6 +167,12 @@ las mismas reglas transaccionales de disponibilidad, pagos, cancelación y
 reprogramación del sistema web. La gestión médica obtiene el profesional desde
 la sesión, limita cada cambio a su agenda y no publica datos clínicos
 innecesarios de las citas afectadas.
+
+La consulta clínica reutiliza los servicios y controles de propiedad del
+portal. Permite abrir o descargar archivos sin publicar rutas de disco, hashes
+o identificadores de otros pacientes. Esta ampliación no cambia las pantallas
+ni crea una nueva base de datos; deja esas funciones disponibles para futuros
+clientes de la API.
 
 ## 6. Integraciones: situación real
 
@@ -195,12 +204,13 @@ innecesarios de las citas afectadas.
 ## 8. Evidencia de validación
 
 - compilación y empaquetado WAR con Java 21 y Maven;
-- 128 pruebas JUnit, sin fallos, errores ni pruebas omitidas;
+- 142 pruebas JUnit, sin fallos, errores ni pruebas omitidas, repetidas en Docker el 10 de septiembre de 2026;
 - pruebas específicas de disponibilidad total, parcial, fecha, estado y citas canceladas;
 - pruebas de persistencia JPA, configuración, transacciones y mapeos;
 - pruebas de autenticación, permisos, aislamiento por paciente y CSRF de la API REST;
+- pruebas de consultas clínicas privadas, descarga autorizada y errores JSON al solicitar archivos;
 - PostgreSQL y SoraCare saludables en Docker;
-- Flyway finalizado correctamente con las versiones V001 a V032;
+- Flyway validado con el esquema en versión V036, sin migraciones pendientes;
 - respuestas HTTP verificadas: recursos públicos 200, privados sin sesión 401 y escritura no permitida 405.
 
 ## 9. Trabajo pendiente
@@ -222,7 +232,7 @@ innecesarios de las citas afectadas.
 
 ### Ampliaciones previstas de la API REST
 
-1. consultar indicaciones y documentos propios desde otro frontend o aplicación móvil;
+1. conectar un futuro frontend o aplicación móvil a las consultas clínicas ya disponibles;
 2. exponer estados operativos estrictamente necesarios sin publicar datos internos.
 
 Estas ampliaciones reutilizarán los servicios actuales, validarán roles y CSRF,

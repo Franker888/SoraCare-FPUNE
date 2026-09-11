@@ -61,6 +61,16 @@ Spring MVC convive con los Servlet y JSP existentes y atiende únicamente el pre
 
 La seguridad REST reutiliza la sesión local `HttpSession`; no crea otro login, claves API ni JWT. `GET /api/v1/sesion` exige un usuario autenticado sin cambio de contraseña pendiente y devuelve solamente su nombre de usuario, roles y un token CSRF. `GET /api/v1/citas` exige el rol `PACIENTE`, obtiene la identidad exclusivamente desde la sesión y devuelve solamente las citas de la ficha asociada; no acepta un `idPaciente` manipulable. `POST /api/v1/citas` crea una cita con su pago pendiente en una sola transacción, `PATCH /api/v1/citas/{idCita}/cancelacion` cancela una cita propia y `PATCH /api/v1/citas/{idCita}/reprogramacion` la mueve a otro turno disponible conservando su pago y comprobante. Bajo `/api/v1/medicos/me/disponibilidad`, el rol `MEDICO` puede consultar sus horarios y excepciones, crear o cambiar bloqueos propios y cancelar una cita que le esté asignada antes de bloquear el período. Tanto el paciente como el médico se obtienen exclusivamente de la sesión. Los métodos de escritura deben enviar el token en la cabecera `X-CSRF-Token`. El filtro Servlet usa una lista explícita de rutas y métodos, por lo que bloquea por defecto recursos no declarados y escrituras sobre los catálogos públicos. La API usa errores JSON sin detalles técnicos y monitoreo mediante Sentry cuando corresponde. No se incorporó Spring Boot ni se reemplazó el despliegue WAR en Tomcat.
 
+La API privada del paciente también permite listar indicaciones, consultar una
+indicación propia y abrir su PDF bajo `/api/v1/pacientes/me/indicaciones`, así
+como listar documentos y abrir sus archivos bajo `/api/v1/pacientes/me/documentos`.
+Reutiliza `RecetaMedicaService`, `RecetaPdfService` y `DocumentoClinicoService`,
+incluyendo la autorización por propietario y la auditoría de acceso a archivos.
+Las operaciones clínicas son de consulta y requieren `PACIENTE`; no exponen
+rutas de almacenamiento ni hashes. Las fechas JSON se representan como texto
+ISO, igual que en los demás recursos REST. El contrato detallado está en
+`docs/API_REST.md`.
+
 ## 3. Perfiles y funciones
 
 ### Administrador
@@ -355,7 +365,7 @@ La instalación Docker usa `http://localhost:8081/SoraCare-FPUNE/`, una base de 
 - Informes, auditoría, configuración, usuarios y roles administrativos.
 - Google Calendar: pruebas técnicas conservadas; función retirada del flujo activo.
 - Validación aislada de Turnstile: modo local, configuración incompleta, token aceptado, token inválido y acción incorrecta.
-- Ciento veintiocho pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, facturación, SIFEN, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, navegación con sesión, uso seguro del contexto JPA, configuración de la unidad de persistencia, mapeo JPA, Sora/OpenAI, configuración de PostgreSQL para Docker y autenticación, autorización, aislamiento por paciente y médico, y CSRF de la API REST con Spring MVC.
+- Ciento cuarenta y dos pruebas JUnit ejecutadas por Maven para BCrypt, Google, citas, pagos, facturación, SIFEN, tarjetas de prueba, HIBP, Sentry, Turnstile, protección anti-CSRF, disponibilidad del médico, navegación con sesión, uso seguro del contexto JPA, configuración de la unidad de persistencia, mapeo JPA, Sora/OpenAI, configuración de PostgreSQL para Docker y autenticación, autorización, aislamiento por paciente y médico, consultas clínicas privadas, archivos y CSRF de la API REST con Spring MVC.
 - Rutas públicas y paneles en resoluciones móviles y de escritorio.
 
 El `pom.xml` incorpora JUnit 5 y Maven Surefire. `mvn clean test` debe informar una cantidad mayor que cero; una compilación sin ese resumen no reemplaza la evidencia de pruebas. Las pruebas manuales, de integración con PostgreSQL y de servicios externos siguen documentándose por separado.

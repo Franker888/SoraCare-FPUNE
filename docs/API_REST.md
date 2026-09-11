@@ -133,11 +133,37 @@ Ejemplo para desactivar un bloqueo:
 Los horarios recurrentes se consultan desde esta API, pero continúan bajo
 administración para evitar cambios masivos accidentales en agendas futuras.
 
+### Información clínica privada del paciente
+
+- `GET /pacientes/me/indicaciones`: lista las indicaciones médicas propias.
+- `GET /pacientes/me/indicaciones/{idIndicacion}`: consulta una indicación
+  propia con sus medicamentos, dosis y cuidados.
+- `GET /pacientes/me/indicaciones/{idIndicacion}/pdf`: abre su PDF.
+- `GET /pacientes/me/documentos`: lista los metadatos seguros de los
+  documentos clínicos propios.
+- `GET /pacientes/me/documentos/{idDocumento}/archivo`: abre el archivo
+  clínico después de comprobar su propiedad.
+
+Los dos recursos de archivo aceptan `?descargar=true` para responder como
+descarga; sin ese parámetro se abren en línea. Las respuestas JSON no incluyen
+el identificador del paciente o la atención, correos de envío, rutas de disco,
+hashes ni otros datos internos. Una indicación o documento ajeno nunca se
+entrega, aunque el cliente manipule el identificador de la URL.
+
+El PDF corresponde a la indicación farmacológica seleccionada; no representa
+el resumen consolidado de toda una atención. Las cargas clínicas actuales se
+registran con visibilidad `PACIENTE`. Antes de habilitar documentos reservados
+al personal médico o administrativo, debe aplicarse esa distinción tanto al
+listado como a la apertura en los servicios compartidos.
+
 ## Seguridad y errores
 
 Las operaciones de citas requieren el rol `PACIENTE` y la disponibilidad
-privada requiere `MEDICO`. `POST` y `PATCH` exigen además un token CSRF válido.
-Las rutas no declaradas se bloquean por defecto.
+privada requiere `MEDICO`. La información clínica bajo `/pacientes/me` exige
+el rol `PACIENTE` y solo permite consultas. `POST` y `PATCH` sobre los recursos
+que admiten escritura exigen además un token CSRF válido. Las rutas no
+declaradas se bloquean por defecto. Todas las respuestas usan `no-store` para
+evitar guardar información privada en caché.
 Los errores se entregan en JSON con `estado`, `codigo` y `mensaje`, sin trazas ni
 detalles de la base de datos.
 
@@ -146,5 +172,7 @@ Estados principales:
 - `400`: contenido o regla de negocio inválida;
 - `401`: no existe una sesión autenticada;
 - `403`: falta el rol, la ficha de paciente o el token CSRF;
-- `404`: recurso REST no declarado;
+- `404`: recurso REST no declarado o indicación/documento no disponible;
+- `405`: método no permitido;
+- `500`: error interno o archivo que no pudo abrirse;
 - `503`: la operación no pudo completarse por un problema de base de datos.

@@ -28,6 +28,8 @@ public class FiltroSeguridadApiRest implements Filter {
     private static final String RUTA_CITAS = "/citas";
     private static final String RUTA_DISPONIBILIDAD_MEDICO =
             "/medicos/me/disponibilidad";
+    private static final String RUTA_INFORMACION_CLINICA_PACIENTE =
+            "/pacientes/me";
     private static final Gson JSON = new Gson();
 
     @Override
@@ -96,6 +98,26 @@ public class FiltroSeguridadApiRest implements Filter {
                     response,
                     "MEDICO",
                     !esMetodoLectura(metodo),
+                    cadena
+            );
+            return;
+        }
+
+        if (esRutaODescendiente(ruta, RUTA_INFORMACION_CLINICA_PACIENTE)) {
+            if (!esMetodoLectura(metodo)) {
+                responderError(
+                        response,
+                        HttpServletResponse.SC_METHOD_NOT_ALLOWED,
+                        "METODO_NO_PERMITIDO",
+                        "La información clínica del paciente es únicamente de consulta."
+                );
+                return;
+            }
+            autenticar(
+                    request,
+                    response,
+                    "PACIENTE",
+                    false,
                     cadena
             );
             return;

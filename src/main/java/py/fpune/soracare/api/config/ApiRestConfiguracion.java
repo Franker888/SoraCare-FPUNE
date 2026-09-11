@@ -8,15 +8,19 @@ import py.fpune.soracare.api.controller.CitaRestController;
 import py.fpune.soracare.api.controller.DisponibilidadRestController;
 import py.fpune.soracare.api.controller.DisponibilidadMedicoRestController;
 import py.fpune.soracare.api.controller.EspecialidadRestController;
+import py.fpune.soracare.api.controller.InformacionClinicaPacienteRestController;
 import py.fpune.soracare.api.controller.MedicoRestController;
 import py.fpune.soracare.api.controller.SesionRestController;
 import py.fpune.soracare.service.CitaService;
 import py.fpune.soracare.service.DisponibilidadService;
+import py.fpune.soracare.service.DocumentoClinicoService;
 import py.fpune.soracare.service.EspecialidadService;
 import py.fpune.soracare.service.MedicoEspecialidadService;
 import py.fpune.soracare.service.MedicoService;
 import py.fpune.soracare.service.GestionDisponibilidadMedicoService;
 import py.fpune.soracare.service.PacienteService;
+import py.fpune.soracare.service.RecetaMedicaService;
+import py.fpune.soracare.service.RecetaPdfService;
 import py.fpune.soracare.service.ReservaPagoService;
 
 @Configuration
@@ -114,6 +118,35 @@ public class ApiRestConfiguracion {
                 citaService,
                 pacienteService,
                 reservaPagoService
+        );
+    }
+
+    @Bean
+    public RecetaMedicaService recetaMedicaService() {
+        return new RecetaMedicaService();
+    }
+
+    @Bean
+    public RecetaPdfService recetaPdfService() {
+        return new RecetaPdfService();
+    }
+
+    @Bean
+    public DocumentoClinicoService documentoClinicoService() {
+        return new DocumentoClinicoService();
+    }
+
+    @Bean
+    public InformacionClinicaPacienteRestController
+    informacionClinicaPacienteRestController(
+            RecetaMedicaService recetaMedicaService,
+            RecetaPdfService recetaPdfService,
+            DocumentoClinicoService documentoClinicoService
+    ) {
+        return new InformacionClinicaPacienteRestController(
+                recetaMedicaService,
+                recetaPdfService,
+                documentoClinicoService
         );
     }
 

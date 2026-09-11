@@ -2,6 +2,7 @@ package py.fpune.soracare.api.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -10,8 +11,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import py.fpune.soracare.api.dto.ErrorApiDTO;
 import py.fpune.soracare.api.security.ApiAccesoDenegadoException;
 import py.fpune.soracare.api.security.ApiNoAutenticadoException;
+import py.fpune.soracare.api.security.ApiRecursoNoEncontradoException;
 import py.fpune.soracare.service.SentryMonitoreoService;
 
+import java.io.IOException;
 import java.sql.SQLException;
 
 @RestControllerAdvice
@@ -35,6 +38,17 @@ public class ApiRestExcepciones {
         return respuesta(
                 HttpStatus.FORBIDDEN,
                 "ACCESO_DENEGADO",
+                error.getMessage()
+        );
+    }
+
+    @ExceptionHandler(ApiRecursoNoEncontradoException.class)
+    public ResponseEntity<ErrorApiDTO> manejarRecursoNoEncontrado(
+            ApiRecursoNoEncontradoException error
+    ) {
+        return respuesta(
+                HttpStatus.NOT_FOUND,
+                "RECURSO_NO_ENCONTRADO",
                 error.getMessage()
         );
     }
@@ -77,6 +91,19 @@ public class ApiRestExcepciones {
         );
     }
 
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<ErrorApiDTO> manejarArchivo(
+            IOException error,
+            HttpServletRequest request
+    ) {
+        capturar(error, request);
+        return respuesta(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "ARCHIVO_NO_DISPONIBLE",
+                "No fue posible abrir el archivo solicitado."
+        );
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorApiDTO> manejarErrorInterno(
             RuntimeException error,
@@ -96,6 +123,7 @@ public class ApiRestExcepciones {
             String mensaje
     ) {
         return ResponseEntity.status(estado)
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(new ErrorApiDTO(estado.value(), codigo, mensaje));
     }
 

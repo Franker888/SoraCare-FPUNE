@@ -59,7 +59,10 @@ Servlet ni las páginas JSP. La versión actual expone:
 - `GET /api/v1/medicos/me/disponibilidad`, para consultar horarios, bloqueos y
   citas afectadas del médico autenticado;
 - operaciones privadas para crear, activar y desactivar bloqueos propios, así
-  como cancelar citas asignadas antes de bloquear un período.
+  como cancelar citas asignadas antes de bloquear un período;
+- consultas privadas bajo `/api/v1/pacientes/me` para listar indicaciones,
+  consultar una indicación propia, abrir su PDF y listar o abrir documentos
+  clínicos propios.
 
 Los controladores reutilizan los servicios existentes y responden mediante
 DTO que excluyen datos internos. La seguridad bloquea escrituras en catálogos,
@@ -71,14 +74,22 @@ cliente.
 Esta API prepara a SoraCare para una aplicación móvil, otro frontend o una
 integración institucional sin duplicar las reglas del sistema.
 
+La consulta clínica reutiliza las comprobaciones de propiedad, el generador
+de PDF y la auditoría de acceso a documentos. Los archivos pueden abrirse o
+descargarse, con respuestas sin caché. El contrato se documenta en
+`docs/API_REST.md`; esta ampliación no modifica el esquema de PostgreSQL.
+
 ## 4. Evidencia de cierre
 
 - WAR compilado con Java 21 y Maven.
-- 128 pruebas JUnit aprobadas, sin fallos ni errores.
+- 142 pruebas JUnit aprobadas, sin fallos ni errores; repetidas en la construcción
+  Docker del 10 de septiembre de 2026.
 - Pruebas directas de bloqueos totales, parciales, fecha, estado y citas
   canceladas.
 - Pruebas de configuración de `SoraCarePU`, mapeos JPA y transacciones.
 - Pruebas de controladores Spring, permisos, aislamiento por paciente y CSRF.
+- Regresiones de la API clínica: identidad desde sesión, identificadores inválidos,
+  PDF ajeno sin generación, metadatos mínimos y errores JSON incluso al solicitar PDF.
 - PostgreSQL, Flyway y SoraCare ejecutándose en Docker con estado saludable.
 
 Con este alcance quedan implementados y comprobados los puntos indicados por
