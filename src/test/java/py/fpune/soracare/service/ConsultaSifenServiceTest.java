@@ -54,10 +54,71 @@ class ConsultaSifenServiceTest {
                 return new ResultadoConsultaSifen(ResultadoConsultaSifen.Estado.NO_ENCONTRADO, cdc, "0420", "No encontrado", null, 0);
             }
         };
-        var servicio = new ConsultaSifenService(dao, cfg, cliente) {
+        var pasos = new java.util.ArrayList<String>();
+        var historial = new py.fpune.soracare.dao.ConsultaSifenDAO() {
+            @Override public void iniciar(long id, long solicitud, long persona, String cdc) {
+                assertEquals(7, id); assertEquals(1, solicitud); assertEquals(20, persona); assertEquals(CDC, cdc);
+                pasos.add("inicio");
+            }
+            @Override public void finalizar(long id, ResultadoConsultaSifen resultado) {
+                assertEquals(7, id); assertNotNull(copia[0]); pasos.add("fin");
+            }
+        };
+        var servicio = new ConsultaSifenService(dao, cfg, cliente, historial) {
             @Override long siguienteIdentificador() { return 7; }
         };
         assertEquals(ResultadoConsultaSifen.Estado.NO_ENCONTRADO, servicio.consultar(1, medico).estado());
         assertArrayEquals(new char[9], copia[0]);
+        assertEquals(java.util.List.of("inicio", "fin"), pasos);
+    }
+    @Test void historialRequiereMedicoYFiltraPorPersona() throws Exception {
+        var historial = new py.fpune.soracare.dao.ConsultaSifenDAO() {
+            @Override public java.util.List<py.fpune.soracare.dto.ConsultaSifenHistorialDTO> listarDelMedico(long persona) {
+                assertEquals(20, persona); return java.util.List.of();
+            }
+        };
+        var servicio = new ConsultaSifenService(null, null, null, historial);
+        assertThrows(IllegalArgumentException.class, () -> servicio.historial(null));
+        assertThrows(IllegalArgumentException.class, () -> servicio.historial(new UsuarioAutenticadoDTO(1, 20, "m", true, Set.of("MEDICO"))));
+        assertThrows(IllegalArgumentException.class, () -> servicio.historial(new UsuarioAutenticadoDTO(1, 20, "p", false, Set.of("PACIENTE"))));
+        assertTrue(servicio.historial(medico).isEmpty());
+    }
+
+    @Test void falloDeHistorialImpideConsultarOConservaLaInterrupcionSinReintentar() throws Exception {
+        for (boolean fallaInicio : new boolean[]{true, false}) {
+            int[] llamadas = {0};
+            char[][] passwordUsada = {null};
+            var dao = new SolicitudSifenDAO() {
+                @Override public Optional<DocumentoKudeDTO> buscarKudeDelMedico(long id, long persona) {
+                    return Optional.of(new DocumentoKudeDTO("PRUEBA", "ERROR", CDC, null, null, true));
+                }
+            };
+            var cfg = new ConfiguracionSifenService() {
+                @Override public ConfiguracionFiscalSifen cargarConfiguracion() {
+                    return new ConfiguracionFiscalSifen(Ambiente.PRUEBA, null, null, null, null, null,
+                            Path.of("sintetico.p12"), "sintetico".toCharArray(), null, new char[0], null);
+                }
+            };
+            var historial = new py.fpune.soracare.dao.ConsultaSifenDAO() {
+                @Override public void iniciar(long id, long solicitud, long persona, String cdc) throws java.sql.SQLException {
+                    if (fallaInicio) throw new java.sql.SQLException("Fallo sintético");
+                }
+                @Override public void finalizar(long id, ResultadoConsultaSifen resultado) throws java.sql.SQLException {
+                    throw new java.sql.SQLException("Fallo sintético");
+                }
+            };
+            var cliente = new ClienteConsultaSifenService() {
+                @Override public ResultadoConsultaSifen consultarPrueba(long id, String cdc, Path ruta, char[] password) {
+                    llamadas[0]++; passwordUsada[0] = password;
+                    return new ResultadoConsultaSifen(ResultadoConsultaSifen.Estado.ERROR, CDC, "TRANSPORTE", "Sin respuesta", null, 0);
+                }
+            };
+            var servicio = new ConsultaSifenService(dao, cfg, cliente, historial) {
+                @Override long siguienteIdentificador() { return 7; }
+            };
+            assertThrows(java.sql.SQLException.class, () -> servicio.consultar(1, medico));
+            assertEquals(fallaInicio ? 0 : 1, llamadas[0]);
+            if (!fallaInicio) assertArrayEquals(new char[9], passwordUsada[0]);
+        }
     }
 }

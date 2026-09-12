@@ -26,8 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 class PostgreSqlFlywayIT {
 
-    private static final int CANTIDAD_MIGRACIONES_ESPERADA = 36;
-    private static final String ULTIMA_VERSION_ESPERADA = "036";
+    private static final int CANTIDAD_MIGRACIONES_ESPERADA = 37;
+    private static final String ULTIMA_VERSION_ESPERADA = "037";
     private static final String BASE_TEMPORAL = "soracare_pruebas";
     private static final String USUARIO_TEMPORAL = "soracare_app";
 
@@ -178,5 +178,58 @@ class PostgreSqlFlywayIT {
                 POSTGRESQL.getUsername(),
                 POSTGRESQL.getPassword()
         );
+    }
+
+    @Test
+    void historialRealAislaMedicosYNoModificaElEstadoFiscal() throws Exception {
+        var dao = new py.fpune.soracare.dao.ConsultaSifenDAO();
+        String cdc = "1".repeat(44);
+        try (var c = abrirConexion()) {
+            c.setAutoCommit(false);
+            long persona = insertar(c, "INSERT INTO soracare.personas(nombres,apellidos,cedula) VALUES ('Test','Historial',987654321) RETURNING id_persona");
+            long paciente = insertar(c, "INSERT INTO soracare.pacientes(id_persona) VALUES (" + persona + ") RETURNING id_paciente");
+            long medico = insertar(c, "INSERT INTO soracare.medicos(id_persona,matricula_profesional) VALUES (" + persona + ",'TEST-HIST') RETURNING id_medico");
+            long usuario = insertar(c, "INSERT INTO soracare.usuarios(id_persona,nombre_usuario,contrasena_hash) VALUES (" + persona + ",'test.historial','hash-sintetico-no-login') RETURNING id_usuario");
+            long especialidad = insertar(c, "INSERT INTO soracare.especialidades(nombre,descripcion) VALUES ('Test historial','Temporal') RETURNING id_especialidad");
+            long sede = insertar(c, "INSERT INTO soracare.sedes(codigo,nombre,direccion,ciudad) VALUES ('TEST-H','Test','Test','Test') RETURNING id_sede");
+            long consultorio = insertar(c, "INSERT INTO soracare.consultorios(id_sede,codigo,nombre) VALUES (" + sede + ",'TEST-H','Test') RETURNING id_consultorio");
+            try (var s = c.createStatement()) {
+                s.executeUpdate("INSERT INTO soracare.medicos_especialidades(id_medico,id_especialidad) VALUES (" + medico + "," + especialidad + ")");
+            }
+            long cita = insertar(c, "INSERT INTO soracare.citas(id_paciente,id_medico,id_especialidad,id_consultorio,id_estado_cita,fecha_hora_inicio,fecha_hora_fin,motivo_consulta) VALUES ("
+                    + paciente + "," + medico + "," + especialidad + "," + consultorio + ",(SELECT MIN(id_estado_cita) FROM soracare.estados_citas),CURRENT_TIMESTAMP,CURRENT_TIMESTAMP+INTERVAL '30 minutes','Test') RETURNING id_cita");
+            long pago = insertar(c, "INSERT INTO soracare.pagos(id_cita,id_metodo_pago,id_estado_pago,monto) VALUES (" + cita
+                    + ",(SELECT MIN(id_metodo_pago) FROM soracare.metodos_pago),(SELECT MIN(id_estado_pago) FROM soracare.estados_pago),100) RETURNING id_pago");
+            long factura = insertar(c, "INSERT INTO soracare.facturas_internas(id_pago,id_usuario_emisor,tipo_documento,numero_documento,nombre_razon_social,direccion,correo,subtotal,total,descripcion) VALUES ("
+                    + pago + "," + usuario + ",'CI','123','Test','Test','test@example.invalid',100,100,'Test') RETURNING id_factura");
+            long solicitud = insertar(c, "INSERT INTO soracare.solicitudes_sifen(id_factura_interna,ambiente,estado,cdc) VALUES (" + factura + ",'PRUEBA','ERROR','" + cdc + "') RETURNING id_solicitud");
+            org.junit.jupiter.api.Assertions.assertThrows(java.sql.SQLException.class, () -> dao.iniciar(c, 900, solicitud, persona + 10000, cdc));
+            dao.iniciar(c, 901, solicitud, persona, cdc);
+            assertEquals("SIN_RESULTADO", dao.listarDelMedico(c, persona).getFirst().estado());
+            assertTrue(dao.listarDelMedico(c, persona + 10000).isEmpty());
+            var resultado = new py.fpune.soracare.sifen.ResultadoConsultaSifen(
+                    py.fpune.soracare.sifen.ResultadoConsultaSifen.Estado.ENCONTRADO, cdc, "0422", "Encontrado", "123", 2);
+            dao.finalizar(c, 901, resultado);
+            var registro = dao.listarDelMedico(c, persona).getFirst();
+            assertEquals("ENCONTRADO", registro.estado());
+            assertEquals(2, registro.eventos());
+            assertEquals("123", registro.protocolo());
+            org.junit.jupiter.api.Assertions.assertThrows(java.sql.SQLException.class, () -> dao.finalizar(c, 901, resultado));
+            for (long id = 902; id <= 952; id++) dao.iniciar(c, id, solicitud, persona, cdc);
+            var recientes = dao.listarDelMedico(c, persona);
+            assertEquals(50, recientes.size());
+            assertEquals(952, recientes.getFirst().idConsulta());
+            assertEquals(903, recientes.getLast().idConsulta());
+            try (var s = c.createStatement(); var r = s.executeQuery("SELECT estado FROM soracare.solicitudes_sifen WHERE id_solicitud=" + solicitud)) {
+                assertTrue(r.next()); assertEquals("ERROR", r.getString(1));
+            }
+            c.rollback();
+        }
+    }
+
+    private static long insertar(Connection c, String sql) throws Exception {
+        try (var s = c.createStatement(); var r = s.executeQuery(sql)) {
+            assertTrue(r.next()); return r.getLong(1);
+        }
     }
 }

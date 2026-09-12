@@ -76,9 +76,8 @@ public class FacturaInternaMedicoServlet extends HttpServlet {
         try {
             UsuarioAutenticadoDTO usuario = usuario(request);
             if ("consultarSifenPrueba".equals(request.getParameter("accion"))) {
-                request.setAttribute("consultaSifen", consultaSifenService.consultar(
-                        convertirIdSolicitud(request.getParameter("idSolicitud")), usuario));
-                mostrarVista(request, response);
+                consultaSifenService.consultar(convertirIdSolicitud(request.getParameter("idSolicitud")), usuario);
+                response.sendRedirect(request.getContextPath() + "/medico/facturas#historial-sifen");
             } else if ("enviarSifenPrueba".equals(request.getParameter("accion"))) {
                 SolicitudSifenResumenDTO solicitud = integracionSifenService
                         .enviarAPruebas(
@@ -129,7 +128,7 @@ public class FacturaInternaMedicoServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             request.setAttribute(
                     "error",
-                    "No fue posible emitir la factura interna. Intentá nuevamente."
+                    "No fue posible completar la operación. Revisá el historial antes de repetirla; una consulta puede haber quedado sin resultado registrado."
             );
             mostrarVista(request, response);
         }
@@ -143,6 +142,7 @@ public class FacturaInternaMedicoServlet extends HttpServlet {
         );
         try {
             UsuarioAutenticadoDTO usuario = usuario(request);
+            request.setAttribute("historialSifen", consultaSifenService.historial(usuario));
             request.setAttribute(
                     "resumenFacturacion",
                     facturaService.consultarResumen(usuario.getIdPersona())

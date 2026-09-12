@@ -393,8 +393,9 @@ ejecuta respaldo y verificación diariamente a las 21:00 (America/Asuncion).
 Consulta diagnóstica SIFEN agregada el 11 de septiembre: botón POST con CSRF en
 facturas del médico, CDC tomado del documento propio, solo PRUEBA. Distingue
 encontrado/inexistente/sin permiso/error; no sobrescribe estados fiscales ni
-interpreta efectos de eventos. Resultado transitorio; historial y conciliación
-persistente pendientes. Suite local actual: 161 unitarias + 3 de integración.
+interpreta efectos de eventos. V037 agrega historial persistente de consultas
+propias, registra inicios sin resultado y respuestas, y redirige a GET al terminar.
+Conciliación e interpretación de eventos pendientes.
 No se realizaron consultas oficiales reales; requiere certificado y CDC propios.
 
 Actualización del 11 de septiembre: KuDE de prueba implementado para el médico

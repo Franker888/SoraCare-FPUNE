@@ -151,19 +151,27 @@
         </div>
     </section>
 
-    <% if (request.getAttribute("consultaSifen") instanceof py.fpune.soracare.sifen.ResultadoConsultaSifen consulta) { %>
-    <div class="alert alert-info" role="status">
-        <strong>Consulta SIFEN Prueba: <%= h(consulta.estado().name().replace('_', ' ')) %></strong>
-        <div class="text-break">CDC: <%= h(consulta.cdc()) %></div>
-        <div>Código <%= h(consulta.codigo()) %>: <%= h(consulta.mensaje()) %></div>
-        <% if (consulta.protocolo() != null) { %>
-        <div>Protocolo: <%= h(consulta.protocolo()) %>. Contenedores de eventos: <%= consulta.eventos() %>.</div>
+    <section id="historial-sifen" class="card p-3 mb-4" aria-label="Historial de consultas SIFEN">
+        <h2 class="h5">Historial de consultas SIFEN Prueba</h2>
+        <p class="small text-muted">Últimas 50 consultas propias. No modifican el estado fiscal ni reenvían facturas.
+            Encontrado no confirma vigencia; los eventos requieren revisión. Sin resultado significa que la consulta
+            sigue en curso o se interrumpió, no que el documento fue rechazado.</p>
+        <% var historial = request.getAttribute("historialSifen") instanceof List<?> lista ? lista : List.of(); %>
+        <% if (historial.isEmpty()) { %><p class="mb-0">No hay consultas registradas para mostrar.</p><% } %>
+        <% for (var elemento : historial) {
+            var consulta = (py.fpune.soracare.dto.ConsultaSifenHistorialDTO) elemento; %>
+        <div class="border-top py-2">
+            <strong><%= h(consulta.estado().replace('_', ' ')) %></strong>
+            <span class="small"> · <%= h(fechaHora.format(consulta.iniciadoEn().atZoneSameInstant(java.time.ZoneId.of("America/Asuncion")))) %>
+                · Consulta #<%= consulta.idConsulta() %> · Solicitud #<%= consulta.idSolicitud() %></span>
+            <div class="small text-break">CDC: <%= h(consulta.cdc()) %></div>
+            <div><%= h(consulta.codigo()) %> <%= h(consulta.mensaje()) %></div>
+            <% if (consulta.protocolo() != null) { %>
+            <div class="small">Protocolo: <%= h(consulta.protocolo()) %> · Contenedores de eventos: <%= consulta.eventos() %> (efectos pendientes de revisión).</div>
+            <% } %>
+        </div>
         <% } %>
-        <div class="small mt-2">Esta consulta no cambia el estado local ni reenvía la factura.
-            Encontrar el CDC no confirma por sí solo su vigencia: los eventos requieren revisión.
-            Un CDC no encontrado no equivale a rechazo ni autoriza un reenvío automático.</div>
-    </div>
-    <% } %>
+    </section>
     <% if (request.getAttribute("mensajeExito") != null) { %>
     <div class="alert alert-success"><%= h((String) request.getAttribute("mensajeExito")) %></div>
     <% } %>

@@ -161,9 +161,8 @@ La consulta informa cuántos contenedores de eventos llegaron, pero **no interpr
 todavía sus efectos fiscales**. Encontrado no equivale a vigencia confirmada.
 No modifica estado, XML, respuesta de emisión, numeración fiscal ni intentos de
 envío. Solo consume un identificador técnico de la secuencia existente para la
-petición. El resultado es transitorio en la pantalla: no hay historial persistente
-de consultas ni conciliación automática en esta etapa. Refrescar el POST puede
-pedir confirmación del navegador y volver a consultar.
+petición. El resultado se conserva ahora en el historial descrito a continuación;
+la conciliación automática todavía no está habilitada.
 
 Las respuestas tienen límite de 2 MB durante su recepción, tiempo máximo de
 solicitud de 40 segundos y redirecciones deshabilitadas. El parser desactiva
@@ -183,6 +182,36 @@ contención de entidades XML, permisos, CSRF y borrado de la contraseña tempora
 Despliegue Docker verificado: aplicación y PostgreSQL saludables, inicio y
 conexión a BD con HTTP 200; facturas y consulta sin sesión redirigen al login,
 y la API privada responde 401. Pendiente prueba autenticada con SIFEN real.
+
+## Historial persistente de consultas
+
+V037 agrega `consultas_sifen` sin modificar documentos ni estados fiscales.
+Antes de contactar SIFEN se registra el identificador técnico, solicitud, médico,
+CDC, ambiente PRUEBA y fecha de inicio. Si no puede guardarse el inicio, no se
+consulta el servicio externo. Después se guarda el resultado, código, mensaje,
+protocolo y cantidad de contenedores de eventos. No se almacena el XML ni secretos.
+
+Una interrupción o fallo al guardar el resultado deja `SIN_RESULTADO`: puede estar
+en curso o interrumpida, y no debe interpretarse como rechazo. No se reintenta
+automáticamente. Un resultado finalizado no se sobrescribe desde este DAO.
+Los errores de configuración previos a iniciar la consulta no crean historial.
+
+Facturación muestra las últimas 50 consultas del médico, con hora de Paraguay.
+La lectura comprueba también la propiedad actual del documento. Tras una consulta
+guardada se redirige a GET para evitar repetirla al refrescar. No hay borrado ni
+retención automática. Los registros anteriores a V037 no se reconstruyen.
+
+La interpretación de eventos y la conciliación fiscal siguen pendientes; el
+historial no certifica vigencia ni reemplaza la prueba oficial con certificado.
+
+Verificado con Maven: 163 pruebas unitarias y 4 de integración, sin fallos ni
+omisiones. PostgreSQL temporal aplica V001–V037; se prueba el registro y cierre,
+aislamiento entre médicos, límite de 50, orden, rechazo de sobrescritura y estado
+fiscal intacto. Tests de servicio cubren fallos de escritura antes/después de la
+llamada y ausencia de reintentos. Ninguna prueba contactó SIFEN real.
+Docker actualizado: V037 aplicada correctamente, inicio HTTP 200 y accesos a
+facturación/consulta sin sesión redirigidos al login (302). Pendiente revisión
+visual autenticada del historial y consulta con certificado oficial.
 
 Enlaces generales:
 
