@@ -20,7 +20,8 @@ validacion local y habilitaciones externas; no declara produccion terminada.
    unitarias y HTTP anonimas no reemplazan este recorrido autenticado.
 2. **Fiscal**: validar formalmente y habilitar la entrega del KuDE al paciente;
    completar conciliación fiscal y análisis/gestión de eventos. El historial
-   persistente de consultas está implementado con V037. La consulta
+   persistente de consultas está implementado con V037 y V038 agrega observación
+   diagnóstica de cancelación informada, sin validar firmas ni conciliar estados. La consulta
    diagnóstica por CDC está implementada, sin alterar el estado fiscal guardado.
    Falta probarla con certificado y CDC oficiales. La descarga de KuDE de prueba para el
    médico está implementada, siempre sin validez fiscal. El motor

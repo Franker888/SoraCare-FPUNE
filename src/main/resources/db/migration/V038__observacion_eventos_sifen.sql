@@ -1,0 +1,4 @@
+ALTER TABLE soracare.consultas_sifen
+    ADD COLUMN observacion_eventos VARCHAR(40) NOT NULL DEFAULT 'NO_EVALUADO'
+    CHECK (observacion_eventos IN ('NO_EVALUADO', 'SIN_EVENTOS_INFORMADOS',
+        'REVISION_REQUERIDA', 'CANCELACION_APROBADA_INFORMADA'));

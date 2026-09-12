@@ -38,11 +38,12 @@ public class ConsultaSifenDAO {
     public void finalizar(Connection c, long id, ResultadoConsultaSifen r) throws SQLException {
         try (var p = c.prepareStatement("""
                 UPDATE soracare.consultas_sifen SET terminado_en = CURRENT_TIMESTAMP,
-                    estado = ?, codigo = ?, mensaje = ?, protocolo = ?, eventos = ?
+                    estado = ?, codigo = ?, mensaje = ?, protocolo = ?, eventos = ?, observacion_eventos = ?
                 WHERE id_consulta = ? AND estado = 'SIN_RESULTADO' AND cdc = ?
                 """)) {
             p.setString(1, r.estado().name()); p.setString(2, r.codigo()); p.setString(3, r.mensaje());
-            p.setString(4, r.protocolo()); p.setInt(5, r.eventos()); p.setLong(6, id); p.setString(7, r.cdc());
+            p.setString(4, r.protocolo()); p.setInt(5, r.eventos()); p.setString(6, r.observacionEventos());
+            p.setLong(7, id); p.setString(8, r.cdc());
             if (p.executeUpdate() != 1) throw new SQLException("No fue posible cerrar el registro de consulta.");
         }
     }
@@ -68,7 +69,7 @@ public class ConsultaSifenDAO {
                 while (r.next()) lista.add(new ConsultaSifenHistorialDTO(r.getLong("id_consulta"),
                         r.getLong("id_solicitud"), r.getString("cdc"), r.getObject("iniciado_en", OffsetDateTime.class),
                         r.getString("estado"), r.getString("codigo"), r.getString("mensaje"),
-                        r.getString("protocolo"), r.getObject("eventos", Integer.class)));
+                        r.getString("protocolo"), r.getObject("eventos", Integer.class), r.getString("observacion_eventos")));
             }
             return List.copyOf(lista);
         }

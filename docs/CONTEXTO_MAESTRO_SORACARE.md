@@ -395,7 +395,8 @@ facturas del médico, CDC tomado del documento propio, solo PRUEBA. Distingue
 encontrado/inexistente/sin permiso/error; no sobrescribe estados fiscales ni
 interpreta efectos de eventos. V037 agrega historial persistente de consultas
 propias, registra inicios sin resultado y respuestas, y redirige a GET al terminar.
-Conciliación e interpretación de eventos pendientes.
+V038 guarda observaciones diagnósticas de eventos v150; no confirma vigencia ni
+valida firmas. Conciliación completa y validación oficial de eventos pendientes.
 No se realizaron consultas oficiales reales; requiere certificado y CDC propios.
 
 Actualización del 11 de septiembre: KuDE de prueba implementado para el médico

@@ -108,7 +108,8 @@ public class ClienteConsultaSifenService {
             String protocolo = campo(contenido, "dProtAut");
             if (!protocolo.matches("[0-9]{1,80}")) throw new IllegalArgumentException();
             int eventos = hijos(contenido, XmlSifenUtil.NAMESPACE, "xContEv").size();
-            return new ResultadoConsultaSifen(ENCONTRADO, cdc, codigo, mensaje, protocolo, eventos);
+            return new ResultadoConsultaSifen(ENCONTRADO, cdc, codigo, mensaje, protocolo, eventos,
+                    InterpretacionEventosSifen.resumir(contenido, cdc));
         } catch (Exception error) {
             return error(cdc, "RESPUESTA_INVALIDA", "La respuesta no permite confirmar el CDC consultado.");
         }

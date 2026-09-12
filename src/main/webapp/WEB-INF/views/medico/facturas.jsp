@@ -167,7 +167,9 @@
             <div class="small text-break">CDC: <%= h(consulta.cdc()) %></div>
             <div><%= h(consulta.codigo()) %> <%= h(consulta.mensaje()) %></div>
             <% if (consulta.protocolo() != null) { %>
-            <div class="small">Protocolo: <%= h(consulta.protocolo()) %> · Contenedores de eventos: <%= consulta.eventos() %> (efectos pendientes de revisión).</div>
+            <div class="small">Protocolo: <%= h(consulta.protocolo()) %> · Contenedores de eventos: <%= consulta.eventos() %>.</div>
+            <div class="small">Observación: <%= h(consulta.observacionEventos().replace('_', ' ')) %>.
+                Lectura diagnóstica del contenedor, sin validación de firma del evento ni confirmación de vigencia. No cambia el estado fiscal.</div>
             <% } %>
         </div>
         <% } %>

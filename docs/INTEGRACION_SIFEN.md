@@ -213,6 +213,35 @@ Docker actualizado: V037 aplicada correctamente, inicio HTTP 200 y accesos a
 facturación/consulta sin sesión redirigidos al login (302). Pendiente revisión
 visual autenticada del historial y consulta con certificado oficial.
 
+## Observación de eventos (V038)
+
+Se incorpora una lectura diagnóstica conservadora del formato v150, separada
+del estado de emisión. No se envían cancelaciones ni otros eventos. No valida
+la firma del evento ni certifica vigencia. El historial registra:
+
+- `NO_EVALUADO`: registros anteriores o consultas sin documento encontrado.
+- `SIN_EVENTOS_INFORMADOS`: contenedor sin eventos, no equivale a vigente.
+- `CANCELACION_APROBADA_INFORMADA`: un evento tipo 1, CDC e identificador
+  coincidentes, respuesta de aprobación, código 0600 y protocolo de evento.
+- `REVISION_REQUERIDA`: eventos desconocidos, repetidos, sin respuesta,
+  rechazados o ambiguos. No se infiere su efecto fiscal.
+
+Se admite únicamente la estructura XML anidada documentada. Variantes escapadas
+de eventos y otros tipos quedan para revisión; la compatibilidad debe comprobarse
+con muestras oficiales. Se conserva la observación, no el XML ni motivos libres.
+Referencia: manual v150, secciones 9.4.3, 9.5.3 y 11.5.1, enlazado arriba.
+
+Para cerrar el módulo fiscal faltan: certificado/habilitación del contribuyente,
+pruebas oficiales de emisión, consulta y eventos, validación de firma y esquemas de
+eventos, conciliación fiscal completa y entrega autorizada del KuDE al paciente.
+No habilitar producción ni marcar homologación confirmada por pasar tests locales.
+
+Validación de esta etapa: 166 pruebas unitarias y 4 de integración PostgreSQL;
+V038 preserva los datos previos y registra la observación separada del estado.
+El contenedor no dispone de certificado SIFEN configurado y legible en la revisión
+del 11/09/2026. No se realizaron solicitudes oficiales. Falta revisión visual
+autenticada del nuevo texto del historial.
+
 Enlaces generales:
 
 - https://www.dnit.gov.py/web/e-kuatia/documentacion-tecnica

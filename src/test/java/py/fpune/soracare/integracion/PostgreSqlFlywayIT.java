@@ -26,8 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 class PostgreSqlFlywayIT {
 
-    private static final int CANTIDAD_MIGRACIONES_ESPERADA = 37;
-    private static final String ULTIMA_VERSION_ESPERADA = "037";
+    private static final int CANTIDAD_MIGRACIONES_ESPERADA = 38;
+    private static final String ULTIMA_VERSION_ESPERADA = "038";
     private static final String BASE_TEMPORAL = "soracare_pruebas";
     private static final String USUARIO_TEMPORAL = "soracare_app";
 
@@ -208,12 +208,13 @@ class PostgreSqlFlywayIT {
             assertEquals("SIN_RESULTADO", dao.listarDelMedico(c, persona).getFirst().estado());
             assertTrue(dao.listarDelMedico(c, persona + 10000).isEmpty());
             var resultado = new py.fpune.soracare.sifen.ResultadoConsultaSifen(
-                    py.fpune.soracare.sifen.ResultadoConsultaSifen.Estado.ENCONTRADO, cdc, "0422", "Encontrado", "123", 2);
+                    py.fpune.soracare.sifen.ResultadoConsultaSifen.Estado.ENCONTRADO, cdc, "0422", "Encontrado", "123", 2, "REVISION_REQUERIDA");
             dao.finalizar(c, 901, resultado);
             var registro = dao.listarDelMedico(c, persona).getFirst();
             assertEquals("ENCONTRADO", registro.estado());
             assertEquals(2, registro.eventos());
             assertEquals("123", registro.protocolo());
+            assertEquals("REVISION_REQUERIDA", registro.observacionEventos());
             org.junit.jupiter.api.Assertions.assertThrows(java.sql.SQLException.class, () -> dao.finalizar(c, 901, resultado));
             for (long id = 902; id <= 952; id++) dao.iniciar(c, id, solicitud, persona, cdc);
             var recientes = dao.listarDelMedico(c, persona);
