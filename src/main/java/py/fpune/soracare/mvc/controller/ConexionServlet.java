@@ -1,61 +1,38 @@
 package py.fpune.soracare.mvc.controller;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import py.fpune.soracare.config.ConexionBD;
-
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/** Healthcheck público: solo disponibilidad, nunca información interna. */
 @WebServlet("/conexion-bd")
 public class ConexionServlet extends HttpServlet {
-
     @Override
-    protected void doGet(HttpServletRequest request,
-                         HttpServletResponse response)
-            throws ServletException, IOException {
-
-        response.setContentType("text/html;charset=UTF-8");
-
-        String consulta = """
-                SELECT
-                    current_database() AS base_datos,
-                    current_user AS usuario
-                """;
-
-        try (
-                Connection conexion = ConexionBD.obtenerConexion();
-                PreparedStatement sentencia =
-                        conexion.prepareStatement(consulta);
-                ResultSet resultado = sentencia.executeQuery();
-                PrintWriter salida = response.getWriter()
-        ) {
-
-            if (resultado.next()) {
-                salida.println("<h1>Conexión exitosa</h1>");
-                salida.println("<p>Java se conectó correctamente con PostgreSQL.</p>");
-                salida.println("<p><strong>Base de datos:</strong> "
-                        + resultado.getString("base_datos") + "</p>");
-                salida.println("<p><strong>Usuario:</strong> "
-                        + resultado.getString("usuario") + "</p>");
-            }
-
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        response.setContentType("text/plain;charset=UTF-8");
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        boolean disponible;
+        try {
+            disponible = baseDisponible();
         } catch (SQLException error) {
+            disponible = false;
+        }
+        response.setStatus(disponible ? 200 : 503);
+        response.getWriter().write(disponible ? "OK" : "NO_DISPONIBLE");
+    }
 
-            response.setStatus(
-                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR
-            );
-
-            try (PrintWriter salida = response.getWriter()) {
-                salida.println("<h1>Error de conexión</h1>");
-                salida.println("<p>" + error.getMessage() + "</p>");
+    protected boolean baseDisponible() throws SQLException {
+        try (var conexion = ConexionBD.obtenerConexion();
+             var sentencia = conexion.prepareStatement("SELECT 1")) {
+            sentencia.setQueryTimeout(3);
+            try (var resultado = sentencia.executeQuery()) {
+                return resultado.next() && resultado.getInt(1) == 1;
             }
         }
     }
