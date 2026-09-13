@@ -12,6 +12,7 @@ public class UsuarioAutenticadoDTO {
     private final String nombreUsuario;
     private final boolean debeCambiarContrasena;
     private final Set<String> roles;
+    private final long versionSesion;
 
     public UsuarioAutenticadoDTO(
             long idUsuario,
@@ -20,6 +21,13 @@ public class UsuarioAutenticadoDTO {
             boolean debeCambiarContrasena,
             Set<String> roles
     ) {
+        this(idUsuario, idPersona, nombreUsuario, debeCambiarContrasena, roles, 0);
+    }
+
+    public UsuarioAutenticadoDTO(long idUsuario, long idPersona, String nombreUsuario,
+                                boolean debeCambiarContrasena, Set<String> roles,
+                                long versionSesion) {
+        this.versionSesion = versionSesion;
         if (idUsuario <= 0) {
             throw new IllegalArgumentException(
                     "El ID del usuario debe ser mayor que cero."
@@ -55,6 +63,10 @@ public class UsuarioAutenticadoDTO {
 
     public long getIdUsuario() {
         return idUsuario;
+    }
+
+    public long getVersionSesion() {
+        return versionSesion;
     }
 
     public long getIdPersona() {

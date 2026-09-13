@@ -327,7 +327,8 @@ public class AutenticacionService {
                 usuario.getIdPersona(),
                 usuario.getNombreUsuario(),
                 usuario.isDebeCambiarContrasena(),
-                nombresRoles
+                nombresRoles,
+                usuario.getVersionSesion()
         );
     }
 

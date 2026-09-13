@@ -40,6 +40,18 @@ public class CambioContrasenaService {
             long idUsuario,
             SolicitudCambioContrasenaDTO solicitud
     ) throws SQLException {
+        return cambiarContrasena(idUsuario, solicitud, null);
+    }
+
+    public UsuarioAutenticadoDTO cambiarContrasena(UsuarioAutenticadoDTO sesion,
+                                                   SolicitudCambioContrasenaDTO solicitud)
+            throws SQLException {
+        return cambiarContrasena(sesion.getIdUsuario(), solicitud, sesion.getVersionSesion());
+    }
+
+    private UsuarioAutenticadoDTO cambiarContrasena(long idUsuario,
+                                                    SolicitudCambioContrasenaDTO solicitud,
+                                                    Long versionSesion) throws SQLException {
 
         validarIdUsuario(
                 idUsuario
@@ -53,6 +65,9 @@ public class CambioContrasenaService {
         try (Connection conexion = ConexionBD.obtenerConexion()) {
             usuario = buscarUsuario(conexion, idUsuario);
             validarEstadoUsuario(usuario);
+            if (versionSesion != null && versionSesion != usuario.getVersionSesion()) {
+                throw new SecurityException("Iniciá sesión nuevamente.");
+            }
             verificarContrasenaActual(
                     solicitud.getContrasenaActual(),
                     usuario.getContrasenaHash()
@@ -80,7 +95,8 @@ public class CambioContrasenaService {
                         conexion,
                         idUsuario,
                         usuario.getContrasenaHash(),
-                        nuevoHash
+                        nuevoHash,
+                        usuario.getVersionSesion()
                 );
 
                 Usuario usuarioActualizado =
@@ -391,7 +407,8 @@ public class CambioContrasenaService {
                 usuario.getIdPersona(),
                 usuario.getNombreUsuario(),
                 usuario.isDebeCambiarContrasena(),
-                nombresRoles
+                nombresRoles,
+                usuario.getVersionSesion()
         );
     }
 

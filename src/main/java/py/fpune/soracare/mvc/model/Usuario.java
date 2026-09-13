@@ -14,6 +14,11 @@ public class Usuario {
     private String contrasenaHash;
 
     private EstadoUsuario estado;
+    private long versionSesion;
+
+    public long getVersionSesion() { return versionSesion; }
+
+    public void setVersionSesion(long versionSesion) { this.versionSesion = versionSesion; }
 
     private short intentosFallidos;
     private OffsetDateTime bloqueadoHasta;

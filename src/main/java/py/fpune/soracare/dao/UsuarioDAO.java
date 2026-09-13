@@ -91,6 +91,7 @@ public class UsuarioDAO {
                 usu.nombre_usuario,
                 usu.contrasena_hash,
                 usu.estado,
+                usu.version_sesion,
                 usu.intentos_fallidos,
                 usu.bloqueado_hasta,
                 usu.debe_cambiar_contrasena,
@@ -129,6 +130,7 @@ public class UsuarioDAO {
                 usu.nombre_usuario,
                 usu.contrasena_hash,
                 usu.estado,
+                usu.version_sesion,
                 usu.intentos_fallidos,
                 usu.bloqueado_hasta,
                 usu.debe_cambiar_contrasena,
@@ -226,6 +228,7 @@ public class UsuarioDAO {
             WHERE id_usuario = ?
               AND contrasena_hash = ?
               AND estado = 'ACTIVO'
+              AND version_sesion = ?
             """;
 
     public boolean existePorNombreUsuario(
@@ -774,6 +777,15 @@ public class UsuarioDAO {
             String hashActualEsperado,
             String nuevoHash
     ) throws SQLException {
+        long version = buscarPorId(conexion, idUsuario)
+                .orElseThrow(() -> new SQLException("La cuenta no existe."))
+                .getVersionSesion();
+        actualizarContrasena(conexion, idUsuario, hashActualEsperado, nuevoHash, version);
+    }
+
+    public void actualizarContrasena(Connection conexion, long idUsuario,
+                                     String hashActualEsperado, String nuevoHash,
+                                     long versionEsperada) throws SQLException {
 
         validarConexion(conexion);
 
@@ -819,6 +831,7 @@ public class UsuarioDAO {
                     3,
                     hashActualEsperado
             );
+            sentencia.setLong(4, versionEsperada);
 
             int filasAfectadas =
                     sentencia.executeUpdate();
@@ -869,6 +882,8 @@ public class UsuarioDAO {
 
         Usuario usuario =
                 new Usuario();
+
+        usuario.setVersionSesion(resultado.getLong("version_sesion"));
 
         usuario.setIdUsuario(
                 resultado.getLong(

@@ -65,6 +65,11 @@ $migraciones = @(
         Nombre = 'vinculacion segura con Google Calendar'
         Archivo = Join-Path $proyecto 'src\main\resources\db\migration\V036__vincular_google_calendar.sql'
         Verificacion = "SELECT to_regclass('soracare.google_calendar_vinculos') IS NOT NULL AND to_regclass('soracare.google_calendar_eventos') IS NOT NULL;"
+    },
+    @{
+        Nombre = 'revocacion de sesiones al cambiar estado'
+        Archivo = Join-Path $proyecto 'src\main\resources\db\migration\V039__revocar_sesiones_por_estado.sql'
+        Verificacion = "SELECT EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'soracare.usuarios'::regclass AND tgname = 'usuarios_revocar_sesiones_por_estado');"
     }
 )
 

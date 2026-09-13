@@ -145,8 +145,7 @@ public class CambioContrasenaServlet extends HttpServlet {
             UsuarioAutenticadoDTO usuarioActualizado =
                     cambioContrasenaService
                             .cambiarContrasena(
-                                    usuarioAutenticado
-                                            .getIdUsuario(),
+                                    usuarioAutenticado,
                                     solicitud
                             );
 

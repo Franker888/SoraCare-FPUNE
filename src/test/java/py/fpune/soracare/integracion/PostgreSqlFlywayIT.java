@@ -26,8 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 class PostgreSqlFlywayIT {
 
-    private static final int CANTIDAD_MIGRACIONES_ESPERADA = 38;
-    private static final String ULTIMA_VERSION_ESPERADA = "038";
+    private static final int CANTIDAD_MIGRACIONES_ESPERADA = 39;
+    private static final String ULTIMA_VERSION_ESPERADA = "039";
     private static final String BASE_TEMPORAL = "soracare_pruebas";
     private static final String USUARIO_TEMPORAL = "soracare_app";
 
@@ -41,6 +41,42 @@ class PostgreSqlFlywayIT {
                     .withPassword(UUID.randomUUID().toString());
 
     private static Flyway flyway;
+
+    @Test
+    void revocaSesionesInclusoTrasReactivarYConservaUnLoginNuevo() throws Exception {
+        var sesiones = new py.fpune.soracare.dao.SesionVigenteDAO();
+        var usuarios = new py.fpune.soracare.dao.UsuarioDAO();
+        try (Connection c = abrirConexion()) {
+            c.setAutoCommit(false);
+            try {
+                long persona = insertar(c, "INSERT INTO soracare.personas(nombres,apellidos,cedula) VALUES ('Test','Revocacion',987654329) RETURNING id_persona");
+                long usuario = insertar(c, "INSERT INTO soracare.usuarios(id_persona,nombre_usuario,contrasena_hash) VALUES (" + persona + ",'test.revocacion','hash-sintetico-no-login') RETURNING id_usuario");
+                assertTrue(sesiones.esVigente(c, usuario, 0));
+                try (Statement s = c.createStatement()) {
+                    s.executeUpdate("UPDATE soracare.usuarios SET estado='INACTIVO' WHERE id_usuario=" + usuario);
+                    assertFalse(sesiones.esVigente(c, usuario, 0));
+                    s.executeUpdate("UPDATE soracare.usuarios SET estado='ACTIVO' WHERE id_usuario=" + usuario);
+                    assertFalse(sesiones.esVigente(c, usuario, 0));
+                    assertTrue(sesiones.esVigente(c, usuario, 2));
+                    // Simula HIBP/BCrypt en vuelo mientras otro administrador revoca y reactiva.
+                    org.junit.jupiter.api.Assertions.assertThrows(java.sql.SQLException.class,
+                            () -> usuarios.actualizarContrasena(c, usuario,
+                                    "hash-sintetico-no-login", "nuevo-hash-sintetico", 0));
+                    usuarios.actualizarContrasena(c, usuario,
+                            "hash-sintetico-no-login", "nuevo-hash-sintetico", 2);
+                    assertTrue(sesiones.esVigente(c, usuario, 2));
+                    assertEquals(2, usuarios.buscarPorId(c, usuario).orElseThrow().getVersionSesion());
+                    assertEquals(2, usuarios.buscarPorIdentificador(c, "test.revocacion").orElseThrow().getVersionSesion());
+                    s.executeUpdate("UPDATE soracare.usuarios SET estado='ACTIVO', ultimo_acceso=CURRENT_TIMESTAMP WHERE id_usuario=" + usuario);
+                    assertTrue(sesiones.esVigente(c, usuario, 2));
+                    s.executeUpdate("UPDATE soracare.usuarios SET estado='BLOQUEADO' WHERE id_usuario=" + usuario);
+                    assertFalse(sesiones.esVigente(c, usuario, 2));
+                    assertFalse(sesiones.esVigente(c, usuario, 3));
+                    assertFalse(sesiones.esVigente(c, -1, 0));
+                }
+            } finally { c.rollback(); }
+        }
+    }
     private static MigrateResult resultadoMigracion;
 
     @BeforeAll
