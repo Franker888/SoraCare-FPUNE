@@ -297,7 +297,7 @@
             <form
                     method="post"
                     action="${pageContext.request.contextPath}/admin/horarios"
-                    class="row g-3">
+                    class="row g-3"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
 
                 <input type="hidden" name="accion" value="registrar">
 
@@ -686,7 +686,7 @@
                             <form
                                     method="post"
                                     action="${pageContext.request.contextPath}/admin/horarios"
-                                    class="d-inline">
+                                    class="d-inline"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
 
                                 <input
                                         type="hidden"

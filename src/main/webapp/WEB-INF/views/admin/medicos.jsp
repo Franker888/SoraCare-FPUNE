@@ -631,7 +631,7 @@
 
             <form
                     method="post"
-                    action="${pageContext.request.contextPath}/admin/medicos">
+                    action="${pageContext.request.contextPath}/admin/medicos"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
 
                 <input
                         type="hidden"
@@ -887,7 +887,7 @@
             <% } else { %>
 
             <form method="post"
-                  action="${pageContext.request.contextPath}/admin/medicos">
+                  action="${pageContext.request.contextPath}/admin/medicos"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
 
                 <input type="hidden" name="accion" value="crearCuentaMedico">
 
@@ -1016,7 +1016,7 @@
 
                     <form
                             method="post"
-                            action="${pageContext.request.contextPath}/admin/medicos">
+                            action="${pageContext.request.contextPath}/admin/medicos"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
 
                         <input
                                 type="hidden"

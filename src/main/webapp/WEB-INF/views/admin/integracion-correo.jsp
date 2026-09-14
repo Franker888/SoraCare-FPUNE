@@ -73,7 +73,7 @@
                 <span class="admin-module-icon mb-3"><i class="bi bi-send-check"></i></span>
                 <h2 class="h4">Enviar correo de prueba</h2>
                 <p class="text-secondary">Usá primero el correo asociado a tu cuenta de Resend. El botón se habilita cuando Tomcat recibe la clave.</p>
-                <form method="post" action="${pageContext.request.contextPath}/admin/integraciones/correo">
+                <form method="post" action="${pageContext.request.contextPath}/admin/integraciones/correo"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                     <label for="destinatario" class="form-label fw-semibold">Correo destinatario</label>
                     <input class="form-control form-control-lg mb-3" type="email" id="destinatario"
                            name="destinatario" maxlength="254" required

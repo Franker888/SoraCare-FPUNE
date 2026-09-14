@@ -77,7 +77,7 @@
                 <span class="admin-module-icon mb-3"><i class="bi bi-send"></i></span>
                 <h2 class="h4">Enviar SMS de prueba</h2>
                 <p class="text-secondary">Durante la prueba de Twilio, el teléfono destinatario debe estar verificado y escribirse con código de país.</p>
-                <form method="post" action="${pageContext.request.contextPath}/admin/integraciones/sms">
+                <form method="post" action="${pageContext.request.contextPath}/admin/integraciones/sms"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                     <label for="destinatario" class="form-label fw-semibold">Teléfono destinatario</label>
                     <input class="form-control form-control-lg mb-3" type="tel"
                            id="destinatario" name="destinatario" maxlength="16"

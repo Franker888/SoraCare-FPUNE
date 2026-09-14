@@ -110,10 +110,25 @@ public class FiltroAutorizacionPorRol implements Filter {
             return;
         }
 
-        cadena.doFilter(
-                request,
-                response
-        );
+        // Antes de leer parámetros: conservar nombres y motivos escritos en UTF-8.
+        request.setCharacterEncoding("UTF-8");
+        String metodo = request.getMethod();
+        boolean lectura = "GET".equals(metodo)
+                || "HEAD".equals(metodo) || "OPTIONS".equals(metodo);
+        if (!lectura) {
+            String[] tokens = request.getParameterValues("csrfToken");
+            if (tokens == null || tokens.length != 1
+                    || !ProteccionCsrf.esValido(sesion, tokens[0])) {
+                request.setAttribute("csrfInvalido", Boolean.TRUE);
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "La confirmación de seguridad venció o no es válida. "
+                                + "Recargá la página e intentá nuevamente.");
+                return;
+            }
+        }
+        // También disponible si el POST legítimo vuelve a mostrar el formulario.
+        request.setAttribute("csrfToken", ProteccionCsrf.obtenerOCrear(sesion));
+        cadena.doFilter(request, response);
     }
 
     private static void redirigirAlLogin(

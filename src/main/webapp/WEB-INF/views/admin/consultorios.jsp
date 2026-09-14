@@ -476,7 +476,7 @@
 
                     <form
                             method="post"
-                            action="${pageContext.request.contextPath}/admin/consultorios">
+                            action="${pageContext.request.contextPath}/admin/consultorios"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
 
                         <div class="row g-3">
 

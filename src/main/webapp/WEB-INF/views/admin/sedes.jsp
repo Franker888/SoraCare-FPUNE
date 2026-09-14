@@ -363,7 +363,7 @@
 
                     <form
                             method="post"
-                            action="${pageContext.request.contextPath}/admin/sedes">
+                            action="${pageContext.request.contextPath}/admin/sedes"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
 
                         <div class="row g-3">
 

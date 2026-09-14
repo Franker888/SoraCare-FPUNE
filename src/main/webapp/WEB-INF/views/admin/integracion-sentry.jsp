@@ -77,7 +77,7 @@
                 <span class="admin-module-icon mb-3"><i class="bi bi-send-check"></i></span>
                 <h2 class="h4">Enviar evento de prueba</h2>
                 <p class="text-secondary">Genera un error controlado y anonimizado para comprobar que el proyecto de Sentry puede recibir eventos.</p>
-                <form method="post" action="${pageContext.request.contextPath}/admin/integraciones/sentry">
+                <form method="post" action="${pageContext.request.contextPath}/admin/integraciones/sentry"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                     <button class="btn btn-primary" type="submit"
                             <%= activo ? "" : "disabled" %>>
                         <i class="bi bi-bug me-2"></i>Enviar prueba segura

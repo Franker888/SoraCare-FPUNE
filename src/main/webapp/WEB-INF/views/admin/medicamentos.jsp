@@ -101,7 +101,7 @@
                     <div class="icono mb-3"><i class="bi bi-capsule-pill"></i></div>
                     <h2 class="h5 mb-1">Registrar medicamento</h2>
                     <p class="text-secondary mb-4">Completá su identificación y presentación clínica.</p>
-                    <form method="post" action="${pageContext.request.contextPath}/admin/medicamentos">
+                    <form method="post" action="${pageContext.request.contextPath}/admin/medicamentos"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                         <input type="hidden" name="accion" value="registrar">
                         <div class="mb-3">
                             <label for="nombreComercial" class="form-label fw-semibold">Nombre comercial</label>
@@ -203,7 +203,7 @@
                                     <% if (!medicamento.isRequiereReceta()) { %><div class="detalle">Venta libre</div><% } %>
                                 </td>
                                 <td class="text-end">
-                                    <form method="post" action="${pageContext.request.contextPath}/admin/medicamentos">
+                                    <form method="post" action="${pageContext.request.contextPath}/admin/medicamentos"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                                         <input type="hidden" name="accion" value="estado">
                                         <input type="hidden" name="idMedicamento" value="<%= medicamento.getIdMedicamento() %>">
                                         <input type="hidden" name="activo" value="<%= !medicamento.isActivo() %>">

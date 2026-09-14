@@ -39,7 +39,7 @@
         <div class="col-12 col-lg-6"><article class="card admin-content-card h-100">
             <div class="d-flex justify-content-between gap-3 mb-3"><div><span class="badge text-bg-light mb-2"><%= h(titulo(configuracion.categoria())) %></span><h3 class="h5 mb-1"><%= h(configuracion.nombre()) %></h3><span class="admin-code"><%= h(configuracion.clave()) %></span></div><i class="bi bi-gear-wide-connected fs-3 text-primary"></i></div>
             <p class="text-secondary"><%= h(configuracion.descripcion()) %></p>
-            <form method="post" class="mt-auto">
+            <form method="post" class="mt-auto"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <input type="hidden" name="idConfiguracion" value="<%= configuracion.idConfiguracion() %>">
                 <input type="hidden" name="tipoDato" value="<%= h(configuracion.tipoDato()) %>">
                 <label class="form-label">Valor actual</label>

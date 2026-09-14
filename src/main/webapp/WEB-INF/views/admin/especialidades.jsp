@@ -331,7 +331,7 @@
 
                     <form
                             method="post"
-                            action="${pageContext.request.contextPath}/admin/especialidades">
+                            action="${pageContext.request.contextPath}/admin/especialidades"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
 
                         <div class="mb-3">
 

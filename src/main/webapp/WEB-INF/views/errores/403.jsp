@@ -170,6 +170,17 @@
                     <div class="error-copy">
                         <span class="error-kicker"><i class="bi bi-shield-lock-fill"></i> Área protegida</span>
                         <div class="error-code">403</div>
+                        <% if (Boolean.TRUE.equals(request.getAttribute("csrfInvalido"))) { %>
+                        <h1 class="error-title">Necesitamos confirmar tu solicitud</h1>
+                        <p class="error-description">
+                            La confirmación de seguridad del formulario venció o no es válida.
+                            No se realizó ningún cambio y tu sesión continúa activa.
+                        </p>
+                        <div class="error-note">
+                            <i class="bi bi-info-circle-fill text-primary mt-1"></i>
+                            <span>Volvé a tu panel, abrí nuevamente el formulario y repetí la operación.</span>
+                        </div>
+                        <% } else { %>
                         <h1 class="error-title">Este sector no corresponde a tu acceso</h1>
                         <p class="error-description">
                             La página que intentaste abrir está reservada para otro perfil de SoraCare.
@@ -179,6 +190,7 @@
                             <i class="bi bi-info-circle-fill text-primary mt-1"></i>
                             <span>Si necesitás realizar una gestión, regresá a tu panel para utilizar las opciones habilitadas para tu cuenta.</span>
                         </div>
+                        <% } %>
                         <div class="error-actions">
                             <a class="btn btn-primary" href="${pageContext.request.contextPath}/dashboard">
                                 <i class="bi bi-grid-1x2-fill me-2"></i>Volver a mi panel
