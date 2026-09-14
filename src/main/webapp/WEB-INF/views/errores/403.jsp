@@ -174,7 +174,7 @@
                         <h1 class="error-title">Necesitamos confirmar tu solicitud</h1>
                         <p class="error-description">
                             La confirmación de seguridad del formulario venció o no es válida.
-                            No se realizó ningún cambio y tu sesión continúa activa.
+                            No se realizó ningún cambio. Volvé a abrir el formulario para continuar.
                         </p>
                         <div class="error-note">
                             <i class="bi bi-info-circle-fill text-primary mt-1"></i>

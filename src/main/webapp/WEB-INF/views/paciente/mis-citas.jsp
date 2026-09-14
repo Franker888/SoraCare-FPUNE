@@ -93,7 +93,7 @@
         <a class="navbar-brand fw-bold text-white" href="${pageContext.request.contextPath}/paciente/inicio">SoraCare-FPUNE</a>
         <div class="d-flex gap-2">
             <a class="btn btn-outline-light btn-sm" href="${pageContext.request.contextPath}/paciente/inicio">Panel</a>
-            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
+            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <button class="btn btn-light btn-sm">Cerrar sesión</button>
             </form>
         </div>
@@ -251,7 +251,7 @@
                     <%= slots.size() %> turnos disponibles
                 </span>
             </div>
-            <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="row g-4">
+            <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="row g-4"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <input type="hidden" name="fecha" value="<%= fecha %>">
                 <input type="hidden" name="nueva" value="1">
                 <input type="hidden" name="busqueda" value="turnos">
@@ -472,7 +472,7 @@
                                 </div>
                                 <% } %>
                                 <% if (cancelable) { %>
-                                <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="d-flex gap-2">
+                                <form method="post" action="${pageContext.request.contextPath}/mis-citas" class="d-flex gap-2"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                                     <input type="hidden" name="accion" value="cancelar">
                                     <input type="hidden" name="fecha" value="<%= fecha == null ? "" : fecha %>">
                                     <input type="hidden" name="idCita" value="<%= cita.getIdCita() %>">

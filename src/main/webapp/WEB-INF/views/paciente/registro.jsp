@@ -37,7 +37,7 @@
             <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}<%= rutaPanel %>">
                 <i class="bi bi-arrow-left"></i> Volver al panel
             </a>
-            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
+            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <button type="submit" class="btn btn-outline-secondary btn-sm">Cerrar sesi&oacute;n</button>
             </form>
         </div>
@@ -81,7 +81,7 @@
         <div class="col-lg-8">
             <section class="card patient-registration-card">
                 <div class="card-body p-4 p-lg-5">
-                    <form action="${pageContext.request.contextPath}/pacientes/registro" method="post">
+                    <form action="${pageContext.request.contextPath}/pacientes/registro" method="post"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                         <div class="registration-section-heading">
                             <span>1</span>
                             <div><h2>Datos personales</h2><p>Información básica para identificar al paciente.</p></div>

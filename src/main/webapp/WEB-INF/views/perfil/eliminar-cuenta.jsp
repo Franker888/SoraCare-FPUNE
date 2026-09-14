@@ -128,7 +128,7 @@
                         data-bs-dismiss="modal">
                     No, volver
                 </button>
-                <form method="post" action="${pageContext.request.contextPath}/cuenta/eliminar">
+                <form method="post" action="${pageContext.request.contextPath}/cuenta/eliminar"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                     <input type="hidden" name="token" value="<%= h(token) %>">
                     <button class="btn btn-danger" type="submit">
                         Sí, eliminar mi cuenta

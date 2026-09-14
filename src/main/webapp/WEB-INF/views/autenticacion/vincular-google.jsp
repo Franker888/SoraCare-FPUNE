@@ -64,7 +64,7 @@
         <% } %>
 
         <form method="post"
-              action="${pageContext.request.contextPath}/google/vincular">
+              action="${pageContext.request.contextPath}/google/vincular"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
             <label for="contrasena" class="form-label">
                 Contraseña actual de SoraCare
             </label>

@@ -202,7 +202,7 @@
                         </td>
                         <td class="accion-pago">
                             <% if (pago.estaPendiente() && pago.esEfectivo()) { %>
-                            <form method="post" action="${pageContext.request.contextPath}/agenda/pagos">
+                            <form method="post" action="${pageContext.request.contextPath}/agenda/pagos"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                                 <input type="hidden" name="accion" value="confirmarEfectivo">
                                 <input type="hidden" name="idPago" value="<%= pago.idPago() %>">
                                 <input type="hidden" name="cedula" value="<%= h(filtro.cedula()) %>">

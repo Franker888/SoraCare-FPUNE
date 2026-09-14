@@ -91,7 +91,7 @@
                 </div>
             </div>
             <form method="post" action="${pageContext.request.contextPath}/mis-documentos"
-                  enctype="multipart/form-data" class="row g-3">
+                  enctype="multipart/form-data" class="row g-3"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <div class="col-md-5">
                     <label class="form-label" for="idTipoDocumento">Tipo de documento</label>
                     <select class="form-select" id="idTipoDocumento" name="idTipoDocumento" required>

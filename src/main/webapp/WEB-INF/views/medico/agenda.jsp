@@ -87,7 +87,7 @@
         <div class="d-flex align-items-center gap-2">
             <a class="btn btn-outline-primary btn-sm"
                href="${pageContext.request.contextPath}/medico/inicio">Panel</a>
-            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
+            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <button type="submit" class="btn btn-outline-secondary btn-sm">Cerrar sesión</button>
             </form>
         </div>

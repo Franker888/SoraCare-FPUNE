@@ -315,7 +315,8 @@
             credentials: "same-origin",
             headers: {
                 "Accept": "application/json",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "X-CSRF-Token": assistant.getAttribute("data-csrf-token") || ""
             },
             body: JSON.stringify({
                 mensaje: consulta,

@@ -76,7 +76,7 @@
             <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}<%= rutaInicio %>">
                 <i class="bi bi-arrow-left"></i> Volver al panel
             </a>
-            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
+            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <button type="submit" class="btn btn-outline-secondary btn-sm">Cerrar sesi&oacute;n</button>
             </form>
         </div>

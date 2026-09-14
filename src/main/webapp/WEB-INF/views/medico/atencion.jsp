@@ -353,7 +353,7 @@
                href="${pageContext.request.contextPath}/medico/agenda?fecha=<%= fechaAgenda %>">
                 Volver a mi agenda
             </a>
-            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
+            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <button type="submit" class="btn btn-outline-secondary btn-sm">Cerrar sesión</button>
             </form>
         </div>
@@ -535,7 +535,7 @@
                 Al iniciar, la cita cambiará a “En atención” y se habilitará
                 la ficha para registrar la evolución clínica.
             </p>
-            <form method="post" action="${pageContext.request.contextPath}/medico/atencion">
+            <form method="post" action="${pageContext.request.contextPath}/medico/atencion"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <input type="hidden" name="idCita" value="<%= idCita %>">
                 <input type="hidden" name="accion" value="iniciar">
                 <button class="btn btn-primary btn-lg">Iniciar atención</button>
@@ -571,7 +571,7 @@
                 <span class="badge estado-cita estado-atencion align-self-start">En atención</span>
             </div>
 
-            <form method="post" action="${pageContext.request.contextPath}/medico/atencion">
+            <form method="post" action="${pageContext.request.contextPath}/medico/atencion"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <input type="hidden" name="idCita" value="<%= idCita %>">
 
                 <h3 class="h6 seccion-formulario">Información clínica permanente</h3>
@@ -858,7 +858,7 @@
                     El catálogo no posee medicamentos activos. Un administrador debe registrarlos antes de guardar una indicación médica.
                 </div>
                 <% } else { %>
-                <form method="post" action="${pageContext.request.contextPath}/medico/recetas" class="mb-4">
+                <form method="post" action="${pageContext.request.contextPath}/medico/recetas" class="mb-4"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                     <input type="hidden" name="accion" value="emitir">
                     <input type="hidden" name="idCita" value="<%= idCita %>">
 
@@ -1008,7 +1008,7 @@
                     </div>
                     <% if (receta.estaEmitida()) { %>
                     <form method="post" action="${pageContext.request.contextPath}/medico/recetas"
-                          class="row g-2 align-items-end mt-3">
+                          class="row g-2 align-items-end mt-3"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                         <input type="hidden" name="accion" value="anular">
                         <input type="hidden" name="idCita" value="<%= idCita %>">
                         <input type="hidden" name="idReceta" value="<%= receta.idReceta() %>">
@@ -1050,7 +1050,7 @@
             </div>
 
             <form method="post" action="${pageContext.request.contextPath}/medico/documentos/cargar"
-                  enctype="multipart/form-data" class="row g-3 border rounded-4 p-3 p-md-4 mb-4 formulario-documento">
+                  enctype="multipart/form-data" class="row g-3 border rounded-4 p-3 p-md-4 mb-4 formulario-documento"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <input type="hidden" name="idCita" value="<%= idCita %>">
                 <div class="col-12"><h3 class="h6 mb-0">Adjuntar un documento</h3></div>
                 <div class="col-md-4">

@@ -2223,6 +2223,7 @@
     =================================================== -->
 
     <aside class="sora-assistant"
+           data-csrf-token="${requestScope.csrfToken}"
            data-context-path="<%= contexto %>"
            data-authenticated="<%= sesionIniciada %>"
            data-patient="<%= esPaciente %>"
@@ -2320,7 +2321,7 @@
         src="${pageContext.request.contextPath}/assets/libs/bootstrap/bootstrap.bundle.min.js">
     </script>
 
-    <script src="<%= contexto %>/assets/app/js/sora-assistant.js?v=20260830b"></script>
+    <script src="<%= contexto %>/assets/app/js/sora-assistant.js?v=20260914csrf"></script>
 
     <script>
         const carruselPrincipal = document.getElementById('heroCarousel');

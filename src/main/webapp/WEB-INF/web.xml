@@ -19,6 +19,16 @@
     </filter-mapping>
 
     <filter>
+        <filter-name>CsrfFormularios</filter-name>
+        <filter-class>py.fpune.soracare.security.FiltroCsrfFormularios</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>CsrfFormularios</filter-name>
+        <url-pattern>/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+    </filter-mapping>
+
+    <filter>
         <filter-name>SentryErroresFilter</filter-name>
         <filter-class>py.fpune.soracare.security.SentryErroresFilter</filter-class>
     </filter>

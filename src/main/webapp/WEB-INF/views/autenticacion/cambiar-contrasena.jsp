@@ -171,7 +171,7 @@
                     <form
                             method="post"
                             action="${pageContext.request.contextPath}/cambiar-contrasena"
-                            autocomplete="on">
+                            autocomplete="on"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
 
                         <div class="mb-3">
 
@@ -282,7 +282,7 @@
 
                         <form
                                 method="post"
-                                action="${pageContext.request.contextPath}/logout">
+                                action="${pageContext.request.contextPath}/logout"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
 
                             <button
                                     type="submit"

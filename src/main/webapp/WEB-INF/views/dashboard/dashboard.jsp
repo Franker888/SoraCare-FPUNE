@@ -245,7 +245,7 @@
             <form
                     method="post"
                     action="${pageContext.request.contextPath}/logout"
-                    class="m-0">
+                    class="m-0"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
 
                 <button
                         type="submit"

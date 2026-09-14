@@ -82,7 +82,7 @@
         <div class="d-flex gap-2">
             <a class="btn btn-outline-light btn-sm"
                href="${pageContext.request.contextPath}/mis-citas">Mis citas</a>
-            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
+            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <button class="btn btn-light btn-sm">Cerrar sesión</button>
             </form>
         </div>
@@ -196,7 +196,7 @@
                         ? "" : "s" %></span>
             </div>
             <form method="post" action="${pageContext.request.contextPath}/mis-citas/reprogramar"
-                  class="row g-3">
+                  class="row g-3"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <input type="hidden" name="idCita" value="<%= cita.getIdCita() %>">
                 <input type="hidden" name="fecha" value="<%= fecha %>">
                 <input type="hidden" name="busqueda" value="turnos">

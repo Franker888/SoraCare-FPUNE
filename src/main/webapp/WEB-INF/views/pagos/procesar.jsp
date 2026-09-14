@@ -63,7 +63,7 @@
     <% if (pago.estaPendiente()) { %>
     <section class="card tarjeta shadow-sm"><div class="card-body p-4">
         <h2 class="h5 mb-3"><%= h(pago.nombreMetodo()) %></h2>
-        <form method="post" action="${pageContext.request.contextPath}/pagos/procesar" class="row g-3">
+        <form method="post" action="${pageContext.request.contextPath}/pagos/procesar" class="row g-3"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
             <input type="hidden" name="idPago" value="<%= pago.idPago() %>">
             <% if ("QR".equals(pago.codigoMetodo())) { %>
             <div class="col-md-5"><div class="qr-demo" aria-label="Código QR de demostración">

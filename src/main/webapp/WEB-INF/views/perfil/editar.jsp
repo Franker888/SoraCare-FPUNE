@@ -93,7 +93,7 @@
                     <span class="profile-card-icon"><i class="bi bi-person-circle"></i></span>
                     <div><h2>Elegir un avatar</h2><p>Pod&eacute;s cambiarlo cuantas veces quieras.</p></div>
                 </div>
-                <form method="post" action="${pageContext.request.contextPath}/perfil">
+                <form method="post" action="${pageContext.request.contextPath}/perfil"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                     <input type="hidden" name="accion" value="avatar">
                     <div class="avatar-grid">
                         <% for (int i = 0; i < codigos.length; i++) { %>
@@ -122,7 +122,7 @@
                     <div><h2>Subir mi fotograf&iacute;a</h2><p>Se mostrar&aacute; solamente dentro de tu cuenta.</p></div>
                 </div>
                 <form method="post" action="${pageContext.request.contextPath}/perfil"
-                      enctype="multipart/form-data">
+                      enctype="multipart/form-data"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                     <input type="hidden" name="accion" value="foto">
                     <label class="profile-upload-zone" for="foto-perfil">
                         <i class="bi bi-image"></i>

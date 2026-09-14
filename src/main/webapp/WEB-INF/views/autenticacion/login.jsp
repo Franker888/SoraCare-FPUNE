@@ -209,7 +209,7 @@
 
             <form method="post"
                   action="${pageContext.request.contextPath}/login"
-                  autocomplete="on">
+                  autocomplete="on"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
 
                 <div class="mb-3">
 

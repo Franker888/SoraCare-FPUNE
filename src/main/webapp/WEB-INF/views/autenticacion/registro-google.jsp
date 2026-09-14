@@ -72,7 +72,7 @@
 
             <form method="post"
                   action="${pageContext.request.contextPath}/google/registro"
-                  class="card border-0 shadow-sm google-registration-form">
+                  class="card border-0 shadow-sm google-registration-form"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <div class="card-body p-4 p-md-5">
                     <div class="section-heading-medical">
                         <span>01</span>

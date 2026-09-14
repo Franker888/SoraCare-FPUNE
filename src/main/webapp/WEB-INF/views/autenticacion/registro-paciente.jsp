@@ -89,7 +89,7 @@
         <div class="registration-divider"><span>o completá el registro tradicional</span></div>
         <% } %>
 
-        <form method="post" action="${pageContext.request.contextPath}/registro" class="card shadow-sm">
+        <form method="post" action="${pageContext.request.contextPath}/registro" class="card shadow-sm"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
             <div class="card-body p-4 p-md-5">
                 <h2 class="h4">Datos personales</h2>
                 <p class="text-secondary">Estos datos formarán tu ficha de paciente.</p>

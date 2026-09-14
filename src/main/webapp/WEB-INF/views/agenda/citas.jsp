@@ -144,7 +144,7 @@
                 </div>
                 <span class="booking-availability-badge"><i class="bi bi-clock"></i><%= slots.size() %> disponibles</span>
             </div>
-            <form method="post" action="${pageContext.request.contextPath}/agenda/citas" class="row g-4">
+            <form method="post" action="${pageContext.request.contextPath}/agenda/citas" class="row g-4"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <input type="hidden" name="accion" value="reservar">
                 <input type="hidden" name="fecha" value="<%= fecha %>">
                 <input type="hidden" name="idMedico" value="<%= idMedico == null ? "" : idMedico %>">
@@ -267,7 +267,7 @@
                         <td><span class="badge <%= "CANCELADA".equals(cita.getCodigoEstado()) ? "text-bg-secondary" : "text-bg-warning" %>"><%= h(cita.getNombreEstado()) %></span></td>
                         <td>
                             <% if (!"CANCELADA".equals(cita.getCodigoEstado()) && !"ATENDIDA".equals(cita.getCodigoEstado())) { %>
-                            <form method="post" action="${pageContext.request.contextPath}/agenda/citas" class="d-flex gap-2">
+                            <form method="post" action="${pageContext.request.contextPath}/agenda/citas" class="d-flex gap-2"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                                 <input type="hidden" name="accion" value="cancelar"><input type="hidden" name="fecha" value="<%= fecha %>"><input type="hidden" name="idMedico" value="<%= idMedico == null ? "" : idMedico %>"><input type="hidden" name="idCita" value="<%= cita.getIdCita() %>">
                                 <input class="form-control form-control-sm" name="motivoCancelacion" required maxlength="500" placeholder="Motivo"><button class="btn btn-sm btn-outline-danger">Cancelar</button>
                             </form>

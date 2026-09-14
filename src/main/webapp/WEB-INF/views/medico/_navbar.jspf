@@ -15,7 +15,7 @@
             <span class="doctor-context d-none d-md-inline-flex">
                 <i class="bi bi-heart-pulse"></i> Portal m&eacute;dico
             </span>
-            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0">
+            <form method="post" action="${pageContext.request.contextPath}/logout" class="m-0"><input type="hidden" name="csrfToken" value="${requestScope.csrfToken}">
                 <button type="submit" class="btn btn-outline-secondary btn-sm">
                     Cerrar sesi&oacute;n
                 </button>
