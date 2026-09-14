@@ -7,6 +7,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 import py.fpune.soracare.security.FiltroCsrfFormularios;
 import py.fpune.soracare.security.ProteccionCsrf;
+import py.fpune.soracare.security.FiltroCabecerasSeguridad;
 import java.net.*;
 import java.net.http.*;
 import java.nio.file.*;
@@ -21,24 +22,30 @@ class CsrfTomcatIT {
     @Test void validaFormulariosMultipartYErrorRealSinBaseNiIntegraciones() throws Exception {
         Path war=temporal.resolve("csrf-prueba.war");
         try(var zip=new JarOutputStream(Files.newOutputStream(war))) {
-            for(Class<?> clase:new Class<?>[]{FiltroCsrfFormularios.class,ProteccionCsrf.class,CsrfPruebaServlet.class}) {
+            for(Class<?> clase:new Class<?>[]{FiltroCsrfFormularios.class,ProteccionCsrf.class,CsrfPruebaServlet.class,FiltroCabecerasSeguridad.class}) {
                 String ruta=clase.getName().replace('.','/')+".class";
                 try(var entrada=clase.getResourceAsStream("/"+ruta)) {
                     assertNotNull(entrada);
                     entrada(zip,"WEB-INF/classes/"+ruta,entrada.readAllBytes());
                 }
             }
+            String descriptor = Files.readString(Path.of("src/main/webapp/WEB-INF/web.xml"));
+            var sesionConfig = java.util.regex.Pattern.compile("<session-config>[\\s\\S]*?</session-config>").matcher(descriptor);
+            assertTrue(sesionConfig.find());
             entrada(zip,"WEB-INF/web.xml",("""
                     <web-app xmlns="https://jakarta.ee/xml/ns/jakartaee" version="6.0" metadata-complete="true">
+                      <filter><filter-name>cabeceras</filter-name><filter-class>py.fpune.soracare.security.FiltroCabecerasSeguridad</filter-class></filter>
+                      <filter-mapping><filter-name>cabeceras</filter-name><url-pattern>/*</url-pattern><dispatcher>REQUEST</dispatcher><dispatcher>ERROR</dispatcher></filter-mapping>
                       <filter><filter-name>csrf</filter-name><filter-class>%s</filter-class></filter>
                       <filter-mapping><filter-name>csrf</filter-name><url-pattern>/*</url-pattern></filter-mapping>
                       <servlet><servlet-name>prueba</servlet-name><servlet-class>%s</servlet-class>
                         <multipart-config><max-file-size>128</max-file-size><max-request-size>2048</max-request-size></multipart-config>
                       </servlet>
                       <servlet-mapping><servlet-name>prueba</servlet-name><url-pattern>/form</url-pattern></servlet-mapping>
+                      %s
                       <error-page><error-code>403</error-code><location>/error.jsp</location></error-page>
                     </web-app>
-                    """).formatted(FiltroCsrfFormularios.class.getName(),CsrfPruebaServlet.class.getName())
+                    """).formatted(FiltroCsrfFormularios.class.getName(),CsrfPruebaServlet.class.getName(),sesionConfig.group())
                     .getBytes(StandardCharsets.UTF_8));
             entrada(zip,"error.jsp",Files.readAllBytes(Path.of("src/main/webapp/WEB-INF/views/errores/403.jsp")));
         }
@@ -50,10 +57,22 @@ class CsrfTomcatIT {
             tomcat.start();
             URI uri=URI.create("http://"+tomcat.getHost()+":"+tomcat.getMappedPort(8080)+"/form");
             var cliente=HttpClient.newBuilder().cookieHandler(new CookieManager(null,CookiePolicy.ACCEPT_ALL)).build();
-            String token=cliente.send(HttpRequest.newBuilder(uri).GET().build(),HttpResponse.BodyHandlers.ofString()).body();
+            var inicial=cliente.send(HttpRequest.newBuilder(uri).GET().build(),HttpResponse.BodyHandlers.ofString());
+            String token=inicial.body();
+            String cookie=inicial.headers().firstValue("Set-Cookie").orElseThrow();
+            assertTrue(cookie.contains("HttpOnly"));
+            assertFalse(cookie.contains("Secure"), "HTTP local debe conservar la sesión");
+            assertEquals("SAMEORIGIN", inicial.headers().firstValue("X-Frame-Options").orElseThrow());
+            assertEquals("nosniff", inicial.headers().firstValue("X-Content-Type-Options").orElseThrow());
+            // Un cliente sin cookie no puede adoptar la sesión colocando su ID en la URL.
+            String id=cookie.substring("JSESSIONID=".length(),cookie.indexOf(';'));
+            var sinCookies=HttpClient.newHttpClient();
+            assertEquals(403,post(sinCookies,URI.create(uri+";jsessionid="+id),
+                    "application/x-www-form-urlencoded","csrfToken="+token).statusCode());
             assertTrue(token.matches("[A-Za-z0-9_-]{43}"));
             var sinToken=post(cliente,uri,"application/x-www-form-urlencoded","accion=prueba");
             assertEquals(403,sinToken.statusCode());
+            assertEquals("frame-ancestors 'self'",sinToken.headers().firstValue("Content-Security-Policy").orElseThrow());
             assertTrue(sinToken.body().contains("Necesitamos confirmar tu solicitud"));
             assertFalse(sinToken.body().contains("Este sector no corresponde a tu acceso"));
             assertEquals(200,post(cliente,uri,"application/x-www-form-urlencoded","csrfToken="+token).statusCode());

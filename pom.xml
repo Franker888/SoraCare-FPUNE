@@ -21,7 +21,7 @@
         <spring-framework.version>6.2.19</spring-framework.version>
         <flyway.version>13.4.0</flyway.version>
         <testcontainers.version>2.0.5</testcontainers.version>
-        <bouncycastle.version>1.80</bouncycastle.version>
+        <bouncycastle.version>1.84</bouncycastle.version>
     </properties>
 
     <dependencies>

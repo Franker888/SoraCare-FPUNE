@@ -50,6 +50,8 @@ public class RegistroCuentaPacienteServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Los errores POST vuelven a mostrar el botón de Google de la misma vista.
+        response.setHeader("Referrer-Policy", "no-referrer-when-downgrade");
         request.setCharacterEncoding("UTF-8");
         if (estaAutenticado(request)) {
             response.sendRedirect(request.getContextPath() + "/dashboard");
