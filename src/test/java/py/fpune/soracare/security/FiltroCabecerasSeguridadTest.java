@@ -54,4 +54,21 @@ class FiltroCabecerasSeguridadTest {
                         .setHeader("Referrer-Policy", "no-referrer-when-downgrade"));
         assertEquals("no-referrer-when-downgrade", response.getHeader("Referrer-Policy"));
     }
+
+    @Test void activaHstsCuandoElProxyPublicoUsaHttps() throws Exception {
+        var request = new MockHttpServletRequest();
+        request.addHeader("X-Forwarded-Proto", "https");
+        var response = new MockHttpServletResponse();
+
+        new FiltroCabecerasSeguridad().doFilter(
+                request,
+                response,
+                (r, s) -> { }
+        );
+
+        assertEquals(
+                "max-age=31536000; includeSubDomains",
+                response.getHeader("Strict-Transport-Security")
+        );
+    }
 }

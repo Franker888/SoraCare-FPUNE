@@ -14,6 +14,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\scripts\iniciar-docke
 Luego se abre `http://localhost:8081/SoraCare-FPUNE/`. La guía completa está
 en [docs/DOCKER.md](docs/DOCKER.md).
 
+Para una exposición desde redes y dispositivos diferentes, la preparación del
+entorno HTTPS está documentada en
+[docs/DESPLIEGUE_RAILWAY.md](docs/DESPLIEGUE_RAILWAY.md).
+
 El cierre técnico de las mejoras solicitadas por el profesor está resumido en
 [docs/MEJORAS_PROFESOR.md](docs/MEJORAS_PROFESOR.md).
 

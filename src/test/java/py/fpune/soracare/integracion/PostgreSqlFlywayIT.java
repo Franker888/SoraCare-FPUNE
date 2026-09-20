@@ -11,6 +11,7 @@ import org.testcontainers.utility.DockerImageName;
 import py.fpune.soracare.dao.EspecialidadDAO;
 import py.fpune.soracare.dao.SolicitudSifenDAO;
 import py.fpune.soracare.mvc.model.Especialidad;
+import py.fpune.soracare.config.MigradorEsquemaBD;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -94,7 +95,11 @@ class PostgreSqlFlywayIT {
                 .cleanDisabled(true)
                 .load();
 
-        resultadoMigracion = flyway.migrate();
+        resultadoMigracion = MigradorEsquemaBD.migrar(
+                POSTGRESQL.getJdbcUrl(),
+                POSTGRESQL.getUsername(),
+                POSTGRESQL.getPassword()
+        );
     }
 
     @Test

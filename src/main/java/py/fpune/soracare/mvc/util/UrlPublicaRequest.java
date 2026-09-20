@@ -1,6 +1,10 @@
 package py.fpune.soracare.mvc.util;
 
 import jakarta.servlet.http.HttpServletRequest;
+import py.fpune.soracare.config.ConfiguracionDespliegue;
+
+import java.net.URI;
+import java.util.function.Supplier;
 
 public final class UrlPublicaRequest {
 
@@ -11,6 +15,25 @@ public final class UrlPublicaRequest {
             HttpServletRequest request,
             String ruta
     ) {
+        return construir(
+                request,
+                ruta,
+                () -> new ConfiguracionDespliegue().obtenerOrigenPublico()
+        );
+    }
+
+    static String construir(
+            HttpServletRequest request,
+            String ruta,
+            Supplier<URI> origenConfigurado
+    ) {
+        URI origen = origenConfigurado.get();
+        if (origen != null) {
+            return origen.toASCIIString()
+                    + request.getContextPath()
+                    + ruta;
+        }
+
         String esquema = primerValor(
                 request.getHeader("X-Forwarded-Proto")
         );

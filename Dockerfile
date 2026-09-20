@@ -24,6 +24,7 @@ RUN apt-get update \
         libsqlite3-0 \
         locales \
         perl-base \
+        gosu \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system --gid 10001 soracare \
     && useradd --system --uid 10001 --gid soracare \
@@ -37,9 +38,12 @@ COPY --from=compilacion --chown=soracare:soracare \
     /workspace/target/SoraCare-FPUNE.war \
     ${CATALINA_HOME}/webapps/SoraCare-FPUNE.war
 
+COPY --chmod=755 docker/iniciar-soracare.sh \
+    /usr/local/bin/iniciar-soracare
+
 ENV SORACARE_DOCUMENTOS_DIR=/var/lib/soracare/documentos-clinicos \
     SORACARE_PERFILES_DIR=/var/lib/soracare/fotos-perfil \
-    CATALINA_OPTS="-Xms256m -Xmx768m -Dfile.encoding=UTF-8 -Duser.timezone=America/Asuncion"
+    CATALINA_OPTS="-Xms128m -Xmx384m -Dfile.encoding=UTF-8 -Duser.timezone=America/Asuncion"
 
 USER soracare
 
@@ -47,7 +51,8 @@ EXPOSE 8080
 
 HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=8 \
     CMD curl --fail --silent --show-error \
-        http://127.0.0.1:8080/SoraCare-FPUNE/conexion-bd > /dev/null \
+        http://127.0.0.1:${PORT:-8080}/SoraCare-FPUNE/conexion-bd > /dev/null \
         || exit 1
 
+ENTRYPOINT ["iniciar-soracare"]
 CMD ["catalina.sh", "run"]
