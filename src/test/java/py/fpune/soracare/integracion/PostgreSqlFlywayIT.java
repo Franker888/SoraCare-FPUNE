@@ -30,7 +30,7 @@ class PostgreSqlFlywayIT {
     private static final int CANTIDAD_MIGRACIONES_ESPERADA = 39;
     private static final String ULTIMA_VERSION_ESPERADA = "039";
     private static final String BASE_TEMPORAL = "soracare_pruebas";
-    private static final String USUARIO_TEMPORAL = "soracare_app";
+    private static final String USUARIO_TEMPORAL = "soracare_admin_test";
 
     @Container
     private static final PostgreSQLContainer POSTGRESQL =
@@ -81,7 +81,7 @@ class PostgreSqlFlywayIT {
     private static MigrateResult resultadoMigracion;
 
     @BeforeAll
-    static void migrarBaseTemporal() {
+    static void migrarBaseTemporal() throws Exception {
         flyway = Flyway.configure()
                 .dataSource(
                         POSTGRESQL.getJdbcUrl(),
@@ -130,6 +130,16 @@ class PostgreSqlFlywayIT {
                             to_regclass('soracare.google_calendar_vinculos') AS google_calendar_vinculos,
                             to_regclass('soracare.google_calendar_eventos') AS google_calendar_eventos,
                             (
+                                SELECT schema_owner
+                                FROM information_schema.schemata
+                                WHERE schema_name = 'soracare'
+                            ) AS propietario_esquema,
+                            (
+                                SELECT rolcanlogin
+                                FROM pg_roles
+                                WHERE rolname = 'soracare_app'
+                            ) AS propietario_puede_iniciar_sesion,
+                            (
                                 SELECT COUNT(*)
                                 FROM soracare.flyway_schema_history
                                 WHERE success = TRUE
@@ -148,6 +158,8 @@ class PostgreSqlFlywayIT {
             assertNotNull(resultado.getString("secuencia_envio_sifen"));
             assertNotNull(resultado.getString("google_calendar_vinculos"));
             assertNotNull(resultado.getString("google_calendar_eventos"));
+            assertEquals("soracare_app", resultado.getString("propietario_esquema"));
+            assertFalse(resultado.getBoolean("propietario_puede_iniciar_sesion"));
             assertEquals(
                     CANTIDAD_MIGRACIONES_ESPERADA,
                     resultado.getInt("migraciones")

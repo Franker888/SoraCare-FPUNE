@@ -36,6 +36,10 @@ public class CierreRecursosAplicacionListener implements ServletContextListener 
                             + migracion.migrationsExecuted + "."
             );
         } catch (SQLException | RuntimeException excepcion) {
+            registrarErrorArranque(
+                    "No fue posible preparar el esquema PostgreSQL.",
+                    excepcion
+            );
             evento.getServletContext().log(
                     "No fue posible preparar el esquema PostgreSQL.",
                     excepcion
@@ -54,6 +58,10 @@ public class CierreRecursosAplicacionListener implements ServletContextListener 
                             + " inicializada."
             );
         } catch (SQLException | RuntimeException excepcion) {
+            registrarErrorArranque(
+                    "No fue posible preparar PostgreSQL y JPA durante el arranque.",
+                    excepcion
+            );
             evento.getServletContext().log(
                     "No fue posible preparar PostgreSQL y JPA durante el arranque.",
                     excepcion
@@ -71,5 +79,13 @@ public class CierreRecursosAplicacionListener implements ServletContextListener 
         JpaContexto.cerrar();
         ConexionBD.cerrar();
         SentryMonitoreoService.cerrar();
+    }
+
+    private static void registrarErrorArranque(
+            String mensaje,
+            Throwable excepcion
+    ) {
+        System.err.println(mensaje);
+        excepcion.printStackTrace(System.err);
     }
 }
