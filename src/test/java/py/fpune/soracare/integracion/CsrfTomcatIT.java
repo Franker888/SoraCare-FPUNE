@@ -47,9 +47,10 @@ class CsrfTomcatIT {
                     </web-app>
                     """).formatted(FiltroCsrfFormularios.class.getName(),CsrfPruebaServlet.class.getName(),sesionConfig.group())
                     .getBytes(StandardCharsets.UTF_8));
+            entrada(zip,"META-INF/context.xml",Files.readAllBytes(Path.of("src/main/webapp/META-INF/context.xml")));
             entrada(zip,"error.jsp",Files.readAllBytes(Path.of("src/main/webapp/WEB-INF/views/errores/403.jsp")));
         }
-        try(var tomcat=new GenericContainer<>("tomcat:10.1.57-jre21-temurin-noble")
+        try(var tomcat=new GenericContainer<>("tomcat:10.1.59-jre21-temurin-noble")
                 .withExposedPorts(8080)
                 .withCopyFileToContainer(MountableFile.forHostPath(war),"/usr/local/tomcat/webapps/ROOT.war")
                 .waitingFor(Wait.forHttp("/form").forStatusCode(200))
@@ -61,6 +62,7 @@ class CsrfTomcatIT {
             String token=inicial.body();
             String cookie=inicial.headers().firstValue("Set-Cookie").orElseThrow();
             assertTrue(cookie.contains("HttpOnly"));
+            assertTrue(cookie.contains("SameSite=Lax"));
             assertFalse(cookie.contains("Secure"), "HTTP local debe conservar la sesión");
             assertEquals("SAMEORIGIN", inicial.headers().firstValue("X-Frame-Options").orElseThrow());
             assertEquals("nosniff", inicial.headers().firstValue("X-Content-Type-Options").orElseThrow());

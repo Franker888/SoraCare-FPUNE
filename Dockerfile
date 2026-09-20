@@ -10,14 +10,20 @@ RUN mvn -B -ntp dependency:go-offline
 COPY src ./src
 RUN mvn -B -ntp clean package
 
-FROM tomcat:10.1.57-jre21-temurin-noble AS ejecucion
+FROM tomcat:10.1.59-jre21-temurin-noble AS ejecucion
 
 LABEL org.opencontainers.image.title="SoraCare-FPUNE" \
       org.opencontainers.image.description="Sistema de gestión hospitalaria SoraCare" \
       org.opencontainers.image.source="https://github.com/TobiBug/SoraCare-FPUNE"
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
+    && apt-get install -y --no-install-recommends \
+        curl \
+        libc-bin \
+        libc6 \
+        libsqlite3-0 \
+        locales \
+        perl-base \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system --gid 10001 soracare \
     && useradd --system --uid 10001 --gid soracare \
