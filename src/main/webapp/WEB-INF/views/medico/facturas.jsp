@@ -17,23 +17,26 @@
     }
 %>
 <%
+    Object resumenAtributo = request.getAttribute("resumenFacturacion");
     ResumenFacturacionMedicoDTO resumen =
-            request.getAttribute("resumenFacturacion") instanceof ResumenFacturacionMedicoDTO valor
-                    ? valor
+            resumenAtributo instanceof ResumenFacturacionMedicoDTO
+                    ? (ResumenFacturacionMedicoDTO) resumenAtributo
                     : ResumenFacturacionMedicoDTO.vacio();
     List<PagoResumenDTO> pagos = resumen.pagos();
+    Object estadoSifenAtributo = request.getAttribute("estadoSifen");
     EstadoPreparacionSifenDTO estadoSifen =
-            request.getAttribute("estadoSifen") instanceof EstadoPreparacionSifenDTO valorSifen
-                    ? valorSifen
+            estadoSifenAtributo instanceof EstadoPreparacionSifenDTO
+                    ? (EstadoPreparacionSifenDTO) estadoSifenAtributo
                     : new EstadoPreparacionSifenDTO(
                             EstadoPreparacionSifenDTO.Ambiente.DESHABILITADO,
                             true,
                             List.of()
                     );
     String csrfToken = (String) request.getAttribute("csrfToken");
+    Object solicitudesSifenAtributo = request.getAttribute("solicitudesSifen");
     Map<Long, SolicitudSifenResumenDTO> solicitudesSifen =
-            request.getAttribute("solicitudesSifen") instanceof Map<?, ?> mapaSifen
-                    ? (Map<Long, SolicitudSifenResumenDTO>) mapaSifen
+            solicitudesSifenAtributo instanceof Map<?, ?>
+                    ? (Map<Long, SolicitudSifenResumenDTO>) solicitudesSifenAtributo
                     : Map.of();
     DateTimeFormatter fechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     NumberFormat guaranies = NumberFormat.getIntegerInstance(
@@ -156,10 +159,13 @@
         <p class="small text-muted">Últimas 50 consultas propias. No modifican el estado fiscal ni reenvían facturas.
             Encontrado no confirma vigencia; los eventos requieren revisión. Sin resultado significa que la consulta
             sigue en curso o se interrumpió, no que el documento fue rechazado.</p>
-        <% var historial = request.getAttribute("historialSifen") instanceof List<?> lista ? lista : List.of(); %>
+        <% Object historialAtributo = request.getAttribute("historialSifen");
+           List<?> historial = historialAtributo instanceof List<?>
+                   ? (List<?>) historialAtributo : List.of(); %>
         <% if (historial.isEmpty()) { %><p class="mb-0">No hay consultas registradas para mostrar.</p><% } %>
-        <% for (var elemento : historial) {
-            var consulta = (py.fpune.soracare.dto.ConsultaSifenHistorialDTO) elemento; %>
+        <% for (Object elemento : historial) {
+            py.fpune.soracare.dto.ConsultaSifenHistorialDTO consulta =
+                    (py.fpune.soracare.dto.ConsultaSifenHistorialDTO) elemento; %>
         <div class="border-top py-2">
             <strong><%= h(consulta.estado().replace('_', ' ')) %></strong>
             <span class="small"> · <%= h(fechaHora.format(consulta.iniciadoEn().atZoneSameInstant(java.time.ZoneId.of("America/Asuncion")))) %>
