@@ -14,11 +14,26 @@ validacion local y habilitaciones externas; no declara produccion terminada.
 
 ## Orden de cierre
 
+Decisión del usuario: aplazar SIFEN hasta el final. Conservar lo implementado,
+sin nuevas funciones fiscales, simulador ni trámites por ahora. No está homologado.
+El siguiente frente recomendado es la prueba funcional integral por roles;
+elegir el próximo módulo con el usuario antes de implementar más cambios.
+
 1. **Prueba funcional integral por roles**: paciente, medico, recepcion y
    administracion; registro, Google Identity, continuidad de sesion, agenda,
    atencion, indicaciones, documentos, pagos, facturacion y reportes. Las pruebas
    unitarias y HTTP anonimas no reemplazan este recorrido autenticado.
-2. **Fiscal**: validar formalmente y habilitar la entrega del KuDE al paciente;
+2. **Integraciones externas**: verificar correo y notificaciones extremo a extremo,
+   Twilio, envio servidor Firebase y decidir si corresponde pasarela de pagos.
+   Google Calendar permanece oculto y aplazado por decision del usuario.
+3. **Produccion**: infraestructura, dominio/HTTPS, permisos, revision de seguridad,
+   monitoreo, cifrado y copia externa de respaldos, retencion y simulacro completo
+   de recuperacion. El respaldo local no protege ante perdida del equipo.
+4. **Visual, después del funcionamiento**: incorporar las referencias que traiga el usuario;
+   unificar botones, tipografia, espaciados y estados; revisar todos los paneles
+   en escritorio/movil y accesibilidad. No iniciar un rediseno antes de cerrar
+   el funcionamiento acordado. Repetir pruebas de regresion tras cambios visuales.
+5. **Fiscal — aplazado para el final**: validar formalmente y habilitar la entrega del KuDE al paciente;
    completar conciliación fiscal y análisis/gestión de eventos. El historial
    persistente de consultas está implementado con V037 y V038 agrega observación
    diagnóstica de cancelación informada, sin validar firmas ni conciliar estados. La consulta
@@ -28,16 +43,6 @@ validacion local y habilitaciones externas; no declara produccion terminada.
    tecnico SIFEN ya existe; la homologacion y autorizacion real requieren los
    datos, certificados y habilitacion del contribuyente. No emitir facturas
    fiscales reales hasta completar esos requisitos.
-3. **Integraciones externas**: verificar correo y notificaciones extremo a extremo,
-   Twilio, envio servidor Firebase y decidir si corresponde pasarela de pagos.
-   Google Calendar permanece oculto y aplazado por decision del usuario.
-4. **Produccion**: infraestructura, dominio/HTTPS, permisos, revision de seguridad,
-   monitoreo, cifrado y copia externa de respaldos, retencion y simulacro completo
-   de recuperacion. El respaldo local no protege ante perdida del equipo.
-5. **Visual, al final**: incorporar las referencias que traiga el usuario;
-   unificar botones, tipografia, espaciados y estados; revisar todos los paneles
-   en escritorio/movil y accesibilidad. No iniciar un rediseno antes de cerrar
-   el funcionamiento acordado. Repetir pruebas de regresion tras cambios visuales.
 6. **Evaluacion final solicitada por el usuario**: al terminar el proyecto,
    entregar recomendaciones priorizadas sobre codigo, arquitectura, rendimiento,
    experiencia visual y seguridad. Reservar esa evaluacion para el cierre;

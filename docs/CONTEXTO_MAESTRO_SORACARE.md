@@ -390,6 +390,11 @@ ejecuta respaldo y verificación diariamente a las 21:00 (America/Asuncion).
 
 ## 14. Instrucciones para continuar en otro chat
 
+Decisión posterior del usuario: SIFEN queda aplazado para el final, sin homologar.
+No continuar funciones fiscales, simulador ni trámites hasta nueva autorización.
+Consultar `PENDIENTES_ACTUALES.md`; próximo frente recomendado: recorrido funcional
+por roles, a elegir con el usuario. No se ha iniciado un nuevo módulo todavía.
+
 Consulta diagnóstica SIFEN agregada el 11 de septiembre: botón POST con CSRF en
 facturas del médico, CDC tomado del documento propio, solo PRUEBA. Distingue
 encontrado/inexistente/sin permiso/error; no sobrescribe estados fiscales ni
