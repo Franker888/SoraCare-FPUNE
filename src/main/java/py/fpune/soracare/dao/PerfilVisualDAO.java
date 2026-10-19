@@ -13,7 +13,8 @@ public class PerfilVisualDAO {
 
     public PerfilVisualDTO consultar(long idPersona) throws SQLException {
         String sql = """
-                SELECT avatar_codigo, ruta_foto IS NOT NULL AS tiene_foto
+                SELECT avatar_codigo,
+                       (ruta_foto IS NOT NULL OR contenido_foto IS NOT NULL) AS tiene_foto
                   FROM soracare.perfiles_visuales
                  WHERE id_persona = ?
                 """;
@@ -34,9 +35,10 @@ public class PerfilVisualDAO {
 
     public Optional<ArchivoPerfil> buscarArchivo(long idPersona) throws SQLException {
         String sql = """
-                SELECT ruta_foto, tipo_mime, tamano_bytes, hash_sha256
+                SELECT ruta_foto, contenido_foto, tipo_mime, tamano_bytes, hash_sha256
                   FROM soracare.perfiles_visuales
-                 WHERE id_persona = ? AND ruta_foto IS NOT NULL
+                 WHERE id_persona = ?
+                   AND (ruta_foto IS NOT NULL OR contenido_foto IS NOT NULL)
                 """;
         try (Connection conexion = ConexionBD.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(sql)) {
@@ -47,6 +49,7 @@ public class PerfilVisualDAO {
                 }
                 return Optional.of(new ArchivoPerfil(
                         resultado.getString("ruta_foto"),
+                         resultado.getBytes("contenido_foto"),
                         resultado.getString("tipo_mime"),
                         resultado.getLong("tamano_bytes"),
                         resultado.getString("hash_sha256")
@@ -58,6 +61,7 @@ public class PerfilVisualDAO {
     public String guardarFoto(
             long idPersona,
             String ruta,
+            byte[] contenido,
             String tipoMime,
             long tamanoBytes,
             String hashSha256
@@ -68,11 +72,12 @@ public class PerfilVisualDAO {
                 String anterior = bloquearYObtenerRuta(conexion, idPersona);
                 String sql = """
                         INSERT INTO soracare.perfiles_visuales (
-                            id_persona, avatar_codigo, ruta_foto, tipo_mime,
-                            tamano_bytes, hash_sha256, fecha_actualizacion
-                        ) VALUES (?, 'AZUL', ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                            id_persona, avatar_codigo, ruta_foto, contenido_foto,
+                            tipo_mime, tamano_bytes, hash_sha256, fecha_actualizacion
+                        ) VALUES (?, 'AZUL', ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                         ON CONFLICT (id_persona) DO UPDATE SET
                             ruta_foto = EXCLUDED.ruta_foto,
+                            contenido_foto = EXCLUDED.contenido_foto,
                             tipo_mime = EXCLUDED.tipo_mime,
                             tamano_bytes = EXCLUDED.tamano_bytes,
                             hash_sha256 = EXCLUDED.hash_sha256,
@@ -81,9 +86,10 @@ public class PerfilVisualDAO {
                 try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
                     sentencia.setLong(1, idPersona);
                     sentencia.setString(2, ruta);
-                    sentencia.setString(3, tipoMime);
-                    sentencia.setLong(4, tamanoBytes);
-                    sentencia.setString(5, hashSha256);
+                    sentencia.setBytes(3, contenido);
+                    sentencia.setString(4, tipoMime);
+                    sentencia.setLong(5, tamanoBytes);
+                    sentencia.setString(6, hashSha256);
                     sentencia.executeUpdate();
                 }
                 conexion.commit();
@@ -109,6 +115,7 @@ public class PerfilVisualDAO {
                         ON CONFLICT (id_persona) DO UPDATE SET
                             avatar_codigo = EXCLUDED.avatar_codigo,
                             ruta_foto = NULL,
+                            contenido_foto = NULL,
                             tipo_mime = NULL,
                             tamano_bytes = NULL,
                             hash_sha256 = NULL,
@@ -148,6 +155,7 @@ public class PerfilVisualDAO {
 
     public record ArchivoPerfil(
             String rutaRelativa,
+            byte[] contenido,
             String tipoMime,
             long tamanoBytes,
             String hashSha256

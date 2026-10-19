@@ -55,6 +55,7 @@ public class DocumentoClinicoDAO {
                 tipo_mime,
                 tamano_bytes,
                 ruta_almacenamiento,
+                contenido_archivo,
                 hash_sha256,
                 descripcion,
                 origen,
@@ -62,7 +63,7 @@ public class DocumentoClinicoDAO {
                 estado,
                 confidencial,
                 fecha_documento
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                       'CARGADO', 'PACIENTE', 'DISPONIBLE', TRUE, ?)
             RETURNING id_documento
             """;
@@ -108,6 +109,7 @@ public class DocumentoClinicoDAO {
                    d.tipo_mime,
                    d.tamano_bytes,
                    d.ruta_almacenamiento,
+                   d.contenido_archivo,
                    d.hash_sha256
             FROM soracare.documentos d
             INNER JOIN soracare.tipos_documento td
@@ -175,17 +177,22 @@ public class DocumentoClinicoDAO {
             sentencia.setString(8, datos.extension());
             sentencia.setString(9, datos.tipoMime());
             sentencia.setLong(10, datos.tamanoBytes());
-            sentencia.setString(11, datos.rutaAlmacenamiento());
-            sentencia.setString(12, datos.hashSha256());
-            if (datos.descripcion() == null) {
-                sentencia.setNull(13, Types.VARCHAR);
+            if (datos.rutaAlmacenamiento() == null) {
+                sentencia.setNull(11, Types.VARCHAR);
             } else {
-                sentencia.setString(13, datos.descripcion());
+                sentencia.setString(11, datos.rutaAlmacenamiento());
+            }
+            sentencia.setBytes(12, datos.contenido());
+            sentencia.setString(13, datos.hashSha256());
+            if (datos.descripcion() == null) {
+                sentencia.setNull(14, Types.VARCHAR);
+            } else {
+                sentencia.setString(14, datos.descripcion());
             }
             if (datos.fechaDocumento() == null) {
-                sentencia.setNull(14, Types.DATE);
+                sentencia.setNull(15, Types.DATE);
             } else {
-                sentencia.setDate(14, Date.valueOf(datos.fechaDocumento()));
+                sentencia.setDate(15, Date.valueOf(datos.fechaDocumento()));
             }
             try (ResultSet resultado = sentencia.executeQuery()) {
                 if (!resultado.next()) {
@@ -225,6 +232,7 @@ public class DocumentoClinicoDAO {
                                 resultado.getString("tipo_mime"),
                                 resultado.getLong("tamano_bytes"),
                                 resultado.getString("ruta_almacenamiento"),
+                                resultado.getBytes("contenido_archivo"),
                                 resultado.getString("hash_sha256")
                         ))
                         : Optional.empty();

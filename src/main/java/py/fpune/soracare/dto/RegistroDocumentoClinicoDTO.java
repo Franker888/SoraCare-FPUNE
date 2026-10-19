@@ -13,6 +13,7 @@ public record RegistroDocumentoClinicoDTO(
         String tipoMime,
         long tamanoBytes,
         String rutaAlmacenamiento,
+        byte[] contenido,
         String hashSha256,
         String descripcion,
         LocalDate fechaDocumento

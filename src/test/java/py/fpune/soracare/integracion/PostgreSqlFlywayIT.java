@@ -27,8 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 class PostgreSqlFlywayIT {
 
-    private static final int CANTIDAD_MIGRACIONES_ESPERADA = 39;
-    private static final String ULTIMA_VERSION_ESPERADA = "039";
+    private static final int CANTIDAD_MIGRACIONES_ESPERADA = 40;
+    private static final String ULTIMA_VERSION_ESPERADA = "040";
     private static final String BASE_TEMPORAL = "soracare_pruebas";
     private static final String USUARIO_TEMPORAL = "soracare_admin_test";
 
@@ -129,6 +129,22 @@ class PostgreSqlFlywayIT {
                             to_regclass('soracare.sifen_identificador_envio_seq') AS secuencia_envio_sifen,
                             to_regclass('soracare.google_calendar_vinculos') AS google_calendar_vinculos,
                             to_regclass('soracare.google_calendar_eventos') AS google_calendar_eventos,
+                            EXISTS (
+                                SELECT 1
+                                FROM information_schema.columns
+                                WHERE table_schema = 'soracare'
+                                  AND table_name = 'documentos'
+                                  AND column_name = 'contenido_archivo'
+                                  AND data_type = 'bytea'
+                            ) AS documentos_persistentes,
+                            EXISTS (
+                                SELECT 1
+                                FROM information_schema.columns
+                                WHERE table_schema = 'soracare'
+                                  AND table_name = 'perfiles_visuales'
+                                  AND column_name = 'contenido_foto'
+                                  AND data_type = 'bytea'
+                            ) AS fotos_persistentes,
                             (
                                 SELECT schema_owner
                                 FROM information_schema.schemata
@@ -158,6 +174,8 @@ class PostgreSqlFlywayIT {
             assertNotNull(resultado.getString("secuencia_envio_sifen"));
             assertNotNull(resultado.getString("google_calendar_vinculos"));
             assertNotNull(resultado.getString("google_calendar_eventos"));
+            assertTrue(resultado.getBoolean("documentos_persistentes"));
+            assertTrue(resultado.getBoolean("fotos_persistentes"));
             assertEquals("soracare_app", resultado.getString("propietario_esquema"));
             assertFalse(resultado.getBoolean("propietario_puede_iniciar_sesion"));
             assertEquals(

@@ -30,19 +30,28 @@ public class AlmacenFotosPerfil {
     }
 
     public FotoGuardada guardar(long idPersona, byte[] contenido) throws IOException {
-        if (idPersona <= 0) {
-            throw new IllegalArgumentException("La cuenta del perfil no es válida.");
-        }
-        validarTamano(contenido);
-        String tipoMime = detectarTipoMime(contenido);
-        validarImagenReal(contenido);
-        String extension = "image/png".equals(tipoMime) ? "png" : "jpg";
+        FotoPreparada preparada = preparar(idPersona, contenido);
+        String extension = "image/png".equals(preparada.tipoMime()) ? "png" : "jpg";
         String rutaRelativa = "persona-" + idPersona + "/" + UUID.randomUUID() + "." + extension;
         Path destino = resolver(rutaRelativa);
         Files.createDirectories(destino.getParent());
         Files.write(destino, contenido, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
         return new FotoGuardada(
                 rutaRelativa,
+                preparada.tipoMime(),
+                preparada.tamanoBytes(),
+                preparada.hashSha256()
+        );
+    }
+
+    public FotoPreparada preparar(long idPersona, byte[] contenido) throws IOException {
+        if (idPersona <= 0) {
+            throw new IllegalArgumentException("La cuenta del perfil no es válida.");
+        }
+        validarTamano(contenido);
+        String tipoMime = detectarTipoMime(contenido);
+        validarImagenReal(contenido);
+        return new FotoPreparada(
                 tipoMime,
                 contenido.length,
                 sha256(contenido)
@@ -59,6 +68,15 @@ public class AlmacenFotosPerfil {
             throw new IOException("La fotografía posee un tamaño inválido.");
         }
         byte[] contenido = Files.readAllBytes(archivo);
+        return verificarContenido(contenido, hashEsperado);
+    }
+
+    public byte[] verificarContenido(byte[] contenido, String hashEsperado)
+            throws IOException {
+        if (contenido == null || contenido.length == 0
+                || contenido.length > TAMANO_MAXIMO_BYTES) {
+            throw new IOException("La fotografía posee un tamaño inválido.");
+        }
         if (hashEsperado == null
                 || hashEsperado.isBlank()
                 || !sha256(contenido).equalsIgnoreCase(hashEsperado.strip())) {
@@ -136,6 +154,13 @@ public class AlmacenFotosPerfil {
 
     public record FotoGuardada(
             String rutaRelativa,
+            String tipoMime,
+            long tamanoBytes,
+            String hashSha256
+    ) {
+    }
+
+    public record FotoPreparada(
             String tipoMime,
             long tamanoBytes,
             String hashSha256

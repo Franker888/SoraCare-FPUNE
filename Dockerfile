@@ -14,7 +14,7 @@ FROM tomcat:10.1.59-jre21-temurin-noble AS ejecucion
 
 LABEL org.opencontainers.image.title="SoraCare-FPUNE" \
       org.opencontainers.image.description="Sistema de gestión hospitalaria SoraCare" \
-      org.opencontainers.image.source="https://github.com/TobiBug/SoraCare-FPUNE"
+      org.opencontainers.image.source="https://github.com/Franker888/SoraCare-FPUNE"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -43,7 +43,7 @@ COPY --chmod=755 docker/iniciar-soracare.sh \
 
 ENV SORACARE_DOCUMENTOS_DIR=/var/lib/soracare/documentos-clinicos \
     SORACARE_PERFILES_DIR=/var/lib/soracare/fotos-perfil \
-    CATALINA_OPTS="-Xms128m -Xmx384m -Dfile.encoding=UTF-8 -Duser.timezone=America/Asuncion"
+    CATALINA_OPTS="-Xms64m -Xmx256m -XX:MaxMetaspaceSize=128m -XX:MaxDirectMemorySize=32m -XX:+UseSerialGC -Dfile.encoding=UTF-8 -Duser.timezone=America/Asuncion"
 
 USER soracare
 

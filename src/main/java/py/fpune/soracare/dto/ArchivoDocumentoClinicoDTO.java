@@ -7,6 +7,7 @@ public record ArchivoDocumentoClinicoDTO(
         String tipoMime,
         long tamanoBytes,
         String rutaAlmacenamiento,
+        byte[] contenido,
         String hashSha256
 ) {
 }

@@ -37,20 +37,16 @@ public class PerfilVisualService {
     public void guardarFoto(long idPersona, byte[] contenido)
             throws IOException, SQLException {
         validarPersona(idPersona);
-        AlmacenFotosPerfil.FotoGuardada nueva = almacen.guardar(idPersona, contenido);
-        try {
-            String anterior = perfilDAO.guardarFoto(
-                    idPersona,
-                    nueva.rutaRelativa(),
-                    nueva.tipoMime(),
-                    nueva.tamanoBytes(),
-                    nueva.hashSha256()
-            );
-            almacen.eliminarSilenciosamente(anterior);
-        } catch (SQLException | RuntimeException error) {
-            almacen.eliminarSilenciosamente(nueva.rutaRelativa());
-            throw error;
-        }
+        AlmacenFotosPerfil.FotoPreparada nueva = almacen.preparar(idPersona, contenido);
+        String anterior = perfilDAO.guardarFoto(
+                idPersona,
+                null,
+                contenido,
+                nueva.tipoMime(),
+                nueva.tamanoBytes(),
+                nueva.hashSha256()
+        );
+        almacen.eliminarSilenciosamente(anterior);
     }
 
     public FotoDescargable abrirFoto(long idPersona) throws SQLException, IOException {
@@ -58,7 +54,9 @@ public class PerfilVisualService {
         PerfilVisualDAO.ArchivoPerfil archivo = perfilDAO.buscarArchivo(idPersona)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "La cuenta todavía no posee una fotografía personalizada."));
-        byte[] contenido = almacen.leer(archivo.rutaRelativa(), archivo.hashSha256());
+        byte[] contenido = archivo.contenido() == null
+                ? almacen.leer(archivo.rutaRelativa(), archivo.hashSha256())
+                : almacen.verificarContenido(archivo.contenido(), archivo.hashSha256());
         return new FotoDescargable(archivo.tipoMime(), contenido);
     }
 

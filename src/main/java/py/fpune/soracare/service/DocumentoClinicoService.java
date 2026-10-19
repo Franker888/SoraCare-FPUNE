@@ -125,8 +125,9 @@ public class DocumentoClinicoService {
                 throw new SecurityException(
                         "No tenés autorización para consultar este documento clínico.");
             }
-            byte[] contenido = almacen.leer(
-                    archivo.rutaAlmacenamiento(), archivo.hashSha256());
+            byte[] contenido = archivo.contenido() == null
+                    ? almacen.leer(archivo.rutaAlmacenamiento(), archivo.hashSha256())
+                    : almacen.verificarContenido(archivo.contenido(), archivo.hashSha256());
             documentoDAO.registrarAcceso(
                     idDocumento,
                     usuario.getIdUsuario(),
@@ -175,14 +176,14 @@ public class DocumentoClinicoService {
     ) throws SQLException, IOException {
         LocalDate fecha = convertirFecha(fechaDocumento);
         String descripcionNormalizada = normalizarDescripcion(descripcion);
-        AlmacenDocumentosClinicos.ArchivoGuardado guardado = null;
+        AlmacenDocumentosClinicos.ArchivoPreparado preparado =
+                almacen.preparar(idPaciente, nombreOriginal, contenido);
         try (Connection conexion = ConexionBD.obtenerConexion()) {
             try {
                 conexion.setAutoCommit(false);
                 documentoDAO.buscarTipoActivo(conexion, idTipoDocumento)
                         .orElseThrow(() -> new IllegalArgumentException(
                                 "El tipo de documento clínico no es válido."));
-                guardado = almacen.guardar(idPaciente, nombreOriginal, contenido);
                 long idDocumento = documentoDAO.registrar(
                         conexion,
                         new RegistroDocumentoClinicoDTO(
@@ -190,13 +191,14 @@ public class DocumentoClinicoService {
                                 idAtencion,
                                 idTipoDocumento,
                                 idUsuario,
-                                guardado.nombreAlmacenado(),
-                                guardado.nombreOriginal(),
-                                guardado.extension(),
-                                guardado.tipoMime(),
-                                guardado.tamanoBytes(),
-                                guardado.rutaRelativa(),
-                                guardado.hashSha256(),
+                                preparado.nombreAlmacenado(),
+                                preparado.nombreOriginal(),
+                                preparado.extension(),
+                                preparado.tipoMime(),
+                                preparado.tamanoBytes(),
+                                null,
+                                contenido,
+                                preparado.hashSha256(),
                                 descripcionNormalizada,
                                 fecha
                         )
@@ -205,7 +207,6 @@ public class DocumentoClinicoService {
                 return idDocumento;
             } catch (Exception error) {
                 rollback(conexion, error);
-                if (guardado != null) almacen.eliminarSilenciosamente(guardado.rutaRelativa());
                 if (error instanceof IllegalArgumentException validacion) throw validacion;
                 if (error instanceof SQLException sql) throw sql;
                 if (error instanceof IOException io) throw io;

@@ -30,6 +30,29 @@ public class AlmacenDocumentosClinicos {
             String nombreOriginal,
             byte[] contenido
     ) throws IOException {
+        ArchivoPreparado preparado = preparar(idPaciente, nombreOriginal, contenido);
+        String carpeta = "paciente-" + idPaciente;
+        String rutaRelativa = carpeta + "/" + preparado.nombreAlmacenado();
+        Path destino = resolverRuta(rutaRelativa);
+
+        Files.createDirectories(destino.getParent());
+        Files.write(destino, contenido, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        return new ArchivoGuardado(
+                preparado.nombreAlmacenado(),
+                preparado.nombreOriginal(),
+                preparado.extension(),
+                preparado.tipoMime(),
+                preparado.tamanoBytes(),
+                rutaRelativa,
+                preparado.hashSha256()
+        );
+    }
+
+    public ArchivoPreparado preparar(
+            long idPaciente,
+            String nombreOriginal,
+            byte[] contenido
+    ) {
         if (idPaciente <= 0) {
             throw new IllegalArgumentException("El paciente del documento no es válido.");
         }
@@ -38,19 +61,12 @@ public class AlmacenDocumentosClinicos {
         String extension = extensionPara(tipoMime);
         String nombreSeguro = normalizarNombreOriginal(nombreOriginal, extension);
         String nombreAlmacenado = UUID.randomUUID() + "." + extension;
-        String carpeta = "paciente-" + idPaciente;
-        String rutaRelativa = carpeta + "/" + nombreAlmacenado;
-        Path destino = resolverRuta(rutaRelativa);
-
-        Files.createDirectories(destino.getParent());
-        Files.write(destino, contenido, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-        return new ArchivoGuardado(
+        return new ArchivoPreparado(
                 nombreAlmacenado,
                 nombreSeguro,
                 extension,
                 tipoMime,
                 contenido.length,
-                rutaRelativa,
                 sha256(contenido)
         );
     }
@@ -65,6 +81,16 @@ public class AlmacenDocumentosClinicos {
             throw new IOException("El archivo clínico posee un tamaño inválido.");
         }
         byte[] contenido = Files.readAllBytes(archivo);
+        verificarContenido(contenido, hashEsperado);
+        return contenido;
+    }
+
+    public byte[] verificarContenido(byte[] contenido, String hashEsperado)
+            throws IOException {
+        if (contenido == null || contenido.length == 0
+                || contenido.length > TAMANO_MAXIMO_BYTES) {
+            throw new IOException("El archivo clínico posee un tamaño inválido.");
+        }
         if (hashEsperado != null
                 && !hashEsperado.isBlank()
                 && !sha256(contenido).equalsIgnoreCase(hashEsperado.strip())) {
@@ -173,6 +199,16 @@ public class AlmacenDocumentosClinicos {
             String tipoMime,
             long tamanoBytes,
             String rutaRelativa,
+            String hashSha256
+    ) {
+    }
+
+    public record ArchivoPreparado(
+            String nombreAlmacenado,
+            String nombreOriginal,
+            String extension,
+            String tipoMime,
+            long tamanoBytes,
             String hashSha256
     ) {
     }
