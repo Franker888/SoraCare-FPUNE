@@ -21,6 +21,18 @@ public final class MigradorEsquemaBD {
                 ) THEN
                     CREATE ROLE soracare_app NOLOGIN;
                 END IF;
+
+                IF current_user <> 'soracare_app'
+                        AND NOT pg_has_role(
+                            current_user,
+                            'soracare_app',
+                            'MEMBER'
+                        ) THEN
+                    EXECUTE format(
+                        'GRANT soracare_app TO %I',
+                        current_user
+                    );
+                END IF;
             END
             $soracare$;
             """;
