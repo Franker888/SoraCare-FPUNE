@@ -26,10 +26,11 @@ public final class MigradorEsquemaBD {
                         AND NOT pg_has_role(
                             current_user,
                             'soracare_app',
-                            'MEMBER'
+                            'USAGE'
                         ) THEN
                     EXECUTE format(
-                        'GRANT soracare_app TO %I',
+                        'GRANT soracare_app TO %I '
+                            || 'WITH INHERIT TRUE, SET TRUE',
                         current_user
                     );
                 END IF;
