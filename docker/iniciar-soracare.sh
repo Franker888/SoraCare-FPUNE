@@ -30,4 +30,12 @@ if [ "${puerto}" != "8080" ]; then
         "${CATALINA_HOME}/conf/server.xml"
 fi
 
+# En un contenedor no se utiliza el puerto de apagado de Tomcat. Mantenerlo
+# abierto hace que los detectores de puertos de la plataforma intenten enviarle
+# solicitudes HTTP y Tomcat las registre como comandos de apagado inválidos.
+# El proceso se detiene mediante las señales normales del contenedor.
+sed -Ei \
+    's#(<Server[[:space:]]+port=")[^"]+("[[:space:]]+shutdown="SHUTDOWN">)#\1-1\2#' \
+    "${CATALINA_HOME}/conf/server.xml"
+
 exec "$@"
