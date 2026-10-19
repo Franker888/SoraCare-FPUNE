@@ -8,7 +8,10 @@ import py.fpune.soracare.service.SentryMonitoreoService;
 import org.flywaydb.core.api.output.MigrateResult;
 
 import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Enumeration;
 
 @WebListener
 public class CierreRecursosAplicacionListener implements ServletContextListener {
@@ -75,10 +78,59 @@ public class CierreRecursosAplicacionListener implements ServletContextListener 
 
     @Override
     public void contextDestroyed(ServletContextEvent evento) {
-        DespachadorCorreoService.cerrar();
-        JpaContexto.cerrar();
-        ConexionBD.cerrar();
-        SentryMonitoreoService.cerrar();
+        cerrarSeguro(
+                evento,
+                "monitoreo técnico",
+                SentryMonitoreoService::cerrar
+        );
+        cerrarSeguro(
+                evento,
+                "despachador de correo",
+                DespachadorCorreoService::cerrar
+        );
+        cerrarSeguro(evento, "unidad de persistencia", JpaContexto::cerrar);
+        cerrarSeguro(evento, "pool de conexiones", ConexionBD::cerrar);
+        desregistrarControladoresJdbc(evento);
+    }
+
+    private static void cerrarSeguro(
+            ServletContextEvent evento,
+            String recurso,
+            Runnable cierre
+    ) {
+        try {
+            cierre.run();
+        } catch (RuntimeException excepcion) {
+            evento.getServletContext().log(
+                    "No fue posible cerrar correctamente " + recurso + ".",
+                    excepcion
+            );
+        }
+    }
+
+    private static void desregistrarControladoresJdbc(
+            ServletContextEvent evento
+    ) {
+        ClassLoader cargadorAplicacion =
+                CierreRecursosAplicacionListener.class.getClassLoader();
+        Enumeration<Driver> controladores = DriverManager.getDrivers();
+
+        while (controladores.hasMoreElements()) {
+            Driver controlador = controladores.nextElement();
+            if (controlador.getClass().getClassLoader() != cargadorAplicacion) {
+                continue;
+            }
+
+            try {
+                DriverManager.deregisterDriver(controlador);
+            } catch (SQLException excepcion) {
+                evento.getServletContext().log(
+                        "No fue posible desregistrar el controlador JDBC "
+                                + controlador.getClass().getName() + ".",
+                        excepcion
+                );
+            }
+        }
     }
 
     private static void registrarErrorArranque(
